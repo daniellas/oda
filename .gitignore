@@ -1,2 +1,13 @@
 *.class
 *.log
+.idea/
+.project
+.classpath
+*.iml
+data/
+reports/
+config.properties
+target/
+.settings
+.cache-main
+.cache-tests
