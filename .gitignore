@@ -4,7 +4,7 @@
 .project
 .classpath
 *.iml
-data/
+/data
 reports/
 config.properties
 target/
