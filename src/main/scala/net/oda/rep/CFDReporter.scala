@@ -12,8 +12,6 @@ import org.apache.spark.sql.functions._
 
 case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
 
-case class CfdItem(created: String, cummulativeCounts: Map[Int, Long])
-
 object CFDReporter {
 
   val validFlows = List(
@@ -43,20 +41,22 @@ object CFDReporter {
 
   val getLongOption = (row: Row, idx: Int) => if (row.isNullAt(idx)) None else Some(row.getLong(idx))
 
-  def putTuple(m: Map[Int, Long], t: (Int, Long)) = m + (t._1 -> t._2)
+  case class CfdItem(created: String, counts: Map[String, Long])
 
-  def getCounts(row: Row, prev: Option[CfdItem]): Map[Int, Long] = (1 to 9)
-    .toArray
-    .map(i => getLongOption(row, i).map(c => (i, c)).getOrElse(() => (i, 0L)))
-    .foldLeft(Map.empty[Int, Long])(putTuple)
+  val currentOrPrevLongOption: (Row, Int, Option[CfdItem], String) => Option[Long] = (row: Row, idx: Int, prev: Option[CfdItem], key: String) =>
+    getLongOption(row, idx)
+      .orElse(prev.map(_.counts(key)))
 
-  val forwardFill = (acc: List[CfdItem], row: Row) => acc match {
-    case Nil => CfdItem(
+  val forwardFill = (cols: Array[String]) => (acc: List[CfdItem], row: Row) => {
+    CfdItem(
       row.getString(0),
-      getCounts(row, None)) :: acc
-    case xs => CfdItem(
-      row.getString(0),
-      getCounts(row, xs.headOption)) :: acc
+      (1 to cols.length - 1)
+        .foldLeft(
+          Map.empty[String, Long]
+        )
+        (
+          (a, i) => a + (cols(i) -> currentOrPrevLongOption(row, i, acc.headOption, cols(i)).getOrElse(0L))
+        )) :: acc
   }
 
   def generate(workItems: List[WorkItem]) = {
@@ -70,30 +70,33 @@ object CFDReporter {
       .count
       .withColumn(
         "cummulativeCount",
-        sum('count).over(
-          Window
-            .partitionBy('status)
-            .orderBy('created)
-            .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
+        sum('count)
+          .over(
+            Window
+              .partitionBy('status)
+              .orderBy('created)
+              .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
       .select(date_format('created, "yyyy-MM-dd").as("created"), 'status, 'cummulativeCount)
       .groupBy('created)
       .pivot('status)
       .sum()
       .orderBy('created)
-      .coalesce(1)
 
     val cfdFilled = cfd.collect()
-      .foldLeft(List[CfdItem]())(forwardFill)
+      .foldLeft(List[CfdItem]())(forwardFill(cfd.columns))
 
     Spark.ctx.parallelize(cfdFilled)
       .toDF()
+      .select('created, explode('counts))
+      .groupBy('created)
+      .pivot('key)
+      .sum()
       .orderBy('created)
-      .show
-
-    //    cfd.write
-    //      .format("csv")
-    //      .mode("overwrite")
-    //      .option("header", true)
-    //      .save(Config.getProp("reports.location").getOrElse(() => "./") + "/cfd")
+      .repartition(1)
+      .write
+      .format("csv")
+      .mode("overwrite")
+      .option("header", true)
+      .save(Config.getProp("reports.location").getOrElse(() => "./") + "/cfd")
   }
 }
