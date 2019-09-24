@@ -6,6 +6,7 @@ import net.oda.Mappers._
 import net.oda.{Config, Spark}
 import net.oda.Spark.session.implicits._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
@@ -38,8 +39,28 @@ object CFDReporter {
 
   val flowDesc = (flow: List[String]) => flow.foldLeft("")(_ + "/" + _)
 
+  val getLongOption = (row: Row, idx: Int) => if (row.isNullAt(idx)) None else Some(row.getLong(idx))
+
+  case class CfdItem(created: String, counts: Map[String, Long])
+
+  val currentOrPrevLongOption: (Row, Int, Option[CfdItem], String) => Option[Long] = (row: Row, idx: Int, prev: Option[CfdItem], key: String) =>
+    getLongOption(row, idx)
+      .orElse(prev.map(_.counts(key)))
+
+  val forwardFill = (cols: Array[String]) => (acc: List[CfdItem], row: Row) => {
+    CfdItem(
+      row.getString(0),
+      (1 to cols.length - 1)
+        .foldLeft(
+          Map.empty[String, Long]
+        )
+        (
+          (a, i) => a + (cols(i) -> currentOrPrevLongOption(row, i, acc.headOption, cols(i)).getOrElse(0L))
+        )) :: acc
+  }
+
   def generate(workItems: List[WorkItem]) = {
-    Spark.ctx.parallelize(workItems)
+    val cfd = Spark.ctx.parallelize(workItems)
       .filter(matchCategory)
       .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, stripStatusHistory(i.statusHistory)))
       .filter(!_.statusHistory.isEmpty)
@@ -49,17 +70,29 @@ object CFDReporter {
       .count
       .withColumn(
         "cummulativeCount",
-        sum('count).over(
-          Window
-            .partitionBy('status)
-            .orderBy('created)
-            .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
+        sum('count)
+          .over(
+            Window
+              .partitionBy('status)
+              .orderBy('created)
+              .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
       .select(date_format('created, "yyyy-MM-dd").as("created"), 'status, 'cummulativeCount)
       .groupBy('created)
       .pivot('status)
       .sum()
       .orderBy('created)
-      .coalesce(1)
+
+    val cfdFilled = cfd.collect()
+      .foldLeft(List[CfdItem]())(forwardFill(cfd.columns))
+
+    Spark.ctx.parallelize(cfdFilled)
+      .toDF()
+      .select('created, explode('counts))
+      .groupBy('created)
+      .pivot('key)
+      .sum()
+      .orderBy('created)
+      .repartition(1)
       .write
       .format("csv")
       .mode("overwrite")
