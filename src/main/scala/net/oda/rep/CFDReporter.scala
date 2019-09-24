@@ -6,10 +6,13 @@ import net.oda.Mappers._
 import net.oda.{Config, Spark}
 import net.oda.Spark.session.implicits._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
 case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
+
+case class CfdItem(created: String, cummulativeCounts: Map[Int, Long])
 
 object CFDReporter {
 
@@ -38,8 +41,26 @@ object CFDReporter {
 
   val flowDesc = (flow: List[String]) => flow.foldLeft("")(_ + "/" + _)
 
+  val getLongOption = (row: Row, idx: Int) => if (row.isNullAt(idx)) None else Some(row.getLong(idx))
+
+  def putTuple(m: Map[Int, Long], t: (Int, Long)) = m + (t._1 -> t._2)
+
+  def getCounts(row: Row, prev: Option[CfdItem]): Map[Int, Long] = (1 to 9)
+    .toArray
+    .map(i => getLongOption(row, i).map(c => (i, c)).getOrElse(() => (i, 0L)))
+    .foldLeft(Map.empty[Int, Long])(putTuple)
+
+  val forwardFill = (acc: List[CfdItem], row: Row) => acc match {
+    case Nil => CfdItem(
+      row.getString(0),
+      getCounts(row, None)) :: acc
+    case xs => CfdItem(
+      row.getString(0),
+      getCounts(row, xs.headOption)) :: acc
+  }
+
   def generate(workItems: List[WorkItem]) = {
-    Spark.ctx.parallelize(workItems)
+    val cfd = Spark.ctx.parallelize(workItems)
       .filter(matchCategory)
       .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, stripStatusHistory(i.statusHistory)))
       .filter(!_.statusHistory.isEmpty)
@@ -60,10 +81,19 @@ object CFDReporter {
       .sum()
       .orderBy('created)
       .coalesce(1)
-      .write
-      .format("csv")
-      .mode("overwrite")
-      .option("header", true)
-      .save(Config.getProp("reports.location").getOrElse(() => "./") + "/cfd")
+
+    val cfdFilled = cfd.collect()
+      .foldLeft(List[CfdItem]())(forwardFill)
+
+    Spark.ctx.parallelize(cfdFilled)
+      .toDF()
+      .orderBy('created)
+      .show
+
+    //    cfd.write
+    //      .format("csv")
+    //      .mode("overwrite")
+    //      .option("header", true)
+    //      .save(Config.getProp("reports.location").getOrElse(() => "./") + "/cfd")
   }
 }
