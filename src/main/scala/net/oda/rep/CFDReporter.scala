@@ -1,39 +1,45 @@
 package net.oda.rep
 
 import java.sql.Timestamp
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 import net.oda.Mappers._
-import net.oda.{Config, Spark}
 import net.oda.Spark.session.implicits._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
+import net.oda.{Config, Spark}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+
+import scala.collection.SortedMap
 
 case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
 
 object CFDReporter {
 
+  val referenceFlow = List("To Do", "In Progress", "In Review", "Ready to test", "In testing", "Done")
+  val entryState = referenceFlow.head
+  val finalState = referenceFlow.last
+
   val validFlows = List(
-    List("to do", "in progress", "in review", "ready to test", "in testing", "done"),
-    List("to do", "in progress", "in review", "done"),
-    List("to do", "in progress", "ready to test", "in testing", "done"),
-    List("to do", "in progress", "in testing", "done"),
-    List("to do", "in progress", "done"),
-    List("to do", "done"))
+    referenceFlow,
+    List("To Do", "In Progress", "In Review", "Done"),
+    List("To Do", "In Progress", "Ready to test", "In testing", "Done"),
+    List("To Do", "In Progress", "In testing", "Done"),
+    List("To Do", "In Progress", "Done"),
+    List("To Do", "Done"))
 
-  val stripStatusHistory = (history: List[WorkItemStatusHistory]) => {
-    val formatted = history.sortBy(_.created.getTime).map(_.name.toLowerCase)
-
+  val normalizeFlow = (history: List[WorkItemStatusHistory]) => {
     validFlows
-      .find(f => formatted.endsWith(f))
+      .find(f => history.sortBy(_.created.getTime).map(_.name).endsWith(f))
       .map(f => history.takeRight(f.size).sortBy(_.created.getTime))
       .getOrElse(List.empty)
   }
 
-  val matchCategory = (item: WorkItem) => item.`type`.toLowerCase match {
-    case "story" => true
-    case "bug" => true
+  val matchType = (item: WorkItem) => item.`type` match {
+    case "Story" => true
+    case "Bug" => true
     case _ => false
   }
 
@@ -47,23 +53,30 @@ object CFDReporter {
     getLongOption(row, idx)
       .orElse(prev.map(_.counts(key)))
 
-  val forwardFill = (cols: Array[String]) => (acc: List[CfdItem], row: Row) => {
+  val calculateStatusCounts = (cols: Array[String], acc: List[CfdItem], row: Row) =>
+    (1 to cols.length - 1)
+      .foldLeft(Map.empty[String, Long])((a, i) => a + (cols(i) -> currentOrPrevLongOption(row, i, acc.headOption, cols(i)).getOrElse(0L)))
+
+  val calculateWip = (counts: Map[String, Long]) => counts + ("WIP" -> (counts(entryState) - counts(finalState)))
+
+  val applyCalculations = (cols: Array[String], acc: List[CfdItem], row: Row) => {
     CfdItem(
       row.getString(0),
-      (1 to cols.length - 1)
-        .foldLeft(
-          Map.empty[String, Long]
-        )
-        (
-          (a, i) => a + (cols(i) -> currentOrPrevLongOption(row, i, acc.headOption, cols(i)).getOrElse(0L))
-        )) :: acc
+      calculateWip(calculateStatusCounts(cols, acc, row))
+    ) :: acc
   }
 
+  val calculateCycleTime = (start: String, end: String) => ChronoUnit.WEEKS.between(LocalDate.parse(end), LocalDate.parse(start)) + 1
+
+  val findDateLastBelow = (m: SortedMap[Long, Array[(String, Long)]], v: Long) => m.to(v).last._2.head._1
+
   def generate(workItems: List[WorkItem]) = {
-    val cfd = Spark.ctx.parallelize(workItems)
-      .filter(matchCategory)
-      .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, stripStatusHistory(i.statusHistory)))
+    val validWorkItems = Spark.ctx.parallelize(workItems)
+      .filter(matchType)
+      .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, normalizeFlow(i.statusHistory)))
       .filter(!_.statusHistory.isEmpty)
+
+    val statusCountsByPeriod = validWorkItems
       .flatMap(i => i.statusHistory.map(h => WorkItemStatus(i.id, i.`type`, weekStart(h.created), h.name, flowDesc(i.statusHistory.map(_.name)))))
       .toDF
       .groupBy('created, 'status)
@@ -82,16 +95,37 @@ object CFDReporter {
       .sum()
       .orderBy('created)
 
-    val cfdFilled = cfd.collect()
-      .foldLeft(List[CfdItem]())(forwardFill(cfd.columns))
+    val statusCountsWip = statusCountsByPeriod.collect()
+      .foldLeft(List[CfdItem]())(applyCalculations(statusCountsByPeriod.columns, _, _))
 
-    Spark.ctx.parallelize(cfdFilled)
+    val pivot = Spark.ctx.parallelize(statusCountsWip)
       .toDF()
       .select('created, explode('counts))
       .groupBy('created)
       .pivot('key)
       .sum()
       .orderBy('created)
+
+    val entryDatesByCount = SortedMap(
+      pivot.select('created, col(entryState))
+        .collect
+        .map(r => (r.getString(0), r.getAs[Long](entryState)))
+        .groupBy(_._2)
+        .toSeq: _*)
+
+    val cycleTime = pivot.select('created, col(finalState))
+      .orderBy('created)
+      .map(r => (
+        r.getString(0),
+        calculateCycleTime(
+          r.getString(0),
+          findDateLastBelow(entryDatesByCount, r.getLong(1)))))
+      .select('_1.as("ct_week"), '_2.as("CT"))
+
+    pivot
+      .join(cycleTime, 'created === cycleTime("ct_week"))
+      .orderBy('created)
+      .withColumnRenamed("created", "week")
       .repartition(1)
       .write
       .format("csv")

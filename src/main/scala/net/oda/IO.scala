@@ -1,8 +1,6 @@
 package net.oda
 
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
+import java.nio.file.{Files, Paths, StandardOpenOption}
 
 object IO {
   def saveTextContent(path: String, content: String) = {

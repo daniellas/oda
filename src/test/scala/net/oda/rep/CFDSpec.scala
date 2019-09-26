@@ -2,13 +2,13 @@ package net.oda.rep
 
 import java.time.ZonedDateTime
 
+import net.oda.Mappers._
 import net.oda.data.jira.{Issue, JiraTimestampSerializer}
 import net.oda.model.WorkItemStatusHistory
 import net.oda.{Config, IO, Mappers}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 import org.scalatest.{FlatSpec, Matchers}
-import Mappers._
 
 class CFDSpec extends FlatSpec with Matchers {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
@@ -20,7 +20,7 @@ class CFDSpec extends FlatSpec with Matchers {
   it should "strip flow history" in {
     val now = ZonedDateTime.now();
 
-    CFDReporter.stripStatusHistory(
+    CFDReporter.normalizeFlow(
       List(
         WorkItemStatusHistory(now.plusHours(0), "backlog"),
         WorkItemStatusHistory(now.plusHours(1), "todo"),

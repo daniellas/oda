@@ -14,4 +14,5 @@ object Spark {
     .master("local[*]")
     .getOrCreate()
   val ctx = session.sparkContext
+
 }

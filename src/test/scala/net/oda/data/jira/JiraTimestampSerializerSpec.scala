@@ -1,12 +1,10 @@
 package net.oda.data.jira
 
-import java.time.ZonedDateTime
+import java.time.{ZoneId, ZonedDateTime}
 
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
-import org.scalatest.FreeSpec
-import org.scalatest.Matchers
-import java.time.ZoneId
+import org.scalatest.{FreeSpec, Matchers}
 
 case class Model(ts: ZonedDateTime) {
 
