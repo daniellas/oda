@@ -1,7 +1,7 @@
 package net.oda.data.jira
 
-import net.oda.{Config, IO}
 import net.oda.json.JsonSer
+import net.oda.{Config, IO}
 import org.json4s.DefaultFormats
 import org.scalatest.FreeSpec
 

@@ -1,15 +1,12 @@
 package net.oda.data
 
 import java.nio.charset.StandardCharsets
-import java.util.Collections
-import java.util.HashMap
-import java.util.Map
+import java.util.{Collections, HashMap, Map}
 
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
+import com.empirica.rest.client.spring.RestTemplateHttpExecutor
+import org.springframework.http.{HttpHeaders, MediaType}
 import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.web.client.RestTemplate
-import com.empirica.rest.client.spring.RestTemplateHttpExecutor
 
 object Rest {
 	private val restTemplate = new RestTemplate()

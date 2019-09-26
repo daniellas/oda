@@ -1,8 +1,8 @@
 package net.oda
 
-import java.sql.{Date, Timestamp}
-import java.time.{DayOfWeek, ZoneId, ZonedDateTime}
+import java.sql.Timestamp
 import java.time.temporal.ChronoUnit
+import java.time.{DayOfWeek, ZoneId, ZonedDateTime}
 
 import net.oda.data.jira.Issue
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
