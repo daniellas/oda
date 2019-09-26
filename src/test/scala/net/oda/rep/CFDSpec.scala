@@ -20,7 +20,7 @@ class CFDSpec extends FlatSpec with Matchers {
   it should "strip flow history" in {
     val now = ZonedDateTime.now();
 
-    CFDReporter.stripStatusHistory(
+    CFDReporter.normalizeFlow(
       List(
         WorkItemStatusHistory(now.plusHours(0), "backlog"),
         WorkItemStatusHistory(now.plusHours(1), "todo"),

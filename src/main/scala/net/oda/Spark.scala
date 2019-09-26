@@ -1,7 +1,7 @@
 package net.oda
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Row, SparkSession}
 
 object Spark {
   Logger.getLogger("org").setLevel(Level.OFF)
@@ -14,4 +14,5 @@ object Spark {
     .master("local[*]")
     .getOrCreate()
   val ctx = session.sparkContext
+
 }
