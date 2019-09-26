@@ -68,6 +68,8 @@ object CFDReporter {
 
   val calculateCycleTime = (start: String, end: String) => ChronoUnit.WEEKS.between(LocalDate.parse(end), LocalDate.parse(start)) + 1
 
+  val findDateLastBelow = (m: SortedMap[Long, Array[(String, Long)]], v: Long) => m.to(v).last._2.head._1
+
   def generate(workItems: List[WorkItem]) = {
     val validWorkItems = Spark.ctx.parallelize(workItems)
       .filter(matchType)
@@ -103,8 +105,6 @@ object CFDReporter {
       .pivot('key)
       .sum()
       .orderBy('created)
-
-    val findDateLastBelow = (m: SortedMap[Long, Array[(String, Long)]], v: Long) => m.to(v).last._2.head._1
 
     val entryDatesByCount = SortedMap(
       pivot.select('created, col(entryState))
