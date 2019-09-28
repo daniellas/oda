@@ -1,19 +1,10 @@
 package net.oda
 
-import java.sql.Timestamp
-import java.time.temporal.ChronoUnit
-import java.time.{DayOfWeek, ZoneId, ZonedDateTime}
-
+import net.oda.Time._
 import net.oda.data.jira.Issue
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 
 object Mappers {
-
-  implicit def zonedDateTimeToTimestamp(dt: ZonedDateTime) = Timestamp.valueOf(dt.toLocalDateTime)
-
-  implicit def timestampToZonedDateTime(ts: Timestamp) = ZonedDateTime.from(ts.toInstant.atZone(ZoneId.systemDefault()))
-
-  def weekStart(dt: ZonedDateTime) = dt.truncatedTo(ChronoUnit.DAYS).`with`(DayOfWeek.MONDAY)
 
   val jiraIssueToWorkItem = (issue: Issue) => WorkItem(
     issue.key,
@@ -21,7 +12,7 @@ object Mappers {
     issue.fields.issuetype.name,
     issue.fields.priority.name,
     issue.fields.created,
-    issue.fields.resolutiondate.map(zonedDateTimeToTimestamp),
+    issue.fields.resolutiondate.map(toTimestamp),
     s"${issue.fields.reporter.displayName} (${issue.fields.reporter.key})",
     issue.changelog.histories
       .flatMap(h => h.items.map(i => (h.created, i.fieldId, i.toStr)))

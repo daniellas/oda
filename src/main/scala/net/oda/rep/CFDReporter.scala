@@ -5,6 +5,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 import net.oda.Mappers._
+import net.oda.Time._
 import net.oda.Spark.session.implicits._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import net.oda.{Config, Spark}
@@ -45,87 +46,68 @@ object CFDReporter {
 
   val flowDesc = (flow: List[String]) => flow.foldLeft("")(_ + "/" + _)
 
-  val getLongOption = (row: Row, idx: Int) => if (row.isNullAt(idx)) None else Some(row.getLong(idx))
+  val calculateCycleTime = (start: LocalDate, end: LocalDate) => weeksBetween(start, end) + 1
 
-  case class CfdItem(created: String, counts: Map[String, Long])
+  val findDateLastBelow = (m: SortedMap[Long, String], v: Long) => m.to(v).last._2
 
-  val currentOrPrevLongOption: (Row, Int, Option[CfdItem], String) => Option[Long] = (row: Row, idx: Int, prev: Option[CfdItem], key: String) =>
-    getLongOption(row, idx)
-      .orElse(prev.map(_.counts(key)))
-
-  val calculateStatusCounts = (cols: Array[String], acc: List[CfdItem], row: Row) =>
-    (1 to cols.length - 1)
-      .foldLeft(Map.empty[String, Long])((a, i) => a + (cols(i) -> currentOrPrevLongOption(row, i, acc.headOption, cols(i)).getOrElse(0L)))
-
-  val calculateWip = (counts: Map[String, Long]) => counts + ("WIP" -> (counts(entryState) - counts(finalState)))
-
-  val applyCalculations = (cols: Array[String], acc: List[CfdItem], row: Row) => {
-    CfdItem(
-      row.getString(0),
-      calculateWip(calculateStatusCounts(cols, acc, row))
-    ) :: acc
-  }
-
-  val calculateCycleTime = (start: String, end: String) => ChronoUnit.WEEKS.between(LocalDate.parse(end), LocalDate.parse(start)) + 1
-
-  val findDateLastBelow = (m: SortedMap[Long, Array[(String, Long)]], v: Long) => m.to(v).last._2.head._1
+  val cumulativeCol = (col: String) => col + " cumulative"
 
   def generate(workItems: List[WorkItem]) = {
-    val validWorkItems = Spark.ctx.parallelize(workItems)
+    val statusHistory = workItems
       .filter(matchType)
       .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, normalizeFlow(i.statusHistory)))
-      .filter(!_.statusHistory.isEmpty)
-
-    val statusCountsByPeriod = validWorkItems
+      .filter(_.statusHistory.nonEmpty)
       .flatMap(i => i.statusHistory.map(h => WorkItemStatus(i.id, i.`type`, weekStart(h.created), h.name, flowDesc(i.statusHistory.map(_.name)))))
+
+    val counts = statusHistory
       .toDF
       .groupBy('created, 'status)
       .count
-      .withColumn(
-        "cummulativeCount",
-        sum('count)
-          .over(
-            Window
-              .partitionBy('status)
-              .orderBy('created)
-              .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
-      .select(date_format('created, "yyyy-MM-dd").as("created"), 'status, 'cummulativeCount)
-      .groupBy('created)
+      .select(date_format('created, "yyyy-MM-dd").as("week"), 'status, 'count)
+      .groupBy('week)
       .pivot('status)
       .sum()
-      .orderBy('created)
+      .na.fill(0)
+      .withColumn("WIP", col(entryState) - col(finalState))
 
-    val statusCountsWip = statusCountsByPeriod.collect()
-      .foldLeft(List[CfdItem]())(applyCalculations(statusCountsByPeriod.columns, _, _))
+    val cumulativeCounts = counts
+      .columns
+      .tail
+      .foldLeft(counts)(
+        (acc, i) => acc.withColumn(
+          cumulativeCol(i),
+          sum(i)
+            .over(
+              Window
+                .orderBy('week)
+                .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
+      )
 
-    val pivot = Spark.ctx.parallelize(statusCountsWip)
-      .toDF()
-      .select('created, explode('counts))
-      .groupBy('created)
-      .pivot('key)
-      .sum()
-      .orderBy('created)
 
-    val entryDatesByCount = SortedMap(
-      pivot.select('created, col(entryState))
-        .collect
-        .map(r => (r.getString(0), r.getAs[Long](entryState)))
-        .groupBy(_._2)
-        .toSeq: _*)
+    val entryDatesByCount = cumulativeCounts.select('week, col(cumulativeCol(entryState)))
+      .collect
+      .map(r => (r.getString(0), r.getAs[Long](cumulativeCol(entryState))))
+      .foldLeft(SortedMap.empty[Long, String])((acc, i) =>
+        acc.contains(i._2) match {
+          case true => acc
+          case false => acc + (i._2 -> i._1)
+        }
+      )
 
-    val cycleTime = pivot.select('created, col(finalState))
-      .orderBy('created)
-      .map(r => (
-        r.getString(0),
-        calculateCycleTime(
+    val cycleTime = cumulativeCounts.select('week, col(cumulativeCol(finalState)))
+      .map(r =>
+        (
           r.getString(0),
-          findDateLastBelow(entryDatesByCount, r.getLong(1)))))
+          calculateCycleTime(findDateLastBelow(entryDatesByCount, r.getLong(1)), r.getString(0))
+        )
+      )
       .select('_1.as("ct_week"), '_2.as("CT"))
 
-    pivot
-      .join(cycleTime, 'created === cycleTime("ct_week"))
-      .orderBy('created)
-      .withColumnRenamed("created", "week")
+    cumulativeCounts
+      .join(cycleTime, 'week === cycleTime("ct_week"))
+      .withColumn("TH", col(cumulativeCol("WIP")) / 'CT)
+      .drop('ct_week)
+      .orderBy('week)
       .repartition(1)
       .write
       .format("csv")
