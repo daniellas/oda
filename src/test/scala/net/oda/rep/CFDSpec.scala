@@ -2,7 +2,7 @@ package net.oda.rep
 
 import java.time.ZonedDateTime
 
-import net.oda.Mappers._
+import net.oda.Time._
 import net.oda.data.jira.{Issue, JiraTimestampSerializer}
 import net.oda.model.WorkItemStatusHistory
 import net.oda.{Config, IO, Mappers}
@@ -28,6 +28,11 @@ class CFDSpec extends FlatSpec with Matchers {
     (
       WorkItemStatusHistory(now.plusHours(1), "todo"),
       WorkItemStatusHistory(now.plusHours(2), "done"))
+  }
+
+  it should "calculateCycleTime" in {
+    CFDReporter.calculateCycleTime("2018-05-21", "2018-05-28") should equal(2)
+    CFDReporter.calculateCycleTime("2018-05-28", "2018-08-20") should equal(13)
   }
 
   it should "generate CFD from JIRA issues" in {
