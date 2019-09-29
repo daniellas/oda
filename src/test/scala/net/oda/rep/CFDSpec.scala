@@ -3,11 +3,9 @@ package net.oda.rep
 import java.time.ZonedDateTime
 
 import net.oda.Time._
-import net.oda.data.jira.{Issue, JiraTimestampSerializer}
+import net.oda.data.jira.JiraTimestampSerializer
 import net.oda.model.WorkItemStatusHistory
-import net.oda.{Config, IO, Mappers}
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization
 import org.scalatest.{FlatSpec, Matchers}
 
 class CFDSpec extends FlatSpec with Matchers {
@@ -35,14 +33,4 @@ class CFDSpec extends FlatSpec with Matchers {
     CFDReporter.calculateCycleTime("2018-05-28", "2018-08-20") should equal(13)
   }
 
-  it should "generate CFD from JIRA issues" in {
-    val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
-    val projectKey = "CRYP"
-
-    IO.loadTextContent
-      .andThen(Serialization.read[List[Issue]])
-      .andThen(_.map(Mappers.jiraIssueToWorkItem))
-      .andThen(CFDReporter.generate)
-      .apply(s"${dataLocation}/${projectKey}-jira-issues.json")
-  }
 }
