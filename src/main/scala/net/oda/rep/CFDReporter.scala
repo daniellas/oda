@@ -9,11 +9,12 @@ import net.oda.Time._
 import net.oda.Spark.session.implicits._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import net.oda.{Config, Spark}
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{Row, RowFactory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
 import scala.collection.SortedMap
+import scala.reflect.macros.whitebox
 
 case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
 
@@ -67,13 +68,22 @@ object CFDReporter {
       .groupBy('week)
       .pivot('status)
       .sum()
+
+    val timeRange = counts.select(min('week), max('week))
+      .flatMap(r => weeksRange(r.getString(0), r.getString(1)).map(_.toString))
+      .toDF("r_week")
+
+    val filledCounts = timeRange
+      .join(counts, 'r_week === counts("week"), "outer")
       .na.fill(0)
       .withColumn("WIP", col(entryState) - col(finalState))
+      .drop('week)
+      .withColumnRenamed("r_week", "week")
 
-    val cumulativeCounts = counts
+    val cumulativeCounts = filledCounts
       .columns
       .tail
-      .foldLeft(counts)(
+      .foldLeft(filledCounts)(
         (acc, i) => acc.withColumn(
           cumulativeCol(i),
           sum(i)
