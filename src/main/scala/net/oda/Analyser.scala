@@ -10,6 +10,8 @@ object Analyser {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
 
   def main(args: Array[String]) = {
+    downloadJiraData()
+    generateCfd()
   }
 
   private def downloadJiraData() = {
