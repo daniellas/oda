@@ -9,9 +9,9 @@ import org.json4s.jackson.Serialization
 object Analyser {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
 
-  def main(args: Array[String]) = {
-    downloadJiraData()
-    generateCfd()
+  def main(args: Array[String]): Unit = {
+    //    downloadJiraData
+    generateCfd
   }
 
   private def downloadJiraData() = {

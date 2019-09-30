@@ -2,19 +2,15 @@ package net.oda.rep
 
 import java.sql.Timestamp
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 
-import net.oda.Mappers._
-import net.oda.Time._
+import net.oda.Config
 import net.oda.Spark.session.implicits._
+import net.oda.Time._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
-import net.oda.{Config, Spark}
-import org.apache.spark.sql.{Row, RowFactory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
 import scala.collection.SortedMap
-import scala.reflect.macros.whitebox
 
 case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
 
@@ -49,11 +45,11 @@ object CFDReporter {
 
   val calculateCycleTime = (start: LocalDate, end: LocalDate) => weeksBetween(start, end) + 1
 
-  val findDateLastBelow = (m: SortedMap[Long, String], v: Long) => m.to(v).last._2
+  val findDateLastBelow = (m: SortedMap[Long, Timestamp], v: Long) => m.to(v).last._2
 
   val cumulativeCol = (col: String) => col + " cumulative"
 
-  def generate(workItems: List[WorkItem]) = {
+  def generate(workItems: List[WorkItem]): Unit = {
     val statusHistory = workItems
       .filter(matchType)
       .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, normalizeFlow(i.statusHistory)))
@@ -64,13 +60,13 @@ object CFDReporter {
       .toDF
       .groupBy('created, 'status)
       .count
-      .select(date_format('created, "yyyy-MM-dd").as("week"), 'status, 'count)
+      .select(col("created").as("week"), 'status, 'count)
       .groupBy('week)
       .pivot('status)
       .sum()
 
     val timeRange = counts.select(min('week), max('week))
-      .flatMap(r => weeksRange(r.getString(0), r.getString(1)).map(_.toString))
+      .flatMap(r => weeksRange(r.getTimestamp(0), r.getTimestamp(1)).map(toTimestamp))
       .toDF("r_week")
 
     val filledCounts = timeRange
@@ -96,19 +92,20 @@ object CFDReporter {
 
     val entryDatesByCount = cumulativeCounts.select('week, col(cumulativeCol(entryState)))
       .collect
-      .map(r => (r.getString(0), r.getAs[Long](cumulativeCol(entryState))))
-      .foldLeft(SortedMap.empty[Long, String])((acc, i) =>
-        acc.contains(i._2) match {
-          case true => acc
-          case false => acc + (i._2 -> i._1)
+      .map(r => (r.getTimestamp(0), r.getAs[Long](cumulativeCol(entryState))))
+      .foldLeft(SortedMap.empty[Long, Timestamp])((acc, i) =>
+        if (acc.contains(i._2)) {
+          acc
+        } else {
+          acc + (i._2 -> i._1)
         }
       )
 
     val cycleTime = cumulativeCounts.select('week, col(cumulativeCol(finalState)))
       .map(r =>
         (
-          r.getString(0),
-          calculateCycleTime(findDateLastBelow(entryDatesByCount, r.getLong(1)), r.getString(0))
+          r.getTimestamp(0),
+          calculateCycleTime(findDateLastBelow(entryDatesByCount, r.getLong(1)), r.getTimestamp(0))
         )
       )
       .select('_1.as("ct_week"), '_2.as("CT"))
@@ -118,11 +115,12 @@ object CFDReporter {
       .withColumn("TH", col(cumulativeCol("WIP")) / 'CT)
       .drop('ct_week)
       .orderBy('week)
+      .withColumn("week", date_format('week, "yyyy-MM-dd"))
       .repartition(1)
       .write
       .format("csv")
       .mode("overwrite")
-      .option("header", true)
+      .option("header", value = true)
       .save(Config.getProp("reports.location").getOrElse(() => "./") + "/cfd")
   }
 }
