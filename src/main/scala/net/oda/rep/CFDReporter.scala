@@ -9,12 +9,14 @@ import net.oda.Time._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import org.slf4j.LoggerFactory
 
 import scala.collection.SortedMap
 
 case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
 
 object CFDReporter {
+  val log = LoggerFactory.getLogger("cfd")
 
   val referenceFlow = List("To Do", "In Progress", "In Review", "Ready to test", "In testing", "Done")
   val entryState = referenceFlow.head
@@ -28,12 +30,10 @@ object CFDReporter {
     List("To Do", "In Progress", "Done"),
     List("To Do", "Done"))
 
-  val normalizeFlow = (history: List[WorkItemStatusHistory]) => {
-    validFlows
-      .find(f => history.sortBy(_.created.getTime).map(_.name).endsWith(f))
-      .map(f => history.takeRight(f.size).sortBy(_.created.getTime))
-      .getOrElse(List.empty)
-  }
+  val normalizeFlow = (history: List[WorkItemStatusHistory]) => validFlows
+    .find(f => history.sortBy(_.created.getTime).map(_.name).endsWith(f))
+    .map(f => history.takeRight(f.size).sortBy(_.created.getTime))
+    .getOrElse(List.empty)
 
   val matchType = (item: WorkItem) => item.`type` match {
     case "Story" => true
