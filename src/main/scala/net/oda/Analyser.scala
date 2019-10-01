@@ -14,7 +14,7 @@ object Analyser {
     generateCfd
   }
 
-  private def downloadJiraData() = {
+  private def downloadJiraData(): Unit = {
     val projectKey = "CRYP"
     val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
 
@@ -24,7 +24,7 @@ object Analyser {
       .apply(projectKey)
   }
 
-  private def generateCfd() = {
+  private def generateCfd(): Unit = {
     val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
     val projectKey = "CRYP"
 
