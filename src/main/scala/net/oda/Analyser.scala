@@ -9,12 +9,12 @@ import org.json4s.jackson.Serialization
 object Analyser {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
 
-  def main(args: Array[String]) = {
-    downloadJiraData()
-    generateCfd()
+  def main(args: Array[String]): Unit = {
+    //    downloadJiraData
+    generateCfd
   }
 
-  private def downloadJiraData() = {
+  private def downloadJiraData(): Unit = {
     val projectKey = "CRYP"
     val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
 
@@ -24,7 +24,7 @@ object Analyser {
       .apply(projectKey)
   }
 
-  private def generateCfd() = {
+  private def generateCfd(): Unit = {
     val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
     val projectKey = "CRYP"
 

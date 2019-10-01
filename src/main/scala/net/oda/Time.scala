@@ -2,11 +2,13 @@ package net.oda
 
 import java.sql.Timestamp
 import java.time.temporal.ChronoUnit
-import java.time.{DayOfWeek, LocalDate, ZoneId, ZonedDateTime}
+import java.time._
 
 object Time {
 
   implicit def toTimestamp(dt: ZonedDateTime) = Timestamp.valueOf(dt.toLocalDateTime)
+
+  implicit def toTimestamp(dt: LocalDate) = Timestamp.valueOf(dt.atStartOfDay())
 
   implicit def toZonedDateTime(ts: Timestamp) = ZonedDateTime.from(ts.toInstant.atZone(ZoneId.systemDefault()))
 
