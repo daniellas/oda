@@ -7,7 +7,5 @@ import org.apache.http.HttpHeaders
 object Rest {
   val jsonHeaders: Map[String, java.util.List[String]] = new HashMap();
 
-  jsonHeaders.put(HttpHeaders.CONTENT_TYPE, Collections.singletonList("application/json;utf-8"))
-  jsonHeaders.put(HttpHeaders.ACCEPT, Collections.singletonList("application/json;utf-8"))
-
+  jsonHeaders.put(HttpHeaders.ACCEPT, Collections.singletonList("application/json"))
 }

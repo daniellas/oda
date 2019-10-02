@@ -9,12 +9,14 @@ import net.oda.Time._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import org.slf4j.LoggerFactory
 
 import scala.collection.SortedMap
 
 case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
 
 object CFDReporter {
+  val log = LoggerFactory.getLogger("cfd")
 
   val referenceFlow = List("To Do", "In Progress", "In Review", "Ready to test", "In testing", "Done")
   val entryState = referenceFlow.head
@@ -22,16 +24,25 @@ object CFDReporter {
 
   val validFlows = List(
     referenceFlow,
-    List("To Do", "In Progress", "In Review", "Done"),
-    List("To Do", "In Progress", "Ready to test", "In testing", "Done"),
-    List("To Do", "In Progress", "In testing", "Done"),
+    List("To Do"),
+    List("To Do", "In Progress"),
+    List("To Do", "In Progress", "In Review"),
+    List("To Do", "In Progress", "In testing"),
     List("To Do", "In Progress", "Done"),
-    List("To Do", "Done"))
+    List("To Do", "In Progress", "In Review", "Done"),
+    List("To Do", "In Progress", "In testing", "Done"),
+    List("To Do", "In Progress", "In Review", "Ready to test"),
+    List("To Do", "In Progress", "Ready to test", "In testing", "Done"),
+    List("To Do", "In Progress", "In Review", "Ready to test", "In testing")
+  )
 
   val normalizeFlow = (history: List[WorkItemStatusHistory]) => {
+    val sortedHistory = history.sortBy(_.created.getTime)
+    val sortedHistoryNames = sortedHistory.map(_.name)
+
     validFlows
-      .find(f => history.sortBy(_.created.getTime).map(_.name).endsWith(f))
-      .map(f => history.takeRight(f.size).sortBy(_.created.getTime))
+      .find(f => sortedHistoryNames.endsWith(f))
+      .map(f => sortedHistory.takeRight(f.size))
       .getOrElse(List.empty)
   }
 
@@ -45,16 +56,27 @@ object CFDReporter {
 
   val calculateCycleTime = (start: LocalDate, end: LocalDate) => weeksBetween(start, end) + 1
 
-  val findDateLastBelow = (m: SortedMap[Long, Timestamp], v: Long) => m.to(v).last._2
+  val findDateLastBelow = (m: SortedMap[Long, Timestamp], v: Long) => {
+    val to = m.to(v)
+
+    if (to.isEmpty) {
+      m.head._2
+    } else {
+      to.last._2
+    }
+  }
 
   val cumulativeCol = (col: String) => col + " cumulative"
 
   def generate(workItems: List[WorkItem]): Unit = {
+    val startDate = Config.getProp("cfd.startDate").map(parseLocalDate).getOrElse(LocalDate.MIN)
     val statusHistory = workItems
       .filter(matchType)
       .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, normalizeFlow(i.statusHistory)))
+      .filter(_.created.after(startDate))
       .filter(_.statusHistory.nonEmpty)
       .flatMap(i => i.statusHistory.map(h => WorkItemStatus(i.id, i.`type`, weekStart(h.created), h.name, flowDesc(i.statusHistory.map(_.name)))))
+      .toDF
 
     val counts = statusHistory
       .toDF
@@ -105,7 +127,8 @@ object CFDReporter {
       .map(r =>
         (
           r.getTimestamp(0),
-          calculateCycleTime(findDateLastBelow(entryDatesByCount, r.getLong(1)), r.getTimestamp(0))
+          calculateCycleTime(
+            findDateLastBelow(entryDatesByCount, r.getLong(1)), r.getTimestamp(0))
         )
       )
       .select('_1.as("ct_week"), '_2.as("CT"))

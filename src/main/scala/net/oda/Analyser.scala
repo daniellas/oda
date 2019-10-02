@@ -5,8 +5,11 @@ import net.oda.json.JsonSer
 import net.oda.rep.CFDReporter
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
+import org.slf4j.LoggerFactory
 
 object Analyser {
+  val log = LoggerFactory.getLogger("oda")
+
   implicit val formats = DefaultFormats + JiraTimestampSerializer
 
   def main(args: Array[String]): Unit = {
@@ -18,10 +21,12 @@ object Analyser {
     val projectKey = "CRYP"
     val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
 
+    log.info("Downloading JIRA data")
     JiraClient.searchIssues
       .andThen(JsonSer.writeAsString(formats, _))
       .andThen(IO.saveTextContent(s"${dataLocation}/${projectKey}-jira-issues.json", _: String))
       .apply(projectKey)
+    log.info("JIRA data downloaded")
   }
 
   private def generateCfd(): Unit = {
