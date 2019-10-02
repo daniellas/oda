@@ -18,14 +18,25 @@ class CFDSpec extends FlatSpec with Matchers {
   it should "strip flow history" in {
     val now = ZonedDateTime.now();
 
-    CFDReporter.normalizeFlow(
+    val res = CFDReporter.normalizeFlow(
       List(
-        WorkItemStatusHistory(now.plusHours(0), "backlog"),
-        WorkItemStatusHistory(now.plusHours(1), "todo"),
-        WorkItemStatusHistory(now.plusHours(2), "done"))) should contain
-    (
-      WorkItemStatusHistory(now.plusHours(1), "todo"),
-      WorkItemStatusHistory(now.plusHours(2), "done"))
+        WorkItemStatusHistory(now.plusHours(0), "Backlog"),
+        WorkItemStatusHistory(now.plusHours(1), "Upcoming"),
+        WorkItemStatusHistory(now.plusHours(2), "To Do"),
+        WorkItemStatusHistory(now.plusHours(3), "In Progress"),
+        WorkItemStatusHistory(now.plusHours(4), "In Review"),
+        WorkItemStatusHistory(now.plusHours(5), "Ready to test"),
+        WorkItemStatusHistory(now.plusHours(6), "In testing"),
+        WorkItemStatusHistory(now.plusHours(7), "Done")))
+
+    res should contain only
+      (
+        WorkItemStatusHistory(now.plusHours(2), "To Do"),
+        WorkItemStatusHistory(now.plusHours(3), "In Progress"),
+        WorkItemStatusHistory(now.plusHours(4), "In Review"),
+        WorkItemStatusHistory(now.plusHours(5), "Ready to test"),
+        WorkItemStatusHistory(now.plusHours(6), "In testing"),
+        WorkItemStatusHistory(now.plusHours(7), "Done"))
   }
 
   it should "calculateCycleTime" in {
