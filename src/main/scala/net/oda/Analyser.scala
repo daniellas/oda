@@ -3,6 +3,7 @@ package net.oda
 import net.oda.data.jira.{Issue, JiraClient, JiraTimestampSerializer}
 import net.oda.json.JsonSer
 import net.oda.rep.CFDReporter
+import net.oda.vertx.VertxServices
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
@@ -14,7 +15,8 @@ object Analyser {
 
   def main(args: Array[String]): Unit = {
     //    downloadJiraData
-    generateCfd
+    //    generateCfd
+    VertxServices.httpServer.requestHandler(VertxServices.router.accept).listen
   }
 
   private def downloadJiraData(): Unit = {
@@ -36,7 +38,7 @@ object Analyser {
     IO.loadTextContent
       .andThen(Serialization.read[List[Issue]])
       .andThen(_.map(Mappers.jiraIssueToWorkItem))
-      .andThen(CFDReporter.generate)
+      .andThen(CFDReporter.generate(projectKey, _))
       .apply(s"${dataLocation}/${projectKey}-jira-issues.json")
   }
 }

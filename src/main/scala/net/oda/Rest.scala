@@ -1,4 +1,4 @@
-package net.oda.data
+package net.oda
 
 import java.util.{Collections, HashMap, Map}
 

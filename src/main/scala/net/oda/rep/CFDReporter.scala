@@ -6,17 +6,26 @@ import java.time.LocalDate
 import net.oda.Config
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
+import net.oda.json.{JsonSer, LocalDateSerializer}
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import org.json4s.DefaultFormats
 import org.slf4j.LoggerFactory
 
 import scala.collection.SortedMap
 
 case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
 
+case class Report(
+                   project: String,
+                   startDate: LocalDate,
+                   metrics: Seq[Map[String, Any]])
+
 object CFDReporter {
   val log = LoggerFactory.getLogger("cfd")
+
+  implicit val formats = DefaultFormats + LocalDateSerializer
 
   val referenceFlow = List("To Do", "In Progress", "In Review", "Ready to test", "In testing", "Done")
   val entryState = referenceFlow.head
@@ -43,7 +52,7 @@ object CFDReporter {
     validFlows
       .find(f => sortedHistoryNames.endsWith(f))
       .map(f => sortedHistory.takeRight(f.size))
-      .getOrElse(List.empty)
+      .getOrElse(Nil)
   }
 
   val matchType = (item: WorkItem) => item.`type` match {
@@ -68,8 +77,9 @@ object CFDReporter {
 
   val cumulativeCol = (col: String) => col + " cumulative"
 
-  def generate(workItems: List[WorkItem]): Unit = {
+  def generate(project: String, workItems: List[WorkItem]): Unit = {
     val startDate = Config.getProp("cfd.startDate").map(parseLocalDate).getOrElse(LocalDate.MIN)
+
     val statusHistory = workItems
       .filter(matchType)
       .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, normalizeFlow(i.statusHistory)))
@@ -127,23 +137,36 @@ object CFDReporter {
       .map(r =>
         (
           r.getTimestamp(0),
-          calculateCycleTime(
-            findDateLastBelow(entryDatesByCount, r.getLong(1)), r.getTimestamp(0))
+          calculateCycleTime(findDateLastBelow(entryDatesByCount, r.getLong(1)), r.getTimestamp(0))
         )
       )
       .select('_1.as("ct_week"), '_2.as("CT"))
 
-    cumulativeCounts
+    val report = cumulativeCounts
       .join(cycleTime, 'week === cycleTime("ct_week"))
       .withColumn("TH", col(cumulativeCol("WIP")) / 'CT)
       .drop('ct_week)
       .orderBy('week)
       .withColumn("week", date_format('week, "yyyy-MM-dd"))
       .repartition(1)
+
+
+    JsonSer.writeToFile(
+      formats,
+      Config.getProp("reports.location").getOrElse(() => "./") + s"/cfd-${project}.json",
+      Report(
+        project,
+        startDate,
+        report
+          .collect
+          .map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
+    )
+
+    report
       .write
       .format("csv")
       .mode("overwrite")
       .option("header", value = true)
-      .save(Config.getProp("reports.location").getOrElse(() => "./") + "/cfd")
+      .save(Config.getProp("reports.location").getOrElse(() => "./") + s"/cfd-${project}")
   }
 }

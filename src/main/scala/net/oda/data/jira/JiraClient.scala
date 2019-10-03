@@ -4,8 +4,7 @@ import java.util.{Base64, Collections, HashMap, Map}
 
 import com.empirica.rest.client.vertx.VertxAsyncHttpExecutor
 import com.empirica.rest.client.{Headers, RestClient}
-import net.oda.Config
-import net.oda.data.Rest
+import net.oda.{Config, Rest}
 import net.oda.vertx.VertxServices
 import org.apache.http.HttpHeaders
 import org.json4s.jackson.Serialization
