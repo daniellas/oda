@@ -1,4 +1,4 @@
-package net.oda.cfd
+package net.oda.rep.cfd
 
 import java.sql.Timestamp
 import java.time.LocalDate

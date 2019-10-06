@@ -1,4 +1,4 @@
-package net.oda.cfd
+package net.oda.rep.cfd
 
 import java.time.ZonedDateTime
 
