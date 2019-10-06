@@ -64,6 +64,19 @@
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.scalatest</groupId>
+                    <artifactId>scalatest-maven-plugin</artifactId>
+                    <version>1.0</version>
+                    <configuration>
+                        <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                        <junitxml>.</junitxml>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
@@ -103,17 +116,15 @@
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
-                <version>1.0</version>
-                <configuration>
-                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-                    <junitxml>.</junitxml>
-                </configuration>
                 <executions>
                     <execution>
                         <id>test</id>
                         <goals>
                             <goal>test</goal>
                         </goals>
+                        <configuration>
+                            <tagsToExclude>IT</tagsToExclude>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -171,32 +182,28 @@
 
     <profiles>
         <profile>
-            <id>itest</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>it</id>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <version>2.19.1</version>
-                        <configuration>
-                            <includes>
-                                <include>**/*ITest.java</include>
-                            </includes>
-                            <encoding>UTF-8</encoding>
-                        </configuration>
+                        <groupId>org.scalatest</groupId>
+                        <artifactId>scalatest-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <phase>integration-test</phase>
+                                <id>itest</id>
                                 <goals>
-                                    <goal>integration-test</goal>
-                                    <goal>verify</goal>
+                                    <goal>test</goal>
                                 </goals>
+                                <phase>
+                                    verify
+                                </phase>
+                                <configuration>
+                                    <tagsToInclude>IT</tagsToInclude>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
+
                 </plugins>
             </build>
         </profile>
@@ -228,8 +235,8 @@
     </distributionManagement>
 
     <scm>
-        <connection>scm:git:git@github.com:daniellas/fj-ctrl.git</connection>
-        <developerConnection>scm:git:git@github.com:daniellas/fj-ctrl.git</developerConnection>
+        <connection>scm:git:git@github.com:daniellas/oda.git</connection>
+        <developerConnection>scm:git:git@github.com:daniellas/oda.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
