@@ -2,7 +2,7 @@ package net.oda
 
 import net.oda.data.jira.{Issue, JiraClient, JiraTimestampSerializer}
 import net.oda.json.JsonSer
-import net.oda.rep.CFDReporter
+import net.oda.cfd.{CFDReporter, CFDRest}
 import net.oda.vertx.VertxServices
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
@@ -15,7 +15,9 @@ object Analyser {
 
   def main(args: Array[String]): Unit = {
     //    downloadJiraData
-    //    generateCfd
+    //        generateCfd
+    RestApi.init(VertxServices.router)
+    CFDRest.init
     VertxServices.httpServer.requestHandler(VertxServices.router.accept).listen
   }
 
@@ -25,7 +27,7 @@ object Analyser {
 
     log.info("Downloading JIRA data")
     JiraClient.searchIssues
-      .andThen(JsonSer.writeAsString(formats, _))
+      .andThen(Serialization.write(_)(formats))
       .andThen(IO.saveTextContent(s"${dataLocation}/${projectKey}-jira-issues.json", _: String))
       .apply(projectKey)
     log.info("JIRA data downloaded")

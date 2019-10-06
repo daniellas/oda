@@ -4,8 +4,8 @@ import java.util.{Base64, Collections, HashMap, Map}
 
 import com.empirica.rest.client.vertx.VertxAsyncHttpExecutor
 import com.empirica.rest.client.{Headers, RestClient}
-import net.oda.{Config, Rest}
 import net.oda.vertx.VertxServices
+import net.oda.{Config, RestClients}
 import org.apache.http.HttpHeaders
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, FieldSerializer}
@@ -32,7 +32,7 @@ object JiraClient {
 
   val restClient = RestClient.using(VertxAsyncHttpExecutor.of(VertxServices.vertx, VertxServices.httpClient))
     .service(Config.getProp("jira.apiUrl").get)
-    .defaultHeaders(Headers.combine(Rest.jsonHeaders, jiraHeaders))
+    .defaultHeaders(Headers.combine(RestClients.jsonHeaders, jiraHeaders))
 
   val expand = "changelog,-schema,-editmeta"
   val fields = "resolution,summary,reporter,created,resolutiondate,status,priority,project,issuetype"

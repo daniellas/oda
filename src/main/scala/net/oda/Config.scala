@@ -14,4 +14,5 @@ object Config {
 
   val getProp = (name: String) => Option(name)
     .map(props.getProperty)
+
 }

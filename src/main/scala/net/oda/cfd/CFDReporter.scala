@@ -1,4 +1,4 @@
-package net.oda.rep
+package net.oda.cfd
 
 import java.sql.Timestamp
 import java.time.LocalDate
@@ -11,11 +11,10 @@ import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.json4s.DefaultFormats
-import org.slf4j.LoggerFactory
 
 import scala.collection.SortedMap
 
-case class WorkItemStatus(id: String, `type`: String, created: Timestamp, status: String, flow: String)
+case class Item(id: String, `type`: String, created: Timestamp, status: String, flow: String)
 
 case class Report(
                    project: String,
@@ -23,8 +22,6 @@ case class Report(
                    metrics: Seq[Map[String, Any]])
 
 object CFDReporter {
-  val log = LoggerFactory.getLogger("cfd")
-
   implicit val formats = DefaultFormats + LocalDateSerializer
 
   val referenceFlow = List("To Do", "In Progress", "In Review", "Ready to test", "In testing", "Done")
@@ -42,7 +39,9 @@ object CFDReporter {
     List("To Do", "In Progress", "In testing", "Done"),
     List("To Do", "In Progress", "In Review", "Ready to test"),
     List("To Do", "In Progress", "Ready to test", "In testing", "Done"),
-    List("To Do", "In Progress", "In Review", "Ready to test", "In testing")
+    List("To Do", "In Progress", "In Review", "Ready to test", "In testing"),
+    List("To Do", "In Progress", "In Review", "Ready to test", "In testing", "In Progress"),
+    List("To Do", "In Progress", "Ready to test", "In testing", "In Progress", "Ready to test", "In testing", "Done")
   )
 
   val normalizeFlow = (history: List[WorkItemStatusHistory]) => {
@@ -85,7 +84,7 @@ object CFDReporter {
       .map(i => WorkItem(i.id, i.name, i.`type`, i.priority, i.created, i.closed, i.createdBy, normalizeFlow(i.statusHistory)))
       .filter(_.created.after(startDate))
       .filter(_.statusHistory.nonEmpty)
-      .flatMap(i => i.statusHistory.map(h => WorkItemStatus(i.id, i.`type`, weekStart(h.created), h.name, flowDesc(i.statusHistory.map(_.name)))))
+      .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, weekStart(h.created), h.name, flowDesc(i.statusHistory.map(_.name)))))
       .toDF
 
     val counts = statusHistory
@@ -120,7 +119,6 @@ object CFDReporter {
                 .orderBy('week)
                 .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
       )
-
 
     val entryDatesByCount = cumulativeCounts.select('week, col(cumulativeCol(entryState)))
       .collect
