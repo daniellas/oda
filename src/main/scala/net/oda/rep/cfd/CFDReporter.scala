@@ -6,11 +6,11 @@ import java.time.LocalDate
 import net.oda.Config
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
-import net.oda.json.{JsonSer, LocalDateSerializer}
+import net.oda.json.LocalDateSerializer
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
-import org.apache.spark.sql.{Dataset, Row}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, Row}
 import org.json4s.DefaultFormats
 
 import scala.collection.SortedMap
@@ -25,16 +25,18 @@ case class Report(
 object CFDReporter {
   implicit val formats = DefaultFormats + LocalDateSerializer
 
-  val entryState = "To Do"
-  val finalState = "Done"
-  val finalStateMapping = Map("Invalid" -> "Done")
 
-  val normalizeFlow = (entryState: String, finalState: String, history: Seq[WorkItemStatusHistory]) => {
+  val normalizeFlow = (
+                        referenceFlow: SortedMap[String, Int],
+                        entryState: String,
+                        finalState: String,
+                        stateMapping: Map[String, String],
+                        history: Seq[WorkItemStatusHistory]) => {
     val sortedHistory = history
       .sortBy(_.created.getTime)
       .map(i => WorkItemStatusHistory(
         i.created,
-        finalStateMapping.get(i.name).getOrElse(i.name)
+        stateMapping.get(i.name).getOrElse(i.name)
       ))
 
     sortedHistory
@@ -42,14 +44,19 @@ object CFDReporter {
         (acc, i) => {
           if (acc.isEmpty && i.name == entryState) {
             i :: acc
-          } else if (acc.headOption.map(_.name) == Some(entryState) && i.name == finalState) {
+          } else if (acc.headOption.map(_.name).contains(entryState) && i.name == finalState) {
             i :: acc
-          } else if (acc.headOption.map(_.name) == Some(finalState) && i.name == entryState) {
-            i :: acc
-          } else if (acc.headOption.map(_.name) == Some(finalState) && i.name != entryState) {
+          } else if (acc.headOption.map(_.name).contains(finalState) && i.name == entryState) {
             acc.tail
-          }
-          else {
+          } else if (acc.headOption.map(_.name).contains(entryState) && i.name != finalState) {
+            if (referenceFlow(i.name) < referenceFlow(acc.head.name)) {
+              Nil
+            } else {
+              acc
+            }
+          } else if (acc.headOption.map(_.name).contains(finalState) && i.name != entryState) {
+            Nil
+          } else {
             acc
           }
         }
@@ -75,6 +82,10 @@ object CFDReporter {
                 project: String,
                 itemType: String => Boolean,
                 priority: String => Boolean,
+                referenceFLow: SortedMap[String, Int],
+                entryState: String,
+                finalState: String,
+                stateMapping: Map[String, String],
                 workItems: List[WorkItem]): Dataset[Row] = {
     val startDate = Config.getProp("cfd.startDate").map(parseLocalDate).getOrElse(LocalDate.MIN)
 
@@ -89,7 +100,7 @@ object CFDReporter {
         i.created,
         i.closed,
         i.createdBy,
-        normalizeFlow(entryState, finalState, i.statusHistory)))
+        normalizeFlow(referenceFLow, entryState, finalState, stateMapping, i.statusHistory)))
       .filter(_.created.after(startDate))
       .filter(_.statusHistory.nonEmpty)
       .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, weekStart(h.created), h.name)))

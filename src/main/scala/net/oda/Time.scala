@@ -10,6 +10,8 @@ object Time {
 
   implicit def toTimestamp(dt: LocalDate) = Timestamp.valueOf(dt.atStartOfDay())
 
+  implicit def toTimestamp(dt: LocalDateTime) = Timestamp.valueOf(dt)
+
   implicit def toZonedDateTime(ts: Timestamp) = ZonedDateTime.from(ts.toInstant.atZone(ZoneId.systemDefault()))
 
   implicit def toLocalDate(ts: Timestamp) = LocalDate.from(ts.toInstant.atZone(ZoneId.systemDefault()))

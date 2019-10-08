@@ -1,6 +1,6 @@
 package net.oda.rep.cfd
 
-import java.time.ZonedDateTime
+import java.time.{LocalDateTime, ZonedDateTime}
 
 import net.oda.Time._
 import net.oda.data.jira.JiraTimestampSerializer
@@ -8,100 +8,156 @@ import net.oda.model.WorkItemStatusHistory
 import org.json4s.DefaultFormats
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.collection.SortedMap
+
 class CFDSpec extends FlatSpec with Matchers {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
+  val stateMapping = Map("invalid" -> "done")
+  val referenceFlow = SortedMap(
+    "backlog" -> 0,
+    "todo" -> 1,
+    "progress" -> 2,
+    "review" -> 3,
+    "testing" -> 4,
+    "done" -> 5
+  )
+  val entryState = "todo"
+  val finalState = "done"
+  val now = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
 
   it should "normalize flow" in {
-    val now = ZonedDateTime.now();
-
     CFDReporter.normalizeFlow(
-      "To Do",
-      "Done",
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "To Do"),
-        WorkItemStatusHistory(now.plusHours(2), "Done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "To Do"),
-      WorkItemStatusHistory(now.plusHours(2), "Done")
+        WorkItemStatusHistory(now.plusHours(1), "todo"),
+        WorkItemStatusHistory(now.plusHours(2), "done"))) should contain only(
+      WorkItemStatusHistory(now.plusHours(1), "todo"),
+      WorkItemStatusHistory(now.plusHours(2), "done")
     )
 
     CFDReporter.normalizeFlow(
-      "To Do",
-      "Done",
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "To Do"),
-        WorkItemStatusHistory(now.plusHours(2), "In Progress"),
-        WorkItemStatusHistory(now.plusHours(3), "Done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "To Do"),
-      WorkItemStatusHistory(now.plusHours(3), "Done")
+        WorkItemStatusHistory(now.plusHours(1), "todo"),
+        WorkItemStatusHistory(now.plusHours(2), "progress"),
+        WorkItemStatusHistory(now.plusHours(3), "done"))) should contain only(
+      WorkItemStatusHistory(now.plusHours(1), "todo"),
+      WorkItemStatusHistory(now.plusHours(3), "done")
     )
 
     CFDReporter.normalizeFlow(
-      "To Do",
-      "Done",
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "To Do"),
-        WorkItemStatusHistory(now.plusHours(2), "In Progress"),
-        WorkItemStatusHistory(now.plusHours(3), "Done"),
-        WorkItemStatusHistory(now.plusHours(4), "In Progress"),
-        WorkItemStatusHistory(now.plusHours(5), "Done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "To Do"),
-      WorkItemStatusHistory(now.plusHours(5), "Done")
+        WorkItemStatusHistory(now.plusHours(1), "todo"),
+        WorkItemStatusHistory(now.plusHours(2), "progress"),
+        WorkItemStatusHistory(now.plusHours(3), "review"),
+        WorkItemStatusHistory(now.plusHours(4), "progress"),
+        WorkItemStatusHistory(now.plusHours(5), "done"))) should contain only(
+      WorkItemStatusHistory(now.plusHours(1), "todo"),
+      WorkItemStatusHistory(now.plusHours(5), "done")
     )
 
     CFDReporter.normalizeFlow(
-      "To Do",
-      "Done",
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "To Do"),
-        WorkItemStatusHistory(now.plusHours(2), "Done"),
-        WorkItemStatusHistory(now.plusHours(3), "To Do"),
-        WorkItemStatusHistory(now.plusHours(4), "Done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "To Do"),
-      WorkItemStatusHistory(now.plusHours(2), "Done"),
-      WorkItemStatusHistory(now.plusHours(3), "To Do"),
-      WorkItemStatusHistory(now.plusHours(4), "Done")
+        WorkItemStatusHistory(now.plusHours(1), "todo"),
+        WorkItemStatusHistory(now.plusHours(2), "progress"),
+        WorkItemStatusHistory(now.plusHours(3), "review"),
+        WorkItemStatusHistory(now.plusHours(4), "todo"),
+        WorkItemStatusHistory(now.plusHours(5), "progress"),
+        WorkItemStatusHistory(now.plusHours(6), "testing"),
+        WorkItemStatusHistory(now.plusHours(7), "done"))) should contain only(
+      WorkItemStatusHistory(now.plusHours(1), "todo"),
+      WorkItemStatusHistory(now.plusHours(7), "done")
     )
 
     CFDReporter.normalizeFlow(
-      "To Do",
-      "Done",
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "To Do"),
-        WorkItemStatusHistory(now.plusHours(2), "In Progress"),
-        WorkItemStatusHistory(now.plusHours(3), "In testing"),
-        WorkItemStatusHistory(now.plusHours(4), "To Do"),
-        WorkItemStatusHistory(now.plusHours(5), "In Progress"),
-        WorkItemStatusHistory(now.plusHours(6), "In testing"),
-        WorkItemStatusHistory(now.plusHours(7), "Done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "To Do"),
-      WorkItemStatusHistory(now.plusHours(7), "Done")
+        WorkItemStatusHistory(now.plusHours(1), "todo"),
+        WorkItemStatusHistory(now.plusHours(2), "progress"),
+        WorkItemStatusHistory(now.plusHours(3), "testing"),
+        WorkItemStatusHistory(now.plusHours(4), "progress"),
+        WorkItemStatusHistory(now.plusHours(5), "testing"),
+        WorkItemStatusHistory(now.plusHours(6), "done"))) should contain only(
+      WorkItemStatusHistory(now.plusHours(1), "todo"),
+      WorkItemStatusHistory(now.plusHours(6), "done")
     )
 
     CFDReporter.normalizeFlow(
-      "To Do",
-      "Done",
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "To Do"),
-        WorkItemStatusHistory(now.plusHours(2), "In Progress"),
-        WorkItemStatusHistory(now.plusHours(3), "In testing"),
-        WorkItemStatusHistory(now.plusHours(4), "In Progress"),
-        WorkItemStatusHistory(now.plusHours(5), "In testing"),
-        WorkItemStatusHistory(now.plusHours(6), "Done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "To Do"),
-      WorkItemStatusHistory(now.plusHours(6), "Done")
-    )
-
-    CFDReporter.normalizeFlow(
-      "To Do",
-      "Done",
-      List(
-        WorkItemStatusHistory(now.plusHours(1), "To Do"),
-        WorkItemStatusHistory(now.plusHours(2), "Invalid"),
+        WorkItemStatusHistory(now.plusHours(1), "todo"),
+        WorkItemStatusHistory(now.plusHours(2), "invalid"),
       )) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "To Do"),
-      WorkItemStatusHistory(now.plusHours(2), "Done")
+      WorkItemStatusHistory(now.plusHours(1), "todo"),
+      WorkItemStatusHistory(now.plusHours(2), "done")
     )
 
+  }
+
+  it should "ignore undefined following states" in {
+    CFDReporter.normalizeFlow(
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
+      List(
+        WorkItemStatusHistory(now.plusHours(1), "backlog"),
+        WorkItemStatusHistory(now.plusHours(2), "todo"),
+        WorkItemStatusHistory(now.plusHours(3), "progress"),
+        WorkItemStatusHistory(now.plusHours(4), "backlog")
+      )) should be(Nil)
+  }
+
+  it should "ignore undefined states" in {
+    CFDReporter.normalizeFlow(
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
+      List(
+        WorkItemStatusHistory(now.plusHours(1), "backlog"),
+        WorkItemStatusHistory(now.plusHours(2), "todo"),
+        WorkItemStatusHistory(now.plusHours(3), "done")
+      )) should contain only(
+      WorkItemStatusHistory(now.plusHours(2), "todo"),
+      WorkItemStatusHistory(now.plusHours(3), "done")
+    )
+  }
+
+  it should "use first entry state" in {
+    CFDReporter.normalizeFlow(
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping,
+      List(
+        WorkItemStatusHistory(now.plusHours(1), "todo"),
+        WorkItemStatusHistory(now.plusHours(2), "done"),
+        WorkItemStatusHistory(now.plusHours(3), "todo"),
+        WorkItemStatusHistory(now.plusHours(4), "done"))) should contain only(
+      WorkItemStatusHistory(now.plusHours(1), "todo"),
+      WorkItemStatusHistory(now.plusHours(4), "done")
+    )
   }
 
   it should "calculateCycleTime" in {
