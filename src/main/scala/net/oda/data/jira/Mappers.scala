@@ -1,12 +1,11 @@
-package net.oda
+package net.oda.data.jira
 
-import net.oda.Time._
-import net.oda.data.jira.Issue
+import net.oda.Time.toTimestamp
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 
 object Mappers {
 
-  val jiraIssueToWorkItem = (issue: Issue) => WorkItem(
+  implicit val jiraIssueToWorkItem = (issue: Issue) => WorkItem(
     issue.key,
     issue.fields.summary,
     issue.fields.issuetype.name,

@@ -12,4 +12,4 @@ case class WorkItem(
                      created: Timestamp,
                      closed: Option[Timestamp],
                      createdBy: String,
-                     statusHistory: List[WorkItemStatusHistory])
+                     statusHistory: Seq[WorkItemStatusHistory])

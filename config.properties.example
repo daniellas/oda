@@ -3,4 +3,5 @@ jira.user=
 jira.apiKey=
 data.location=
 reports.location=
-cfd.startDate=2019-08-01
+cfd.startDate=
+http.port=

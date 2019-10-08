@@ -11,3 +11,4 @@ target/
 .settings
 .cache-main
 .cache-tests
+src/test/scala/net/oda/it

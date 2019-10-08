@@ -1,18 +1,16 @@
 package net.oda.rep.cfd
 
 import io.vertx.core.http.HttpMethod
-import io.vertx.ext.web.RoutingContext
-import net.oda.RestApi
+import io.vertx.ext.web.{Router, RoutingContext}
 import net.oda.RestApi.apiRoot
 import net.oda.vertx.Handlers
 import net.oda.vertx.Paths.path
-import net.oda.vertx.VertxServices.router
 
 object CFDRest {
 
   val root = "cfd"
 
-  def init(): Unit = {
+  def init(router: Router): Unit = {
     router
       .route(path(root).apply(apiRoot))
       .method(HttpMethod.GET)
