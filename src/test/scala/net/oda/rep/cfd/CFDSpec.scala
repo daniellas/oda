@@ -2,7 +2,7 @@ package net.oda.rep.cfd
 
 import java.time.{LocalDateTime, ZonedDateTime}
 
-import net.oda.Time._
+import net.oda.Time.{weeksBetween, _}
 import net.oda.data.jira.JiraTimestampSerializer
 import net.oda.model.WorkItemStatusHistory
 import org.json4s.DefaultFormats
@@ -161,8 +161,8 @@ class CFDSpec extends FlatSpec with Matchers {
   }
 
   it should "calculateCycleTime" in {
-    CFDReporter.calculateCycleTime("2018-05-21", "2018-05-28") should equal(2)
-    CFDReporter.calculateCycleTime("2018-05-28", "2018-08-20") should equal(13)
+    CFDReporter.calculateCycleTime(weeksBetween, "2018-05-21", "2018-05-28") should equal(2)
+    CFDReporter.calculateCycleTime(weeksBetween, "2018-05-28", "2018-08-20") should equal(13)
   }
 
 }

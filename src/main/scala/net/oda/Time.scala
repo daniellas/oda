@@ -20,7 +20,13 @@ object Time {
 
   implicit def weekStart(dt: ZonedDateTime) = dt.truncatedTo(ChronoUnit.DAYS).`with`(DayOfWeek.MONDAY)
 
+  implicit def day(dt: ZonedDateTime) = dt.truncatedTo(ChronoUnit.DAYS)
+
   val weeksBetween = (start: LocalDate, end: LocalDate) => ChronoUnit.WEEKS.between(start, end)
 
+  val daysBetween = (start: LocalDate, end: LocalDate) => ChronoUnit.DAYS.between(start, end)
+
   val weeksRange = (start: LocalDate, end: LocalDate) => (0L to weeksBetween(start, end)).toList.map(start.plusWeeks)
+
+  val daysRange = (start: LocalDate, end: LocalDate) => (0L to daysBetween(start, end)).toList.map(start.plusDays)
 }

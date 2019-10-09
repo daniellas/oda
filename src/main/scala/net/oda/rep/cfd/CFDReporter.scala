@@ -1,7 +1,7 @@
 package net.oda.rep.cfd
 
 import java.sql.Timestamp
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 
 import net.oda.Config
 import net.oda.Spark.session.implicits._
@@ -64,7 +64,7 @@ object CFDReporter {
       .sortBy(_.created.getTime)
   }
 
-  val calculateCycleTime = (start: LocalDate, end: LocalDate) => weeksBetween(start, end) + 1
+  val calculateCycleTime = (tsDiffCalculator: (LocalDate, LocalDate) => Long, start: LocalDate, end: LocalDate) => tsDiffCalculator(start, end) + 1
 
   val findDateLastBelow = (m: SortedMap[Long, Timestamp], v: Long) => {
     val to = m.to(v)
@@ -86,6 +86,9 @@ object CFDReporter {
                 entryState: String,
                 finalState: String,
                 stateMapping: Map[String, String],
+                createTsMapper: ZonedDateTime => ZonedDateTime,
+                tsDiffCalculator: (LocalDate, LocalDate) => Long,
+                rangeProvider: (LocalDate, LocalDate) => List[LocalDate],
                 workItems: List[WorkItem]): Dataset[Row] = {
     val startDate = Config.getProp("cfd.startDate").map(parseLocalDate).getOrElse(LocalDate.MIN)
 
@@ -103,28 +106,28 @@ object CFDReporter {
         normalizeFlow(referenceFLow, entryState, finalState, stateMapping, i.statusHistory)))
       .filter(_.created.after(startDate))
       .filter(_.statusHistory.nonEmpty)
-      .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, weekStart(h.created), h.name)))
+      .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, createTsMapper(h.created), h.name)))
       .toDF
 
     val counts = statusHistory
       .toDF
       .groupBy('created, 'status)
       .count
-      .select(col("created").as("week"), 'status, 'count)
-      .groupBy('week)
+      .select(col("created"), 'status, 'count)
+      .groupBy('created)
       .pivot('status)
       .sum()
 
-    val timeRange = counts.select(min('week), max('week))
-      .flatMap(r => weeksRange(r.getTimestamp(0), r.getTimestamp(1)).map(toTimestamp))
-      .toDF("r_week")
+    val timeRange = counts.select(min('created), max('created))
+      .flatMap(r => rangeProvider(r.getTimestamp(0), r.getTimestamp(1)).map(toTimestamp))
+      .toDF("r_created")
 
     val filledCounts = timeRange
-      .join(counts, 'r_week === counts("week"), "outer")
+      .join(counts, 'r_created === counts("created"), "outer")
       .na.fill(0)
       .withColumn("WIP", col(entryState) - col(finalState))
-      .drop('week)
-      .withColumnRenamed("r_week", "week")
+      .drop('created)
+      .withColumnRenamed("r_created", "created")
 
     val cumulativeCounts = filledCounts
       .columns
@@ -135,33 +138,33 @@ object CFDReporter {
           sum(i)
             .over(
               Window
-                .orderBy('week)
+                .orderBy('created)
                 .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
       )
 
-    val entryDatesByCount = cumulativeCounts.select('week, col(cumulativeCol(entryState)))
+    val entryDatesByCount = cumulativeCounts.select('created, col(cumulativeCol(entryState)))
       .collect
       .map(r => (r.getTimestamp(0), r.getAs[Long](cumulativeCol(entryState))))
       .foldLeft(SortedMap.empty[Long, Timestamp])((acc, i) => acc + (i._2 -> i._1))
 
-    val cycleTime = cumulativeCounts.select('week, col(cumulativeCol(entryState)), col(cumulativeCol(finalState)))
+    val cycleTime = cumulativeCounts.select('created, col(cumulativeCol(entryState)), col(cumulativeCol(finalState)))
       .map(r =>
         (
           r.getTimestamp(0),
           if (r.getLong(1) == r.getLong(2)) 0
           else findDateLastBelow(entryDatesByCount, r.getLong(2))
-            .map(calculateCycleTime(_, r.getTimestamp(0)))
+            .map(calculateCycleTime(tsDiffCalculator, _, r.getTimestamp(0)))
             .getOrElse(1L)
         )
       )
-      .select('_1.as("ct_week"), '_2.as("CT"))
+      .select('_1.as("ct_created"), '_2.as("CT"))
 
     cumulativeCounts
-      .join(cycleTime, 'week === cycleTime("ct_week"))
+      .join(cycleTime, 'created === cycleTime("ct_created"))
       .withColumn("TH", col(cumulativeCol("WIP")) / 'CT)
-      .drop('ct_week)
-      .orderBy('week)
-      .withColumn("week", date_format('week, "yyyy-MM-dd"))
+      .drop('ct_created)
+      .orderBy('created)
+      .withColumn("created", date_format('created, "yyyy-MM-dd"))
       .repartition(1)
 
 
