@@ -59,7 +59,7 @@ object CFDRest {
         CFDReporter.generate(
           projectKey,
           LocalDate.MIN,
-          _ => true,
+          RequestReaders.params(ctx, "item").contains,
           _ => true,
           referenceFlow,
           entryState,

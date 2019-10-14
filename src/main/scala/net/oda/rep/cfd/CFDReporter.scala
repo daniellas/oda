@@ -73,7 +73,7 @@ object CFDReporter {
                 startDate: LocalDate,
                 itemType: String => Boolean,
                 priority: String => Boolean,
-                referenceFLow: SortedMap[String, Int],
+                referenceFlow: SortedMap[String, Int],
                 entryState: String,
                 finalState: String,
                 stateMapping: Map[String, String],
@@ -98,7 +98,7 @@ object CFDReporter {
         i.createdBy,
         i.size,
         i.estimate,
-        normalizeFlow(referenceFLow, entryState, finalState, stateMapping, i.statusHistory)))
+        normalizeFlow(referenceFlow, entryState, finalState, stateMapping, i.statusHistory)))
       .filter(_.statusHistory.nonEmpty)
       .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
