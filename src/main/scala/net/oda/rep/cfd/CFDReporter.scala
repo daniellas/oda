@@ -4,17 +4,16 @@ import java.sql.Timestamp
 import java.time.temporal.ChronoUnit
 import java.time.{LocalDate, ZonedDateTime}
 
-import net.oda.Config
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Dataset, Row}
+import org.apache.spark.sql.{Column, Dataset, Row}
 
 import scala.collection.SortedMap
 
-case class Item(id: String, `type`: String, created: Timestamp, status: String)
+case class Item(id: String, `type`: String, created: Timestamp, status: String, estimate: Int)
 
 object CFDReporter {
   val normalizeFlow = (
@@ -71,16 +70,16 @@ object CFDReporter {
 
   def generate(
                 project: String,
+                startDate: LocalDate,
                 itemType: String => Boolean,
                 priority: String => Boolean,
-                size: Option[String => Boolean],
                 referenceFLow: SortedMap[String, Int],
                 entryState: String,
                 finalState: String,
                 stateMapping: Map[String, String],
                 interval: ChronoUnit,
+                aggregate: Column,
                 workItems: List[WorkItem]): Dataset[Row] = {
-    val startDate = Config.getProp("cfd.startDate").map(parseLocalDate).getOrElse(LocalDate.MIN)
     val createTsMapper = (ts: ZonedDateTime) => if (interval == ChronoUnit.DAYS) day(ts) else weekStart(ts)
     val tsDiffCalculator = (start: LocalDate, end: LocalDate) => interval.between(start, end)
     val rangeProvider = (start: LocalDate, end: LocalDate) => (0L to tsDiffCalculator.apply(start, end)).toList.map(start.plus(_, interval))
@@ -88,7 +87,7 @@ object CFDReporter {
     val statusHistory = workItems
       .filter(i => itemType.apply(i.`type`))
       .filter(i => priority.apply(i.priority))
-      .filter(i => size.isEmpty || i.size.exists(size.get))
+      //      .filter(i => i.created.after(startDate))
       .map(i => WorkItem(
         i.id,
         i.name,
@@ -98,36 +97,35 @@ object CFDReporter {
         i.closed,
         i.createdBy,
         i.size,
+        i.estimate,
         normalizeFlow(referenceFLow, entryState, finalState, stateMapping, i.statusHistory)))
-      .filter(_.created.after(startDate))
       .filter(_.statusHistory.nonEmpty)
-      .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, createTsMapper(h.created), h.name)))
+      .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
 
-    val counts = statusHistory
-      .toDF
+    val values = statusHistory
       .groupBy('created, 'status)
-      .count
-      .select(col("created"), 'status, 'count)
+      .agg(aggregate.alias("val"))
+      .select(col("created"), 'status, 'val)
       .groupBy('created)
       .pivot('status)
       .sum()
 
-    val timeRange = counts.select(min('created), max('created))
+    val timeRange = values.select(min('created), max('created))
       .flatMap(r => rangeProvider(r.getTimestamp(0), r.getTimestamp(1)).map(toTimestamp))
       .toDF("r_created")
 
-    val filledCounts = timeRange
-      .join(counts, 'r_created === counts("created"), "outer")
+    val filledValues = timeRange
+      .join(values, 'r_created === values("created"), "outer")
       .na.fill(0)
       .withColumn("WIP", col(entryState) - col(finalState))
       .drop('created)
       .withColumnRenamed("r_created", "created")
 
-    val cumulativeCounts = filledCounts
+    val cumulativeValues = filledValues
       .columns
       .tail
-      .foldLeft(filledCounts)(
+      .foldLeft(filledValues)(
         (acc, i) => acc.withColumn(
           cumulativeCol(i),
           sum(i)
@@ -137,24 +135,24 @@ object CFDReporter {
                 .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
       )
 
-    val entryDatesByCount = cumulativeCounts.select('created, col(cumulativeCol(entryState)))
+    val entryDatesByValue = cumulativeValues.select('created, col(cumulativeCol(entryState)))
       .collect
       .map(r => (r.getTimestamp(0), r.getAs[Long](cumulativeCol(entryState))))
       .foldLeft(SortedMap.empty[Long, Timestamp])((acc, i) => acc + (i._2 -> i._1))
 
-    val cycleTime = cumulativeCounts.select('created, col(cumulativeCol(entryState)), col(cumulativeCol(finalState)))
+    val cycleTime = cumulativeValues.select('created, col(cumulativeCol(entryState)), col(cumulativeCol(finalState)))
       .map(r =>
         (
           r.getTimestamp(0),
           if (r.getLong(1) == r.getLong(2)) 0
-          else findDateLastBelow(entryDatesByCount, r.getLong(2))
+          else findDateLastBelow(entryDatesByValue, r.getLong(2))
             .map(calculateCycleTime(tsDiffCalculator, _, r.getTimestamp(0)))
             .getOrElse(1L)
         )
       )
       .select('_1.as("ct_created"), '_2.as("CT"))
 
-    cumulativeCounts
+    cumulativeValues
       .join(cycleTime, 'created === cycleTime("ct_created"))
       .withColumn("TH", col(cumulativeCol("WIP")) / 'CT)
       .drop('ct_created)

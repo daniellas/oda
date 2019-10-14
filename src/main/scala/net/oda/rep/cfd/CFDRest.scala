@@ -1,19 +1,19 @@
 package net.oda.rep.cfd
 
+import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import java.time.{LocalDateTime, ZonedDateTime}
 
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.{Router, RoutingContext}
-import net.oda.{Config, IO, Time}
 import net.oda.RestApi.apiRoot
-import net.oda.Time.{day, daysBetween, daysRange}
 import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
 import net.oda.json.LocalDateSerializer
-import net.oda.vertx.{Handlers, RequestReaders, ResponseWriters}
 import net.oda.vertx.Paths.path
+import net.oda.vertx.{RequestReaders, ResponseWriters}
+import net.oda.{Config, IO}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
+import org.apache.spark.sql.functions._
 
 import scala.collection.SortedMap
 
@@ -54,18 +54,19 @@ object CFDRest {
 
     IO.loadTextContent
       .andThen(Serialization.read[List[Issue]])
-      .andThen(_.map(Mappers.jiraIssueToWorkItem))
+      .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
       .andThen(
         CFDReporter.generate(
           projectKey,
+          LocalDate.MIN,
           _ => true,
           _ => true,
-          Some(_ => true),
           referenceFlow,
           entryState,
           finalState,
           stateMapping,
           interval,
+          count(lit(1)),
           _))
       .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
       .andThen(Serialization.write(_)(formats))
