@@ -12,4 +12,5 @@ case class WorkItem(
                      created: Timestamp,
                      closed: Option[Timestamp],
                      createdBy: String,
+                     size: Option[String],
                      statusHistory: Seq[WorkItemStatusHistory])

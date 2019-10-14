@@ -1,14 +1,41 @@
 package net.oda.rep.cfd
 
+import java.time.temporal.ChronoUnit
+import java.time.{LocalDateTime, ZonedDateTime}
+
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.{Router, RoutingContext}
+import net.oda.{Config, IO, Time}
 import net.oda.RestApi.apiRoot
-import net.oda.vertx.Handlers
+import net.oda.Time.{day, daysBetween, daysRange}
+import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
+import net.oda.json.LocalDateSerializer
+import net.oda.vertx.{Handlers, RequestReaders, ResponseWriters}
 import net.oda.vertx.Paths.path
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization
+
+import scala.collection.SortedMap
 
 object CFDRest {
-
+  implicit val formats = DefaultFormats + LocalDateSerializer + JiraTimestampSerializer
   val root = "cfd"
+
+  val projectKey = "CRYP"
+  val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
+  val referenceFlow = SortedMap(
+    "Backlog" -> -1,
+    "Upcoming" -> 0,
+    "To Do" -> 1,
+    "In Progress" -> 2,
+    "In Review" -> 3,
+    "Ready to test" -> 4,
+    "In testing" -> 5,
+    "Done" -> 6
+  )
+  val entryState = "To Do"
+  val finalState = "Done"
+  val stateMapping = Map("Invalid" -> "Done")
 
   def init(router: Router): Unit = {
     router
@@ -18,7 +45,33 @@ object CFDRest {
   }
 
   def getReport(ctx: RoutingContext): Unit = {
-    Handlers.body(_ => "CFD").accept(ctx)
+    val interval = RequestReaders.param(ctx, "interval")
+      .map(i => i match {
+        case "day" => ChronoUnit.DAYS
+        case _ => ChronoUnit.WEEKS
+      })
+      .getOrElse(ChronoUnit.WEEKS);
+
+    IO.loadTextContent
+      .andThen(Serialization.read[List[Issue]])
+      .andThen(_.map(Mappers.jiraIssueToWorkItem))
+      .andThen(
+        CFDReporter.generate(
+          projectKey,
+          _ => true,
+          _ => true,
+          Some(_ => true),
+          referenceFlow,
+          entryState,
+          finalState,
+          stateMapping,
+          interval,
+          _))
+      .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
+      .andThen(Serialization.write(_)(formats))
+      .andThen(ResponseWriters.body)
+      .apply(s"${dataLocation}/jira-issues-${projectKey}.json")
+      .accept(ctx)
   }
 
 }

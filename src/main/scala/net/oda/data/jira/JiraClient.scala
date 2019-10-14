@@ -35,7 +35,7 @@ object JiraClient {
     .defaultHeaders(Headers.combine(RestClients.jsonHeaders, jiraHeaders))
 
   val expand = "changelog,-schema,-editmeta"
-  val fields = "resolution,summary,reporter,created,resolutiondate,status,priority,project,issuetype"
+  val fields = "resolution,summary,reporter,created,resolutiondate,status,priority,project,issuetype,size"
 
   private def getIssuesPage(project: String, startAt: Int = 0): List[JiraIssues] = {
     log.info("Downloading issues {} to {}", startAt, startAt + 100)

@@ -1,31 +1,22 @@
 package net.oda.rep.cfd
 
 import java.sql.Timestamp
+import java.time.temporal.ChronoUnit
 import java.time.{LocalDate, ZonedDateTime}
 
 import net.oda.Config
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
-import net.oda.json.LocalDateSerializer
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Dataset, Row}
-import org.json4s.DefaultFormats
 
 import scala.collection.SortedMap
 
 case class Item(id: String, `type`: String, created: Timestamp, status: String)
 
-case class Report(
-                   project: String,
-                   startDate: LocalDate,
-                   metrics: Seq[Map[String, Any]])
-
 object CFDReporter {
-  implicit val formats = DefaultFormats + LocalDateSerializer
-
-
   val normalizeFlow = (
                         referenceFlow: SortedMap[String, Int],
                         entryState: String,
@@ -82,19 +73,22 @@ object CFDReporter {
                 project: String,
                 itemType: String => Boolean,
                 priority: String => Boolean,
+                size: Option[String => Boolean],
                 referenceFLow: SortedMap[String, Int],
                 entryState: String,
                 finalState: String,
                 stateMapping: Map[String, String],
-                createTsMapper: ZonedDateTime => ZonedDateTime,
-                tsDiffCalculator: (LocalDate, LocalDate) => Long,
-                rangeProvider: (LocalDate, LocalDate) => List[LocalDate],
+                interval: ChronoUnit,
                 workItems: List[WorkItem]): Dataset[Row] = {
     val startDate = Config.getProp("cfd.startDate").map(parseLocalDate).getOrElse(LocalDate.MIN)
+    val createTsMapper = (ts: ZonedDateTime) => if (interval == ChronoUnit.DAYS) day(ts) else weekStart(ts)
+    val tsDiffCalculator = (start: LocalDate, end: LocalDate) => interval.between(start, end)
+    val rangeProvider = (start: LocalDate, end: LocalDate) => (0L to tsDiffCalculator.apply(start, end)).toList.map(start.plus(_, interval))
 
     val statusHistory = workItems
       .filter(i => itemType.apply(i.`type`))
       .filter(i => priority.apply(i.priority))
+      .filter(i => size.isEmpty || i.size.exists(size.get))
       .map(i => WorkItem(
         i.id,
         i.name,
@@ -103,6 +97,7 @@ object CFDReporter {
         i.created,
         i.closed,
         i.createdBy,
+        i.size,
         normalizeFlow(referenceFLow, entryState, finalState, stateMapping, i.statusHistory)))
       .filter(_.created.after(startDate))
       .filter(_.statusHistory.nonEmpty)
@@ -175,8 +170,7 @@ object CFDReporter {
     //        project,
     //        startDate,
     //        report
-    //          .collect
-    //          .map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
+    //          .collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
     //    )
 
     //    report
