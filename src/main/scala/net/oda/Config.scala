@@ -3,7 +3,7 @@ package net.oda
 import java.util.Properties
 
 object Config {
-  private val props = IO.newInputStream
+  private val props = FileIO.newInputStream
     .andThen(is => {
       val p = new Properties()
 

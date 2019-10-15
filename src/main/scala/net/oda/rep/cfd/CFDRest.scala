@@ -10,14 +10,16 @@ import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
 import net.oda.json.LocalDateSerializer
 import net.oda.vertx.Paths.path
 import net.oda.vertx.{RequestReaders, ResponseWriters}
-import net.oda.{Config, IO}
+import net.oda.{Config, FileIO, Encoding}
+import org.apache.spark.sql.functions._
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
-import org.apache.spark.sql.functions._
+import org.slf4j.LoggerFactory
 
 import scala.collection.SortedMap
 
 object CFDRest {
+  private val log = LoggerFactory.getLogger("CFDRest");
   implicit val formats = DefaultFormats + LocalDateSerializer + JiraTimestampSerializer
   val root = "cfd"
 
@@ -51,28 +53,37 @@ object CFDRest {
         case _ => ChronoUnit.WEEKS
       })
       .getOrElse(ChronoUnit.WEEKS);
+    val items = RequestReaders.params(ctx, "item")
+    val cachedFilePath = Config.getProp("reports.location")
+      .map(_ + "/" + Encoding.encodeFilePath(Seq(interval, "item", items)))
+      .map(_ + ".json")
+      .get
 
-    IO.loadTextContent
-      .andThen(Serialization.read[List[Issue]])
-      .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
-      .andThen(
-        CFDReporter.generate(
-          projectKey,
-          LocalDate.MIN,
-          RequestReaders.params(ctx, "item").contains,
-          _ => true,
-          referenceFlow,
-          entryState,
-          finalState,
-          stateMapping,
-          interval,
-          count(lit(1)),
-          _))
-      .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
-      .andThen(Serialization.write(_)(formats))
-      .andThen(ResponseWriters.body)
-      .apply(s"${dataLocation}/jira-issues-${projectKey}.json")
-      .accept(ctx)
+    val resp = FileIO.tryLoadTextContent(cachedFilePath)
+      .getOrElse(FileIO.loadTextContent
+        .andThen(Serialization.read[List[Issue]])
+        .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
+        .andThen(
+          CFDReporter.generate(
+            projectKey,
+            LocalDate.MIN,
+            items.contains,
+            _ => true,
+            referenceFlow,
+            entryState,
+            finalState,
+            stateMapping,
+            interval,
+            count(lit(1)),
+            _))
+        .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
+        .andThen(Serialization.write(_)(formats))
+        .apply(s"${dataLocation}/jira-issues-${projectKey}.json")
+      )
+
+    FileIO.saveTextContent(cachedFilePath, resp)
+
+    ResponseWriters.body(resp).accept(ctx)
   }
 
 }
