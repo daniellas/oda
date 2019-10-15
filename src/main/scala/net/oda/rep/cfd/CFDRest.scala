@@ -54,8 +54,9 @@ object CFDRest {
       })
       .getOrElse(ChronoUnit.WEEKS);
     val items = RequestReaders.params(ctx, "item")
+    val prios = RequestReaders.params(ctx, "prio")
     val cachedFilePath = Config.getProp("reports.location")
-      .map(_ + "/" + Encoding.encodeFilePath(Seq(interval, "item", items)))
+      .map(_ + "/" + Encoding.encodeFilePath(Seq(interval, "item", items, "prios", prios)))
       .map(_ + ".json")
       .get
 
@@ -68,7 +69,7 @@ object CFDRest {
             projectKey,
             LocalDate.MIN,
             items.contains,
-            _ => true,
+            prios.contains,
             referenceFlow,
             entryState,
             finalState,
