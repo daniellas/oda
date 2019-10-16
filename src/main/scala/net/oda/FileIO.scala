@@ -20,4 +20,6 @@ object FileIO {
   }
 
   val newInputStream = (path: String) => Files.newInputStream(Paths.get(path))
+
+  val lastModified = (path: String) => Paths.get(path).toFile.lastModified
 }

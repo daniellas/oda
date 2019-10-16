@@ -47,6 +47,7 @@ object CFDRest {
   }
 
   def getReport(ctx: RoutingContext): Unit = {
+    val dataPath = s"${dataLocation}/jira-issues-${projectKey}.json"
     val interval = RequestReaders.param(ctx, "interval")
       .map(i => i match {
         case "day" => ChronoUnit.DAYS
@@ -56,7 +57,7 @@ object CFDRest {
     val items = RequestReaders.params(ctx, "item")
     val prios = RequestReaders.params(ctx, "prio")
     val cachedFilePath = Config.getProp("reports.location")
-      .map(_ + "/" + Encoding.encodeFilePath(Seq(interval, "item", items, "prios", prios)))
+      .map(_ + "/" + Encoding.encodeFilePath(Seq(FileIO.lastModified(dataPath), interval, "item", items, "prios", prios)))
       .map(_ + ".json")
       .get
 
