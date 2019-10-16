@@ -12,7 +12,7 @@ object Spark {
     .builder()
     .appName("ODA")
     .master("local[*]")
-    .getOrCreate()
+    .getOrCreate
   val ctx = session.sparkContext
 
 }

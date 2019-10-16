@@ -56,12 +56,12 @@ object CFDRest {
       .getOrElse(ChronoUnit.WEEKS);
     val items = RequestReaders.params(ctx, "item")
     val prios = RequestReaders.params(ctx, "prio")
-    val cachedFilePath = Config.getProp("reports.location")
+    val reportCachePath = Config.getProp("reports.location")
       .map(_ + "/" + Encoding.encodeFilePath(Seq(FileIO.lastModified(dataPath), interval, "item", items, "prios", prios)))
       .map(_ + ".json")
       .get
 
-    val resp = FileIO.tryLoadTextContent(cachedFilePath)
+    val resp = FileIO.tryLoadTextContent(reportCachePath)
       .getOrElse(FileIO.loadTextContent
         .andThen(Serialization.read[List[Issue]])
         .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
@@ -80,10 +80,10 @@ object CFDRest {
             _))
         .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
         .andThen(Serialization.write(_)(formats))
-        .apply(s"${dataLocation}/jira-issues-${projectKey}.json")
+        .apply(dataPath)
       )
 
-    FileIO.saveTextContent(cachedFilePath, resp)
+    FileIO.saveTextContent(reportCachePath, resp)
 
     ResponseWriters.body(resp).accept(ctx)
   }
