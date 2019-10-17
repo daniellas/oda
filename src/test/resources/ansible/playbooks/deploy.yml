@@ -1,0 +1,34 @@
+- name: Deploy
+  hosts: all
+  vars:
+    version: ${project.version}
+
+  tasks:
+  - name: Create folders
+    file:
+      path: "{{ item }}"
+      state: directory
+      recurse: true
+    with_items:
+      - "{{ config.basedir }}/{{ config.datadir }}"
+      - "{{ config.basedir }}/{{ config.reportsdir }}"
+
+  - name: Copy files
+    template:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+    with_items:
+      - { src: "templates/config.properties", dest: "{{ config.basedir }}" }
+
+  - name: Run container
+    docker_container:
+      image: "oda:{{ version }}"
+      name: "oda"
+      published_ports: "{{ config.ports }}"
+      volumes:
+        - "{{ config.basedir }}/{{ config.datadir }}:/opt/{{ config.datadir }}:rw"
+        - "{{ config.basedir }}/{{ config.reportsdir }}:/opt/{{ config.reportsdir }}:rw"
+        - "{{ config.basedir }}/config.properties:/opt/config.properties:ro"
+      restart_policy: unless-stopped
+      state: started
+  

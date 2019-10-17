@@ -1,0 +1,6 @@
+config:
+  basedir: /home/daniel.las/work/oda
+  datadir: data
+  reportsdir: reports
+  ports:
+    - 8090:8090

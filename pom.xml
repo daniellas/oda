@@ -238,6 +238,53 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>docker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.spotify</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>1.0.0</version>
+                        <configuration>
+                            <maintainer>daniel.las@empirica.pl</maintainer>
+                            <baseImage>openjdk:8-jre-alpine</baseImage>
+                            <imageName>oda:${project.version}</imageName>
+                            <workdir>/opt</workdir>
+                            <entryPoint>
+                                ["java","-jar","${project.artifactId}-${project.version}.jar"]
+                            </entryPoint>
+                            <serverId>empirica-nexus</serverId>
+                            <resources>
+                                <resource>
+                                    <targetPath>/opt</targetPath>
+                                    <directory>${project.build.directory}</directory>
+                                    <includes>
+                                        <include>${project.artifactId}-${project.version}.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>push-image</id>
+                                <phase>deploy</phase>
+                                <goals>
+                                    <goal>push</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <repositories>
