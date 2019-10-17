@@ -47,6 +47,7 @@ object CFDRest {
   }
 
   def getReport(ctx: RoutingContext): Unit = {
+    log.info("CFD generation started")
     val dataPath = s"${dataLocation}/jira-issues-${projectKey}.json"
     val interval = RequestReaders.param(ctx, "interval")
       .map(i => i match {
@@ -86,6 +87,7 @@ object CFDRest {
     FileIO.saveTextContent(reportCachePath, resp)
 
     ResponseWriters.body(resp).accept(ctx)
+    log.info("CFD generation completed")
   }
 
 }

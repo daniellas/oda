@@ -13,6 +13,7 @@ object Config {
     .apply("config.properties")
 
   val getProp = (name: String) => Option(name)
-    .map(props.getProperty)
+    .flatMap((n: String) => Option(props.get(n)))
+    .map(_.toString)
 
 }

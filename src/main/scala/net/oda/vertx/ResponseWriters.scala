@@ -33,6 +33,8 @@ object ResponseWriters {
 
   def end[A](body: A): Consumer[RoutingContext] = ctx => ctx.response.end
 
+  def end(): Consumer[RoutingContext] = ctx => ctx.response.end
+
   val notFound: Consumer[RoutingContext] = ctx => ctx.fail(HttpResponseStatus.NOT_FOUND.code)
 
   val badRequest: Consumer[RoutingContext] = ctx => ctx.fail(HttpResponseStatus.BAD_REQUEST.code)

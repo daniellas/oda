@@ -20,10 +20,16 @@
     with_items:
       - { src: "templates/config.properties", dest: "{{ config.basedir }}" }
 
+  - name: Create network
+    docker_network:
+      name: "oda"
+
   - name: Run container
     docker_container:
       image: "oda:{{ version }}"
       name: "oda"
+      networks:
+        - name: "oda"
       published_ports: "{{ config.ports }}"
       volumes:
         - "{{ config.basedir }}/{{ config.datadir }}:/opt/{{ config.datadir }}:rw"

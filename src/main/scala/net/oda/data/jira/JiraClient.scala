@@ -55,6 +55,6 @@ object JiraClient {
     }
   }
 
-  val searchIssues = (project: String) => getIssuesPage(project).flatMap(_.issues)
+  val searchIssues = (project: String) => getIssuesPage(project, 0).flatMap(_.issues)
 
 }
