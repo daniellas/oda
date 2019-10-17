@@ -16,4 +16,7 @@ object Config {
     .flatMap((n: String) => Option(props.get(n)))
     .map(_.toString)
 
+  val reportsLocation = getProp("reports.location").getOrElse("./")
+  val dataLocation = getProp("data.location").getOrElse("./")
+
 }
