@@ -1,6 +1,6 @@
 config:
-  image: oda
-  basedir: /home/daniel.las/work/oda
+  image: docker.earp-integration.com/oda
+  basedir: /opt/oda
   datadir: data
   reportsdir: reports
   ports:

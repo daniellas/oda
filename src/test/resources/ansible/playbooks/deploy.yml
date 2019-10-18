@@ -26,7 +26,7 @@
 
   - name: Run container
     docker_container:
-      image: "oda:{{ version }}"
+      image: "{{ config.image }}:{{ version }}"
       name: "oda"
       networks:
         - name: "oda"

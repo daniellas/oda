@@ -1,0 +1,6 @@
+empi:
+  hosts:
+    192.168.1.2:
+  vars:
+    ansible_user: empirica
+    ansible_become: true
