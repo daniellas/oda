@@ -30,7 +30,7 @@ object JiraRest {
           .andThen(FileIO.saveTextContent(s"data/jira-issues-${pk}.json", _))
           .apply(pk)
       })
-      .map(ResponseWriters.end)
+      .map(_ => ResponseWriters.end)
       .getOrElse(ResponseWriters.notFound)
       .accept(ctx)
   }
