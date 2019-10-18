@@ -4,15 +4,15 @@ import java.util.{Base64, Collections, HashMap, Map}
 
 import com.empirica.rest.client.vertx.VertxAsyncHttpExecutor
 import com.empirica.rest.client.{Headers, RestClient}
+import com.typesafe.scalalogging.Logger
 import net.oda.vertx.VertxServices
 import net.oda.{Config, RestClients}
 import org.apache.http.HttpHeaders
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, FieldSerializer}
-import org.slf4j.LoggerFactory
 
 object JiraClient {
-  val log = LoggerFactory.getLogger("jira-client")
+  val log = Logger("jira-client")
 
   implicit val formats = DefaultFormats + JiraTimestampSerializer +
     FieldSerializer[ChangeItem](

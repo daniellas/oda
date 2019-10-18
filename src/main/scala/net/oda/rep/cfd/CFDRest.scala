@@ -5,12 +5,16 @@ import java.time.temporal.ChronoUnit
 
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.{Router, RoutingContext}
+import net.oda.Config
+import net.oda.Config.reportsLocation
+import net.oda.FileCache.usingCache
+import net.oda.FileIO.{lastModified, loadTextContent}
 import net.oda.RestApi.apiRoot
 import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
 import net.oda.json.LocalDateSerializer
-import net.oda.vertx.Paths.path
+import net.oda.vertx.Paths.{path, variable}
+import net.oda.vertx.RequestReaders.{param, params}
 import net.oda.vertx.{RequestReaders, ResponseWriters}
-import net.oda.{Config, FileIO, Encoding}
 import org.apache.spark.sql.functions._
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
@@ -19,12 +23,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.SortedMap
 
 object CFDRest {
-  private val log = LoggerFactory.getLogger("CFDRest");
   implicit val formats = DefaultFormats + LocalDateSerializer + JiraTimestampSerializer
   val root = "cfd"
-
-  val projectKey = "CRYP"
-  val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
   val referenceFlow = SortedMap(
     "Backlog" -> -1,
     "Upcoming" -> 0,
@@ -41,53 +41,50 @@ object CFDRest {
 
   def init(router: Router): Unit = {
     router
-      .route(path(root).apply(apiRoot))
+      .route(path(root).andThen(variable("projectKey")).apply(apiRoot))
       .method(HttpMethod.GET)
       .blockingHandler(getReport)
   }
 
   def getReport(ctx: RoutingContext): Unit = {
-    log.info("CFD generation started")
-    val dataPath = s"${dataLocation}/jira-issues-${projectKey}.json"
-    val interval = RequestReaders.param(ctx, "interval")
-      .map(i => i match {
-        case "day" => ChronoUnit.DAYS
-        case _ => ChronoUnit.WEEKS
+    param(ctx, "projectKey")
+      .map(pk => {
+        val dataLocation = s"${Config.dataLocation}/jira-issues-${pk}.json"
+        val interval = param(ctx, "interval")
+          .map(i => i match {
+            case "day" => ChronoUnit.DAYS
+            case _ => ChronoUnit.WEEKS
+          })
+          .getOrElse(ChronoUnit.WEEKS)
+        val items = params(ctx, "item")
+        val prios = params(ctx, "prio")
+
+        usingCache(reportsLocation, lastModified(dataLocation), "interval", interval, "item", items, "prio", prios) {
+          () =>
+            loadTextContent
+              .andThen(Serialization.read[List[Issue]])
+              .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
+              .andThen(
+                CFDReporter.generate(
+                  pk,
+                  LocalDate.MIN,
+                  items.contains,
+                  prios.contains,
+                  referenceFlow,
+                  entryState,
+                  finalState,
+                  stateMapping,
+                  interval,
+                  count(lit(1)),
+                  _))
+              .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
+              .andThen(Serialization.write(_)(formats))
+              .apply(dataLocation)
+        }
       })
-      .getOrElse(ChronoUnit.WEEKS);
-    val items = RequestReaders.params(ctx, "item")
-    val prios = RequestReaders.params(ctx, "prio")
-    val reportCachePath = Config.getProp("reports.location")
-      .map(_ + "/" + Encoding.encodeFilePath(Seq(FileIO.lastModified(dataPath), interval, "item", items, "prios", prios)))
-      .map(_ + ".json")
-      .get
-
-    val resp = FileIO.tryLoadTextContent(reportCachePath)
-      .getOrElse(FileIO.loadTextContent
-        .andThen(Serialization.read[List[Issue]])
-        .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
-        .andThen(
-          CFDReporter.generate(
-            projectKey,
-            LocalDate.MIN,
-            items.contains,
-            prios.contains,
-            referenceFlow,
-            entryState,
-            finalState,
-            stateMapping,
-            interval,
-            count(lit(1)),
-            _))
-        .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
-        .andThen(Serialization.write(_)(formats))
-        .apply(dataPath)
-      )
-
-    FileIO.saveTextContent(reportCachePath, resp)
-
-    ResponseWriters.body(resp).accept(ctx)
-    log.info("CFD generation completed")
+      .map(ResponseWriters.body)
+      .getOrElse(ResponseWriters.notFound)
+      .accept(ctx)
   }
 
 }

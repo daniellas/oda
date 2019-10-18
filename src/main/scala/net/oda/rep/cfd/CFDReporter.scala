@@ -4,18 +4,22 @@ import java.sql.Timestamp
 import java.time.temporal.ChronoUnit
 import java.time.{LocalDate, ZonedDateTime}
 
+import com.typesafe.scalalogging.Logger
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, Dataset, Row}
+import org.slf4j.LoggerFactory
 
 import scala.collection.SortedMap
 
 case class Item(id: String, `type`: String, created: Timestamp, status: String, estimate: Int)
 
 object CFDReporter {
+  private val log = Logger("cfd-reporter")
+
   val normalizeFlow = (
                         referenceFlow: SortedMap[String, Int],
                         entryState: String,
@@ -80,6 +84,7 @@ object CFDReporter {
                 interval: ChronoUnit,
                 aggregate: Column,
                 workItems: List[WorkItem]): Dataset[Row] = {
+    log.info("CFD report generation started")
     val createTsMapper = (ts: ZonedDateTime) => if (interval == ChronoUnit.DAYS) day(ts) else weekStart(ts)
     val tsDiffCalculator = (start: LocalDate, end: LocalDate) => interval.between(start, end)
     val rangeProvider = (start: LocalDate, end: LocalDate) => (0L to tsDiffCalculator.apply(start, end)).toList.map(start.plus(_, interval))
@@ -152,7 +157,7 @@ object CFDReporter {
       )
       .select('_1.as("ct_created"), '_2.as("CT"))
 
-    cumulativeValues
+    val res = cumulativeValues
       .join(cycleTime, 'created === cycleTime("ct_created"))
       .withColumn("TH", col(cumulativeCol("WIP")) / 'CT)
       .drop('ct_created)
@@ -160,22 +165,7 @@ object CFDReporter {
       .withColumn("created", date_format('created, "yyyy-MM-dd"))
       .repartition(1)
 
-
-    //    JsonSer.writeToFile(
-    //      formats,
-    //      Config.getProp("reports.location").getOrElse(() => "./") + s"/cfd-${project}.json",
-    //      Report(
-    //        project,
-    //        startDate,
-    //        report
-    //          .collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
-    //    )
-
-    //    report
-    //      .write
-    //      .format("csv")
-    //      .mode("overwrite")
-    //      .option("header", value = true)
-    //      .save(Config.getProp("reports.location").getOrElse(() => "./") + s"/cfd-${project}")
+    log.info("CFD report generation complete")
+    res
   }
 }
