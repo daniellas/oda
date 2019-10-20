@@ -11,7 +11,6 @@ import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, Dataset, Row}
-import org.slf4j.LoggerFactory
 
 import scala.collection.SortedMap
 
@@ -92,7 +91,7 @@ object CFDReporter {
     val statusHistory = workItems
       .filter(i => itemType.apply(i.`type`))
       .filter(i => priority.apply(i.priority))
-      //      .filter(i => i.created.after(startDate))
+      .filter(i => startDate == LocalDate.MIN || i.created.after(startDate))
       .map(i => WorkItem(
         i.id,
         i.name,

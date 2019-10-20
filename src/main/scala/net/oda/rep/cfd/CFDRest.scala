@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit
 
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.{Router, RoutingContext}
-import net.oda.Config
+import net.oda.{Config, Time}
 import net.oda.Config.reportsLocation
 import net.oda.FileCache.usingCache
 import net.oda.FileIO.{lastModified, loadTextContent}
@@ -46,6 +46,8 @@ object CFDRest {
       .blockingHandler(getReport)
   }
 
+  private def readAggregate(param: String) = if (param == "count") count(lit(1)) else sum("estimate")
+
   def getReport(ctx: RoutingContext): Unit = {
     param(ctx, "projectKey")
       .map(pk => {
@@ -58,16 +60,25 @@ object CFDRest {
           .getOrElse(ChronoUnit.WEEKS)
         val items = params(ctx, "item")
         val prios = params(ctx, "prio")
+        val aggregate = param(ctx, "aggregate").map(readAggregate).getOrElse(count(lit(1)))
+        val start = param(ctx, "start").map(_.toLong).map(Time.toLocalDate).getOrElse(LocalDate.MIN)
 
-        usingCache(reportsLocation, lastModified(dataLocation), "interval", interval, "item", items, "prio", prios) {
+        usingCache(
+          reportsLocation,
+          lastModified(dataLocation),
+          "aggregate", aggregate,
+          "interval", interval,
+          "item", items,
+          "prio", prios,
+          "start", start) {
           () =>
             loadTextContent
               .andThen(Serialization.read[List[Issue]])
-              .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
+              .andThen(_.map(Mappers.jiraIssueToWorkItem(_, Config.estimateMapping.get)))
               .andThen(
                 CFDReporter.generate(
                   pk,
-                  LocalDate.MIN,
+                  start,
                   items.contains,
                   prios.contains,
                   referenceFlow,
@@ -75,7 +86,7 @@ object CFDRest {
                   finalState,
                   stateMapping,
                   interval,
-                  count(lit(1)),
+                  aggregate,
                   _))
               .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
               .andThen(Serialization.write(_)(formats))
