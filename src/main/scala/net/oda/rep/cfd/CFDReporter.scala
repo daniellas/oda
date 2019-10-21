@@ -10,11 +10,12 @@ import net.oda.Time._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{Column, Dataset, Row}
 
 import scala.collection.SortedMap
 
-case class Item(id: String, `type`: String, created: Timestamp, status: String, estimate: Int)
+case class Item(id: String, `type`: String, created: Timestamp, status: String, estimate: Double)
 
 object CFDReporter {
   private val log = Logger("cfd-reporter")
@@ -59,7 +60,7 @@ object CFDReporter {
 
   val calculateCycleTime = (tsDiffCalculator: (LocalDate, LocalDate) => Long, start: LocalDate, end: LocalDate) => tsDiffCalculator(start, end) + 1
 
-  val findDateLastBelow = (m: SortedMap[Long, Timestamp], v: Long) => {
+  val findDateLastBelow = (m: SortedMap[Double, Timestamp], v: Double) => {
     val to = m.to(v)
 
     if (to.isEmpty) {
@@ -139,17 +140,20 @@ object CFDReporter {
                 .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
       )
 
-    val entryDatesByValue = cumulativeValues.select('created, col(cumulativeCol(entryState)))
+    val entryDatesByValue = cumulativeValues.select('created, col(cumulativeCol(entryState)).cast(DoubleType))
       .collect
-      .map(r => (r.getTimestamp(0), r.getAs[Long](cumulativeCol(entryState))))
-      .foldLeft(SortedMap.empty[Long, Timestamp])((acc, i) => acc + (i._2 -> i._1))
+      .map(r => (r.getTimestamp(0), r.getAs[Double](cumulativeCol(entryState))))
+      .foldLeft(SortedMap.empty[Double, Timestamp])((acc, i) => acc + (i._2 -> i._1))
 
-    val cycleTime = cumulativeValues.select('created, col(cumulativeCol(entryState)), col(cumulativeCol(finalState)))
+    val cycleTime = cumulativeValues.select(
+      'created,
+      col(cumulativeCol(entryState)).cast(DoubleType),
+      col(cumulativeCol(finalState)).cast(DoubleType))
       .map(r =>
         (
           r.getTimestamp(0),
-          if (r.getLong(1) == r.getLong(2)) 0
-          else findDateLastBelow(entryDatesByValue, r.getLong(2))
+          if (r.getDouble(1) == r.getDouble(2)) 0L
+          else findDateLastBelow(entryDatesByValue, r.getDouble(2))
             .map(calculateCycleTime(tsDiffCalculator, _, r.getTimestamp(0)))
             .getOrElse(1L)
         )

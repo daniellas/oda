@@ -18,5 +18,5 @@ object Config {
 
   val reportsLocation = getProp("reports.location").getOrElse("./")
   val dataLocation = getProp("data.location").getOrElse("./")
-  val estimateMapping = Map("S" -> 3, "M" -> 5, "L" -> 8, "XL" -> 13)
+  val estimateMapping = Map[String, Double]("S" -> 3, "M" -> 5, "L" -> 8, "XL" -> 13)
 }
