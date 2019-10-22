@@ -26,10 +26,10 @@
     }
   },
   "data": {
-    "location": "/home/daniel.las/work/workspace_lynx/dltech/oda/data"
+    "location": "./"
   },
   "reports": {
-    "location": "/home/daniel.las/work/workspace_lynx/dltech/oda/reports"
+    "location": "./"
   },
   "http": {
     "port": 8090
