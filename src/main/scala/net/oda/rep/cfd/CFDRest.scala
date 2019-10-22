@@ -53,6 +53,8 @@ object CFDRest {
         usingCache(
           reportsLocation,
           lastModified(dataLocation),
+          "jiraProps",
+          Config.props.jira,
           "aggregate", aggregate,
           "interval", interval,
           "item", items,
