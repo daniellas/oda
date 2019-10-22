@@ -20,18 +20,14 @@ object JiraClient {
       FieldSerializer.renameFrom("toString", "toStr")
     )
 
-  val jiraAuthHeader = Config
-    .getProp("jira.user")
-    .map(_ + ":")
-    .flatMap(h => Config.getProp("jira.apiKey").map(i => h + i))
-    .get
+  val jiraAuthHeader = Config.props.jira.user + ":" + Config.props.jira.apiKey
 
   val jiraHeaders: Map[String, java.util.List[String]] = new HashMap();
 
   jiraHeaders.put(HttpHeaders.AUTHORIZATION, Collections.singletonList("Basic " + Base64.getEncoder.encodeToString(jiraAuthHeader.getBytes)))
 
   val restClient = RestClient.using(VertxAsyncHttpExecutor.of(VertxServices.vertx, VertxServices.httpClient))
-    .service(Config.getProp("jira.apiUrl").get)
+    .service(Config.props.jira.apiUrl)
     .defaultHeaders(Headers.combine(RestClients.jsonHeaders, jiraHeaders))
 
   val expand = "changelog,-schema,-editmeta"

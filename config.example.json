@@ -1,0 +1,37 @@
+{
+  "jira": {
+    "apiUrl": "",
+    "user": "",
+    "apiKey": "",
+    "estimateMapping": {
+      "S": 3,
+      "M": 5,
+      "L": 8,
+      "XL": 13
+    },
+    "referenceFlow": {
+      "Backlog": -1,
+      "Upcoming": 0,
+      "To Do": 1,
+      "In Progress": 2,
+      "In Review": 3,
+      "Ready to test": 4,
+      "In testing": 5,
+      "Done": 6
+    },
+    "entryState": "To Do",
+    "finalState": "Done",
+    "stateMapping": {
+      "Invalid": "Done"
+    }
+  },
+  "data": {
+    "location": "/home/daniel.las/work/workspace_lynx/dltech/oda/data"
+  },
+  "reports": {
+    "location": "/home/daniel.las/work/workspace_lynx/dltech/oda/reports"
+  },
+  "http": {
+    "port": 8090
+  }
+}

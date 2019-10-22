@@ -21,7 +21,7 @@ object CFDReporter {
   private val log = Logger("cfd-reporter")
 
   val normalizeFlow = (
-                        referenceFlow: SortedMap[String, Int],
+                        referenceFlow: Map[String, Int],
                         entryState: String,
                         finalState: String,
                         stateMapping: Map[String, String],
@@ -77,7 +77,7 @@ object CFDReporter {
                 startDate: LocalDate,
                 itemType: String => Boolean,
                 priority: String => Boolean,
-                referenceFlow: SortedMap[String, Int],
+                referenceFlow: Map[String, Int],
                 entryState: String,
                 finalState: String,
                 stateMapping: Map[String, String],

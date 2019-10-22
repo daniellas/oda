@@ -1,22 +1,35 @@
 package net.oda
 
-import java.util.Properties
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization
+
+case class JiraProps(
+                      apiUrl: String,
+                      user: String,
+                      apiKey: String,
+                      estimateMapping: Map[String, Double],
+                      referenceFlow: Map[String, Int],
+                      entryState: String,
+                      finalState: String,
+                      stateMapping: Map[String, String]
+                    )
+
+case class DataProps(location: String = "./")
+
+case class ReportsProps(location: String = "./")
+
+case class HttpProps(port: Int)
+
+case class ConfigProps(
+                        jira: JiraProps,
+                        data: DataProps,
+                        reports: ReportsProps,
+                        http: HttpProps)
 
 object Config {
-  private val props = FileIO.newInputStream
-    .andThen(is => {
-      val p = new Properties()
+  private implicit val formats = DefaultFormats
+  val props = Serialization.read[ConfigProps](FileIO.loadTextContent("config.json"))
 
-      p.load(is)
-      p
-    })
-    .apply("config.properties")
-
-  val getProp = (name: String) => Option(name)
-    .flatMap((n: String) => Option(props.get(n)))
-    .map(_.toString)
-
-  val reportsLocation = getProp("reports.location").getOrElse("./")
-  val dataLocation = getProp("data.location").getOrElse("./")
-  val estimateMapping = Map[String, Double]("S" -> 3, "M" -> 5, "L" -> 8, "XL" -> 13)
+  val reportsLocation = props.data.location
+  val dataLocation = props.reports.location
 }

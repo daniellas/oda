@@ -13,8 +13,6 @@ object JiraRest {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
   val root = "jira"
 
-  val dataLocation = Config.getProp("data.location").getOrElse(() => "./")
-
   def init(router: Router): Unit = {
     router
       .route(path(root).andThen(variable("projectKey")).andThen(path("download")).apply(apiRoot))
@@ -27,7 +25,7 @@ object JiraRest {
       .map(pk => {
         JiraClient.searchIssues
           .andThen(Serialization.write(_))
-          .andThen(FileIO.saveTextContent(s"data/jira-issues-${pk}.json", _))
+          .andThen(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${pk}.json", _))
           .apply(pk)
       })
       .map(_ => ResponseWriters.end)

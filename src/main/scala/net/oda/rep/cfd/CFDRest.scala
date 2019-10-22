@@ -25,19 +25,6 @@ import scala.collection.SortedMap
 object CFDRest {
   implicit val formats = DefaultFormats + LocalDateSerializer + JiraTimestampSerializer
   val root = "cfd"
-  val referenceFlow = SortedMap(
-    "Backlog" -> -1,
-    "Upcoming" -> 0,
-    "To Do" -> 1,
-    "In Progress" -> 2,
-    "In Review" -> 3,
-    "Ready to test" -> 4,
-    "In testing" -> 5,
-    "Done" -> 6
-  )
-  val entryState = "To Do"
-  val finalState = "Done"
-  val stateMapping = Map("Invalid" -> "Done")
 
   def init(router: Router): Unit = {
     router
@@ -74,17 +61,17 @@ object CFDRest {
           () =>
             loadTextContent
               .andThen(Serialization.read[List[Issue]])
-              .andThen(_.map(Mappers.jiraIssueToWorkItem(_, Config.estimateMapping.get)))
+              .andThen(_.map(Mappers.jiraIssueToWorkItem(_, Config.props.jira.estimateMapping.get)))
               .andThen(
                 CFDReporter.generate(
                   pk,
                   start,
                   items.contains,
                   prios.contains,
-                  referenceFlow,
-                  entryState,
-                  finalState,
-                  stateMapping,
+                  Config.props.jira.referenceFlow,
+                  Config.props.jira.entryState,
+                  Config.props.jira.finalState,
+                  Config.props.jira.stateMapping,
                   interval,
                   aggregate,
                   _))

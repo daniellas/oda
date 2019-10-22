@@ -6,7 +6,7 @@ object Spark {
   val session = SparkSession
     .builder()
     .appName("ODA")
-    .master(Config.getProp("spark.master.url").getOrElse("local[*]"))
+    .master("local[*]")
     .getOrCreate
   val ctx = session.sparkContext
 

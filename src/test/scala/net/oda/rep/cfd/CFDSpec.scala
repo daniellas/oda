@@ -1,6 +1,6 @@
 package net.oda.rep.cfd
 
-import java.time.{LocalDateTime, ZonedDateTime}
+import java.time.LocalDateTime
 
 import net.oda.Time.{weeksBetween, _}
 import net.oda.data.jira.JiraTimestampSerializer
@@ -8,12 +8,10 @@ import net.oda.model.WorkItemStatusHistory
 import org.json4s.DefaultFormats
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.collection.SortedMap
-
 class CFDSpec extends FlatSpec with Matchers {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
   val stateMapping = Map("invalid" -> "done")
-  val referenceFlow = SortedMap(
+  val referenceFlow = Map(
     "backlog" -> 0,
     "todo" -> 1,
     "progress" -> 2,
