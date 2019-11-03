@@ -77,7 +77,7 @@ object CFDRest {
                   pk,
                   start,
                   items.contains,
-                  prios.contains,
+                  prio => prios.isEmpty || prios.contains(prio),
                   props.jira.projects(pk).referenceFlow,
                   entryState,
                   finalState,
