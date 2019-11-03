@@ -5,8 +5,7 @@ import java.time.temporal.ChronoUnit
 
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.{Router, RoutingContext}
-import net.oda.{Config, Time}
-import net.oda.Config.reportsLocation
+import net.oda.Config.{props, reportsLocation}
 import net.oda.FileCache.usingCache
 import net.oda.FileIO.{lastModified, loadTextContent}
 import net.oda.RestApi.apiRoot
@@ -14,13 +13,14 @@ import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
 import net.oda.json.LocalDateSerializer
 import net.oda.vertx.Paths.{path, variable}
 import net.oda.vertx.RequestReaders.{param, params}
-import net.oda.vertx.{RequestReaders, ResponseWriters}
+import net.oda.vertx.ResponseWriters
+import net.oda.{Config, Time}
+import org.apache.spark.sql.{Dataset, Row}
 import org.apache.spark.sql.functions._
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
-import org.slf4j.LoggerFactory
 
-import scala.collection.SortedMap
+case class CFDReport(data: Seq[Map[String, Any]], aggregates: Seq[Map[String, Any]])
 
 object CFDRest {
   implicit val formats = DefaultFormats + LocalDateSerializer + JiraTimestampSerializer
@@ -34,6 +34,10 @@ object CFDRest {
   }
 
   private def readAggregate(param: String) = if (param == "count") count(lit(1)) else sum("estimate")
+
+  def datasetToMaps(dataset: Dataset[Row]) = dataset
+    .collect
+    .map(r => dataset.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i))))
 
   def getReport(ctx: RoutingContext): Unit = {
     param(ctx, "projectKey")
@@ -49,36 +53,45 @@ object CFDRest {
         val prios = params(ctx, "prio")
         val aggregate = param(ctx, "aggregate").map(readAggregate).getOrElse(count(lit(1)))
         val start = param(ctx, "start").map(_.toLong).map(Time.toLocalDate).getOrElse(LocalDate.MIN)
+        val entryState = param(ctx, "entryState").getOrElse(props.jira.projects(pk).entryState)
+        val finalState = param(ctx, "finalState").getOrElse(props.jira.projects(pk).finalState)
 
         usingCache(
           reportsLocation,
           lastModified(dataLocation),
           "jiraProps",
-          Config.props.jira,
+          props.jira,
           "aggregate", aggregate,
           "interval", interval,
           "item", items,
           "prio", prios,
-          "start", start) {
+          "start", start,
+          "entryState", entryState,
+          "finalState", finalState) {
           () =>
             loadTextContent
               .andThen(Serialization.read[List[Issue]])
-              .andThen(_.map(Mappers.jiraIssueToWorkItem(_, Config.props.jira.estimateMapping.get)))
-              .andThen(
-                CFDReporter.generate(
+              .andThen(_.map(Mappers.jiraIssueToWorkItem(_, props.jira.projects(pk).estimateMapping.get)))
+              .andThen(workItems => {
+                val data = CFDReporter.generate(
                   pk,
                   start,
                   items.contains,
                   prios.contains,
-                  Config.props.jira.referenceFlow,
-                  Config.props.jira.entryState,
-                  Config.props.jira.finalState,
-                  Config.props.jira.stateMapping,
+                  props.jira.projects(pk).referenceFlow,
+                  entryState,
+                  finalState,
+                  props.jira.projects(pk).stateMapping,
                   interval,
                   aggregate,
-                  _))
-              .andThen(report => report.collect.map(r => report.columns.foldLeft(Map.empty[String, Any])((acc, i) => acc + (i -> r.getAs[Any](i)))))
-              .andThen(Serialization.write(_)(formats))
+                  workItems)
+                val aggregates = CFDReporter.calculateAggregates(data)
+
+                CFDReport(
+                  datasetToMaps(data),
+                  datasetToMaps(aggregates))
+              })
+              .andThen(Serialization.write(_))
               .apply(dataLocation)
         }
       })

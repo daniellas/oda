@@ -18,19 +18,36 @@ object JiraRest {
       .route(path(root).andThen(variable("projectKey")).andThen(path("download")).apply(apiRoot))
       .method(HttpMethod.POST)
       .blockingHandler(downloadData)
+    router
+      .route(path(root).andThen(path("projects")).apply(apiRoot))
+      .method(HttpMethod.GET)
+      .blockingHandler(getProjects)
+    router
+      .route(path(root).andThen(variable("projectKey")).andThen(path("config")).apply(apiRoot))
+      .method(HttpMethod.GET)
+      .blockingHandler(getConfig)
   }
 
-  def downloadData(ctx: RoutingContext): Unit = {
+  def downloadData(ctx: RoutingContext): Unit =
     RequestReaders.param(ctx, "projectKey")
-      .map(pk => {
-        JiraClient.searchIssues
-          .andThen(Serialization.write(_))
-          .andThen(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${pk}.json", _))
-          .apply(pk)
-      })
+      .map(pk => JiraClient.searchIssues
+        .andThen(Serialization.write(_))
+        .andThen(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${pk}.json", _))
+        .apply(pk)
+      )
       .map(_ => ResponseWriters.end)
       .getOrElse(ResponseWriters.notFound)
       .accept(ctx)
-  }
+
+  def getProjects(ctx: RoutingContext): Unit =
+    ResponseWriters
+      .body(Serialization.write(Config.props.jira.projects.keys.toSeq.sorted))
+      .accept(ctx)
+
+  def getConfig(ctx: RoutingContext): Unit = RequestReaders.param(ctx, "projectKey")
+    .map(pk => Config.props.jira.projects(pk))
+    .map(ResponseWriters.body(Serialization.write(_)))
+    .getOrElse(ResponseWriters.notFound)
+    .accept(ctx)
 
 }

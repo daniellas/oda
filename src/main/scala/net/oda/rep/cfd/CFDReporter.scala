@@ -8,6 +8,7 @@ import com.typesafe.scalalogging.Logger
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
+import net.oda.rep.cfd.CFDReporter.thCol
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
@@ -72,6 +73,13 @@ object CFDReporter {
 
   val cumulativeCol = (col: String) => col + " cumulative"
 
+  val wipCol = "WIP"
+  val createdCol = "created"
+  val thCol = "TH"
+  val timeCol = "Time"
+
+  val ctCol = "CT"
+
   def generate(
                 project: String,
                 startDate: LocalDate,
@@ -111,21 +119,21 @@ object CFDReporter {
     val values = statusHistory
       .groupBy('created, 'status)
       .agg(aggregate.alias("val"))
-      .select(col("created"), 'status, 'val)
+      .select(col(createdCol), 'status, 'val)
       .groupBy('created)
       .pivot('status)
       .sum()
 
     val timeRange = values.select(min('created), max('created))
       .flatMap(r => rangeProvider(r.getTimestamp(0), r.getTimestamp(1)).map(toTimestamp))
-      .toDF("r_created")
+      .toDF("r_" + createdCol)
 
     val filledValues = timeRange
-      .join(values, 'r_created === values("created"), "outer")
+      .join(values, 'r_created === values(createdCol), "outer")
       .na.fill(0)
-      .withColumn("WIP", col(entryState) - col(finalState))
+      .withColumn(wipCol, col(entryState) - col(finalState))
       .drop('created)
-      .withColumnRenamed("r_created", "created")
+      .withColumnRenamed("r_" + createdCol, createdCol)
 
     val cumulativeValues = filledValues
       .columns
@@ -158,17 +166,30 @@ object CFDReporter {
             .getOrElse(1L)
         )
       )
-      .select('_1.as("ct_created"), '_2.as("CT"))
+      .select('_1.as("ct_" + createdCol), '_2.as(ctCol))
 
     val res = cumulativeValues
-      .join(cycleTime, 'created === cycleTime("ct_created"))
-      .withColumn("TH", col(cumulativeCol("WIP")) / 'CT)
-      .drop('ct_created)
+      .join(cycleTime, 'created === cycleTime("ct_" + createdCol))
       .orderBy('created)
-      .withColumn("created", date_format('created, "yyyy-MM-dd"))
+      .withColumn(timeCol, date_format('created, "yyyy-MM-dd"))
+      .drop("ct_" + createdCol, createdCol, entryState, finalState, wipCol)
+      .withColumnRenamed(cumulativeCol(entryState), entryState)
+      .withColumnRenamed(cumulativeCol(finalState), finalState)
+      .withColumnRenamed(cumulativeCol(wipCol), wipCol)
+      .withColumn(thCol, format_number(col(wipCol) / 'CT, 2))
       .repartition(1)
 
     log.info("CFD report generation complete")
     res
+  }
+
+  def calculateAggregates(data: Dataset[Row]) = {
+    data
+      .agg(
+        Map(
+          thCol -> "avg",
+          ctCol -> "avg",
+          wipCol -> "avg",
+        ))
   }
 }

@@ -3,33 +3,61 @@
     "apiUrl": "",
     "user": "",
     "apiKey": "",
-    "estimateMapping": {
-      "S": 3,
-      "M": 5,
-      "L": 8,
-      "XL": 13
-    },
-    "referenceFlow": {
-      "Backlog": -1,
-      "Upcoming": 0,
-      "To Do": 1,
-      "In Progress": 2,
-      "In Review": 3,
-      "Ready to test": 4,
-      "In testing": 5,
-      "Done": 6
-    },
-    "entryState": "To Do",
-    "finalState": "Done",
-    "stateMapping": {
-      "Invalid": "Done"
+    "projects": {
+      "CRYP": {
+        "estimateMapping": {
+          "S": 3,
+          "M": 5,
+          "L": 8,
+          "XL": 21
+        },
+        "referenceFlow": {
+          "Backlog": -1,
+          "Upcoming": 0,
+          "To Do": 1,
+          "In Progress": 2,
+          "In Review": 3,
+          "Ready to test": 4,
+          "In testing": 5,
+          "Done": 6
+        },
+        "entryState": "To Do",
+        "finalState": "Done",
+        "stateMapping": {
+          "Invalid": "Done",
+          "IN REVIW": "In Review",
+          "IN REVIEW": "In Review"
+        },
+        "prios": [
+          "Critical",
+          "Highest",
+          "High",
+          "Medium",
+          "Low",
+          "Lowest"
+        ]
+      },
+      "AW": {
+        "estimateMapping": {},
+        "referenceFlow": {
+          "To Do": 1,
+          "In Progress": 2,
+          "MR": 3,
+          "Ready to test": 4,
+          "In testing": 5,
+          "Done": 6
+        },
+        "entryState": "To Do",
+        "finalState": "Done",
+        "stateMapping": {}
+      }
     }
   },
   "data": {
-    "location": "./"
+    "location": ""
   },
   "reports": {
-    "location": "./"
+    "location": ""
   },
   "http": {
     "port": 8090
