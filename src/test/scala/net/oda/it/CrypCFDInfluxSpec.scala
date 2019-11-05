@@ -10,6 +10,7 @@ import net.oda.Config.props
 import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
 import net.oda.rep.cfd.CFDReporter
 import net.oda.{Config, FileIO, IT}
+import org.apache.spark.sql.{Dataset, Row}
 import org.apache.spark.sql.functions._
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
@@ -23,24 +24,39 @@ class CrypCFDInfluxSpec extends FreeSpec {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
   val projectKey = "CRYP"
   val dataLocation = Config.dataLocation
+  val server = InfluxDB.connect("localhost", 8086)
+  val db = server.selectDatabase("oda")
 
   s"Generate ${projectKey} CFD" taggedAs (IT) in {
-    val server = InfluxDB.connect("localhost", 8086)
-    val db = server.selectDatabase("oda")
+    writeToDb(
+      generate(
+        projectKey,
+        props.jira.projects(projectKey).entryState,
+        props.jira.projects(projectKey).finalState,
+        Seq("Story", "Bug").contains,
+        _ => true,
+        ChronoUnit.DAYS),
+      "All To Do->Done")
+  }
 
-    val report = generate(
-      projectKey,
-      props.jira.projects(projectKey).entryState,
-      props.jira.projects(projectKey).finalState,
-      Seq("Story", "Bug").contains,
-      _ => true,
-      ChronoUnit.DAYS)
+  s"Generate ${projectKey} Critical Bugs CFD" taggedAs (IT) in {
+    writeToDb(
+      generate(
+        projectKey,
+        props.jira.projects(projectKey).entryState,
+        props.jira.projects(projectKey).finalState,
+        Seq("Bug").contains,
+        "Critical".equals,
+        ChronoUnit.DAYS),
+      "Critical Bugs")
+  }
 
-    report.printSchema()
+  def writeToDb(report: Dataset[Row], qualifier: String): Unit = {
     val points = report
       .collect
       .map(r => Point("cfd", r.getAs[Timestamp](CFDReporter.timeCol).getTime)
         .addTag("project", projectKey)
+        .addTag("qualifier", qualifier)
         .addField(CFDReporter.ctCol, r.getAs[Long](CFDReporter.ctCol))
         .addField(CFDReporter.thCol, r.getAs[Double](CFDReporter.thCol))
         .addField(CFDReporter.wipCol, r.getAs[Long](CFDReporter.wipCol))
@@ -49,8 +65,6 @@ class CrypCFDInfluxSpec extends FreeSpec {
       )
 
     Await.result(db.bulkWrite(points, precision = Precision.MILLISECONDS), 100 second)
-
-    server.close
   }
 
   def generate(
