@@ -18,7 +18,7 @@
       src: "{{ item.src }}"
       dest: "{{ item.dest }}"
     with_items:
-      - { src: "templates/config.properties", dest: "{{ config.basedir }}" }
+      - { src: "templates/config.json", dest: "{{ config.basedir }}" }
 
   - name: Create network
     docker_network:
@@ -34,7 +34,7 @@
       volumes:
         - "{{ config.basedir }}/{{ config.datadir }}:/opt/{{ config.datadir }}:rw"
         - "{{ config.basedir }}/{{ config.reportsdir }}:/opt/{{ config.reportsdir }}:rw"
-        - "{{ config.basedir }}/config.properties:/opt/config.properties:ro"
+        - "{{ config.basedir }}/config.json:/opt/config.json:ro"
       restart_policy: unless-stopped
       state: started
   
