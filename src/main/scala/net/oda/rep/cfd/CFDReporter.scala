@@ -171,12 +171,12 @@ object CFDReporter {
     val res = cumulativeValues
       .join(cycleTime, 'created === cycleTime("ct_" + createdCol))
       .orderBy('created)
-      .withColumn(timeCol, date_format('created, "yyyy-MM-dd"))
-      .drop("ct_" + createdCol, createdCol, entryState, finalState, wipCol)
+      .drop("ct_" + createdCol, entryState, finalState, wipCol)
+      .withColumnRenamed("created", timeCol)
       .withColumnRenamed(cumulativeCol(entryState), entryState)
       .withColumnRenamed(cumulativeCol(finalState), finalState)
       .withColumnRenamed(cumulativeCol(wipCol), wipCol)
-      .withColumn(thCol, format_number(col(wipCol) / 'CT, 2))
+      .withColumn(thCol, col(wipCol) / 'CT)
       .repartition(1)
 
     log.info("CFD report generation complete")
