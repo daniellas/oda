@@ -8,24 +8,22 @@ import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import com.paulgoldbaum.influxdbclient._
 import net.oda.Config.props
 import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
-import net.oda.rep.cfd.CFDReporter
+import net.oda.db.InfluxDb.db
+import net.oda.rep.cfd.{CFDReporter, CFDInfluxDb}
 import net.oda.{Config, FileIO, IT}
-import org.apache.spark.sql.{Dataset, Row}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, Row}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 import org.scalatest.FreeSpec
 
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class CrypCFDInfluxSpec extends FreeSpec {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
   val projectKey = "CRYP"
   val dataLocation = Config.dataLocation
-  val server = InfluxDB.connect("localhost", 8086)
-  val db = server.selectDatabase("oda")
 
   s"Generate ${projectKey} CFD" taggedAs (IT) in {
     writeToDb(
@@ -49,22 +47,6 @@ class CrypCFDInfluxSpec extends FreeSpec {
         "Critical".equals,
         ChronoUnit.DAYS),
       "Critical Bugs")
-  }
-
-  def writeToDb(report: Dataset[Row], qualifier: String): Unit = {
-    val points = report
-      .collect
-      .map(r => Point("cfd", r.getAs[Timestamp](CFDReporter.timeCol).getTime)
-        .addTag("project", projectKey)
-        .addTag("qualifier", qualifier)
-        .addField(CFDReporter.ctCol, r.getAs[Long](CFDReporter.ctCol))
-        .addField(CFDReporter.thCol, r.getAs[Double](CFDReporter.thCol))
-        .addField(CFDReporter.wipCol, r.getAs[Long](CFDReporter.wipCol))
-        .addField(props.jira.projects(projectKey).entryState, r.getAs[Long](props.jira.projects(projectKey).entryState))
-        .addField(props.jira.projects(projectKey).finalState, r.getAs[Long](props.jira.projects(projectKey).finalState))
-      )
-
-    Await.result(db.bulkWrite(points, precision = Precision.MILLISECONDS), 100 second)
   }
 
   def generate(
@@ -93,4 +75,17 @@ class CrypCFDInfluxSpec extends FreeSpec {
           _))
       .apply(s"${dataLocation}/jira-issues-${projectKey}.json")
   }
+
+  def writeToDb(report: Dataset[Row], qualifier: String): Unit = {
+    val points = CFDInfluxDb.toPoints(
+      report,
+      "oda",
+      projectKey,
+      qualifier,
+      props.jira.projects(projectKey).entryState,
+      props.jira.projects(projectKey).finalState)
+
+    Await.result(db.bulkWrite(points, precision = Precision.MILLISECONDS), 100 second)
+  }
+
 }

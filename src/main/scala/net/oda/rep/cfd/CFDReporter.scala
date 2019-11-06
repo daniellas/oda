@@ -8,7 +8,6 @@ import com.typesafe.scalalogging.Logger
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
 import net.oda.model.{WorkItem, WorkItemStatusHistory}
-import net.oda.rep.cfd.CFDReporter.thCol
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType

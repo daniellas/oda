@@ -25,11 +25,14 @@ case class ReportsProps(location: String = "./")
 
 case class HttpProps(port: Int)
 
+case class InluxdbProps(host: String, port: Int, db: String)
+
 case class ConfigProps(
                         jira: JiraProps,
                         data: DataProps,
                         reports: ReportsProps,
-                        http: HttpProps)
+                        http: HttpProps,
+                        influxdb: InluxdbProps)
 
 object Config {
   private implicit val formats = DefaultFormats
