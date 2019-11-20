@@ -1,15 +1,13 @@
 package net.oda.it
 
-import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
-import com.paulgoldbaum.influxdbclient._
 import net.oda.Config.props
 import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
 import net.oda.db.InfluxDb.db
-import net.oda.rep.cfd.{CFDReporter, CFDInfluxDb}
+import net.oda.rep.cfd.{CFDInfluxDb, CFDReporter}
 import net.oda.{Config, FileIO, IT}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Dataset, Row}
@@ -20,33 +18,47 @@ import org.scalatest.FreeSpec
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class CrypCFDInfluxSpec extends FreeSpec {
+class CFDInfluxSpec extends FreeSpec {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
-  val projectKey = "CRYP"
   val dataLocation = Config.dataLocation
 
-  s"Generate ${projectKey} CFD" taggedAs (IT) in {
+  s"Generate CRYP CFD" taggedAs (IT) in {
     writeToDb(
       generate(
-        projectKey,
-        props.jira.projects(projectKey).entryState,
-        props.jira.projects(projectKey).finalState,
+        "CRYP",
+        props.jira.projects("CRYP").entryState,
+        props.jira.projects("CRYP").finalState,
         Seq("Story", "Bug").contains,
         _ => true,
         ChronoUnit.DAYS),
+      "CRYP",
       "All To Do->Done")
   }
 
-  s"Generate ${projectKey} Critical Bugs CFD" taggedAs (IT) in {
+  s"Generate CRYP Critical Bugs CFD" taggedAs (IT) in {
     writeToDb(
       generate(
-        projectKey,
-        props.jira.projects(projectKey).entryState,
-        props.jira.projects(projectKey).finalState,
+        "CRYP",
+        props.jira.projects("CRYP").entryState,
+        props.jira.projects("CRYP").finalState,
         Seq("Bug").contains,
         "Critical".equals,
         ChronoUnit.DAYS),
+      "CRYP",
       "Critical Bugs")
+  }
+
+  s"Generate AW CFD" taggedAs (IT) in {
+    writeToDb(
+      generate(
+        "AW",
+        props.jira.projects("AW").entryState,
+        props.jira.projects("AW").finalState,
+        Seq("Story", "Bug").contains,
+        _ => true,
+        ChronoUnit.DAYS),
+      "AW",
+      "All To Do->Done")
   }
 
   def generate(
@@ -76,10 +88,10 @@ class CrypCFDInfluxSpec extends FreeSpec {
       .apply(s"${dataLocation}/jira-issues-${projectKey}.json")
   }
 
-  def writeToDb(report: Dataset[Row], qualifier: String): Unit = {
+  def writeToDb(report: Dataset[Row], projectKey: String, qualifier: String): Unit = {
     val points = CFDInfluxDb.toPoints(
       report,
-      "oda",
+      "cfd",
       projectKey,
       qualifier,
       props.jira.projects(projectKey).entryState,

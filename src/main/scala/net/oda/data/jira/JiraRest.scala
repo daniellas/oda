@@ -9,6 +9,8 @@ import net.oda.{Config, FileIO}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 object JiraRest {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
   val root = "jira"
@@ -28,16 +30,16 @@ object JiraRest {
       .blockingHandler(getConfig)
   }
 
-  def downloadData(ctx: RoutingContext): Unit =
+  def downloadData(ctx: RoutingContext): Unit = {
     RequestReaders.param(ctx, "projectKey")
-      .map(pk => JiraClient.searchIssues
-        .andThen(Serialization.write(_))
-        .andThen(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${pk}.json", _))
-        .apply(pk)
+      .map(pk => JiraClient.searchIssues(pk)
+        .map(Serialization.write(_))
+        .onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${pk}.json", _)))
       )
-      .map(_ => ResponseWriters.end)
+      .map(ResponseWriters.end)
       .getOrElse(ResponseWriters.notFound)
       .accept(ctx)
+  }
 
   def getProjects(ctx: RoutingContext): Unit =
     ResponseWriters

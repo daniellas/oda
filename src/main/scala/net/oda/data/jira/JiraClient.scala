@@ -1,15 +1,17 @@
 package net.oda.data.jira
 
-import java.util.{Base64, Collections, HashMap, Map}
+import java.util.Base64
 
-import com.empirica.rest.client.vertx.VertxAsyncHttpExecutor
-import com.empirica.rest.client.{Headers, RestClient}
 import com.typesafe.scalalogging.Logger
+import net.oda.Config
+import net.oda.rest.client.{RestClient, VertxHttpExecutor}
 import net.oda.vertx.VertxServices
-import net.oda.{Config, RestClients}
 import org.apache.http.HttpHeaders
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, FieldSerializer}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, Promise}
 
 object JiraClient {
   val log = Logger("jira-client")
@@ -21,36 +23,28 @@ object JiraClient {
     )
 
   val jiraAuthHeader = Config.props.jira.user + ":" + Config.props.jira.apiKey
-
-  val jiraHeaders: Map[String, java.util.List[String]] = new HashMap();
-
-  jiraHeaders.put(HttpHeaders.AUTHORIZATION, Collections.singletonList("Basic " + Base64.getEncoder.encodeToString(jiraAuthHeader.getBytes)))
-
-  val restClient = RestClient.using(VertxAsyncHttpExecutor.of(VertxServices.vertx, VertxServices.httpClient))
+  val jiraHeaders = Map(HttpHeaders.AUTHORIZATION -> Seq("Basic " + Base64.getEncoder.encodeToString(jiraAuthHeader.getBytes)))
+  val restClient = RestClient.using(VertxHttpExecutor.of(VertxServices.vertx, VertxServices.httpClient, (m, e) => log.error(m, e), m => log.debug(m)))
     .service(Config.props.jira.apiUrl)
-    .defaultHeaders(Headers.combine(RestClients.jsonHeaders, jiraHeaders))
+    .defaultHeaders(jiraHeaders)
 
   val expand = "changelog,-schema,-editmeta"
   val fields = "resolution,summary,reporter,created,resolutiondate,status,priority,project,issuetype,size"
+  val maxResults = 100
 
-  private def getIssuesPage(project: String, startAt: Int = 0): List[JiraIssues] = {
-    log.info("Downloading issues {} to {}", startAt, startAt + 100)
-    val body = restClient.resource("/search?jql=%s&expand=%s&fields=%s&startAt=%s&maxResults=100", s"project = $project", expand, fields, startAt.toString)
-      .getDefault
-      .execute
-      .toCompletableFuture
+  private def getIsses(project: String, issues: JiraIssues): Future[JiraIssues] = {
+    log.info("Downloading issues {} to {}", issues.startAt, issues.startAt + maxResults)
+
+    restClient
+      .resource("/search?jql=%s&expand=%s&fields=%s&startAt=%s&maxResults=%s", s"project=$project", expand, fields, issues.startAt, maxResults)
       .get
-      .getBody
-
-    val issues = Serialization.read[JiraIssues](body)
-
-    if (issues.total > startAt) {
-      getIssuesPage(project, startAt + issues.maxResults) ::: List(issues)
-    } else {
-      List(issues)
-    }
+      .execute
+      .filter(_.statusCode == 200)
+      .map(_.body.get)
+      .map(Serialization.read[JiraIssues])
+      .flatMap(i => if (i.total > issues.startAt) getIsses(project, new JiraIssues(i.startAt + maxResults, maxResults, i.total, issues.issues ::: i.issues)) else Promise.successful(issues).future)
   }
 
-  val searchIssues = (project: String) => getIssuesPage(project, 0).flatMap(_.issues)
+  def searchIssues(project: String) = getIsses(project, JiraIssues.empty).map(_.issues)
 
 }

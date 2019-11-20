@@ -25,15 +25,10 @@ object CFDReporter {
                         entryState: String,
                         finalState: String,
                         stateMapping: Map[String, String],
-                        history: Seq[WorkItemStatusHistory]) => {
-    val sortedHistory = history
+                        history: Seq[WorkItemStatusHistory]) =>
+    history
       .sortBy(_.created.getTime)
-      .map(i => WorkItemStatusHistory(
-        i.created,
-        stateMapping.get(i.name).getOrElse(i.name)
-      ))
-
-    sortedHistory
+      .map(i => WorkItemStatusHistory(i.created, stateMapping.get(i.name).getOrElse(i.name)))
       .foldLeft(List.empty[WorkItemStatusHistory])(
         (acc, i) => {
           if (acc.isEmpty && i.name == entryState) {
@@ -56,7 +51,6 @@ object CFDReporter {
         }
       )
       .sortBy(_.created.getTime)
-  }
 
   val calculateCycleTime = (tsDiffCalculator: (LocalDate, LocalDate) => Long, start: LocalDate, end: LocalDate) => tsDiffCalculator(start, end) + 1
 
