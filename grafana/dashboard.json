@@ -2,7 +2,7 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:89",
+        "$$hashKey": "object:92",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574307789002,
+  "iteration": 1574308644731,
   "links": [
     {
       "icon": "external link",
@@ -69,7 +69,7 @@
       ],
       "targets": [
         {
-          "$$hashKey": "object:361",
+          "$$hashKey": "object:161",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -97,6 +97,22 @@
               {
                 "params": [
                   "WIP"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "To Do"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "Done"
                 ],
                 "type": "field"
               }
@@ -164,7 +180,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:747",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -285,7 +300,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:884",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -400,7 +414,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:990",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -495,7 +508,6 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "tags": [],
           "text": "CRYP",
           "value": "CRYP"
         },
@@ -506,13 +518,11 @@
         "name": "projectKey",
         "options": [
           {
-            "$$hashKey": "object:1204",
             "selected": true,
             "text": "CRYP",
             "value": "CRYP"
           },
           {
-            "$$hashKey": "object:1205",
             "selected": false,
             "text": "AW",
             "value": "AW"
@@ -524,9 +534,9 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
-          "text": "All",
-          "value": "All"
+          "selected": false,
+          "text": "Critical bugs",
+          "value": "Critical bugs"
         },
         "hide": 0,
         "includeAll": false,
@@ -535,12 +545,12 @@
         "name": "qualifier",
         "options": [
           {
-            "selected": true,
+            "selected": false,
             "text": "All",
             "value": "All"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "Critical bugs",
             "value": "Critical bugs"
           }
@@ -551,6 +561,7 @@
       {
         "allValue": null,
         "current": {
+          "selected": true,
           "tags": [],
           "text": "DAYS",
           "value": "DAYS"
@@ -562,13 +573,13 @@
         "name": "cfdInterval",
         "options": [
           {
-            "$$hashKey": "object:701",
+            "$$hashKey": "object:121",
             "selected": false,
             "text": "WEEKS",
             "value": "WEEKS"
           },
           {
-            "$$hashKey": "object:702",
+            "$$hashKey": "object:122",
             "selected": true,
             "text": "DAYS",
             "value": "DAYS"
@@ -611,5 +622,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 46
+  "version": 47
 }
