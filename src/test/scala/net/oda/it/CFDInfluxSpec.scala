@@ -32,7 +32,22 @@ class CFDInfluxSpec extends FreeSpec {
         _ => true,
         ChronoUnit.DAYS),
       "CRYP",
-      "All To Do->Done")
+      "All",
+      ChronoUnit.DAYS)
+  }
+
+  s"Generate weekly CRYP CFD" taggedAs (IT) in {
+    writeToDb(
+      generate(
+        "CRYP",
+        props.jira.projects("CRYP").entryState,
+        props.jira.projects("CRYP").finalState,
+        Seq("Story", "Bug").contains,
+        _ => true,
+        ChronoUnit.WEEKS),
+      "CRYP",
+      "All",
+      ChronoUnit.WEEKS)
   }
 
   s"Generate CRYP Critical Bugs CFD" taggedAs (IT) in {
@@ -45,7 +60,8 @@ class CFDInfluxSpec extends FreeSpec {
         "Critical".equals,
         ChronoUnit.DAYS),
       "CRYP",
-      "Critical Bugs")
+      "Critical bugs",
+      ChronoUnit.DAYS)
   }
 
   s"Generate AW CFD" taggedAs (IT) in {
@@ -58,7 +74,8 @@ class CFDInfluxSpec extends FreeSpec {
         _ => true,
         ChronoUnit.DAYS),
       "AW",
-      "All To Do->Done")
+      "All",
+      ChronoUnit.DAYS)
   }
 
   def generate(
@@ -88,14 +105,15 @@ class CFDInfluxSpec extends FreeSpec {
       .apply(s"${dataLocation}/jira-issues-${projectKey}.json")
   }
 
-  def writeToDb(report: Dataset[Row], projectKey: String, qualifier: String): Unit = {
+  def writeToDb(report: Dataset[Row], projectKey: String, qualifier: String, interval: ChronoUnit): Unit = {
     val points = CFDInfluxDb.toPoints(
       report,
       "cfd",
       projectKey,
       qualifier,
       props.jira.projects(projectKey).entryState,
-      props.jira.projects(projectKey).finalState)
+      props.jira.projects(projectKey).finalState,
+      interval.name)
 
     Await.result(db.bulkWrite(points, precision = Precision.MILLISECONDS), 100 second)
   }
