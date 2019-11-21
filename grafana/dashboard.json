@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574282913488,
+  "iteration": 1574307789002,
   "links": [
     {
       "icon": "external link",
@@ -48,7 +48,7 @@
       "styles": [
         {
           "alias": "Time",
-          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "dateFormat": "YYY-MM-DD",
           "pattern": "Time",
           "type": "date"
         },
@@ -69,7 +69,7 @@
       ],
       "targets": [
         {
-          "$$hashKey": "object:182",
+          "$$hashKey": "object:361",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -113,6 +113,12 @@
               "key": "qualifier",
               "operator": "=~",
               "value": "/^$qualifier$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=~",
+              "value": "/^$cfdInterval$/"
             }
           ]
         }
@@ -158,6 +164,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:747",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -195,6 +202,12 @@
               "key": "project",
               "operator": "=~",
               "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=~",
+              "value": "/^$cfdInterval$/"
             }
           ]
         }
@@ -272,6 +285,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:884",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -300,6 +314,12 @@
               "key": "project",
               "operator": "=~",
               "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=~",
+              "value": "/^$cfdInterval$/"
             }
           ]
         }
@@ -324,7 +344,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:137",
           "decimals": null,
           "format": "short",
           "label": null,
@@ -334,7 +353,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:138",
           "decimals": null,
           "format": "short",
           "label": null,
@@ -358,7 +376,7 @@
         "x": 13,
         "y": 12
       },
-      "id": 4,
+      "id": 7,
       "legend": {
         "avg": false,
         "current": false,
@@ -382,6 +400,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:990",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -418,6 +437,12 @@
               "key": "project",
               "operator": "=~",
               "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=~",
+              "value": "/^$cfdInterval$/"
             }
           ]
         }
@@ -481,13 +506,13 @@
         "name": "projectKey",
         "options": [
           {
-            "$$hashKey": "object:385",
+            "$$hashKey": "object:1204",
             "selected": true,
             "text": "CRYP",
             "value": "CRYP"
           },
           {
-            "$$hashKey": "object:386",
+            "$$hashKey": "object:1205",
             "selected": false,
             "text": "AW",
             "value": "AW"
@@ -500,9 +525,8 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "tags": [],
-          "text": "All To Do->Done",
-          "value": "All To Do->Done"
+          "text": "All",
+          "value": "All"
         },
         "hide": 0,
         "includeAll": false,
@@ -511,19 +535,46 @@
         "name": "qualifier",
         "options": [
           {
-            "$$hashKey": "object:358",
             "selected": true,
-            "text": "All To Do->Done",
-            "value": "All To Do->Done"
+            "text": "All",
+            "value": "All"
           },
           {
-            "$$hashKey": "object:359",
             "selected": false,
-            "text": "Critical Bugs",
-            "value": "Critical Bugs"
+            "text": "Critical bugs",
+            "value": "Critical bugs"
           }
         ],
-        "query": "All To Do->Done,Critical Bugs",
+        "query": "All,Critical bugs",
+        "type": "custom"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "tags": [],
+          "text": "DAYS",
+          "value": "DAYS"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Interval",
+        "multi": false,
+        "name": "cfdInterval",
+        "options": [
+          {
+            "$$hashKey": "object:701",
+            "selected": false,
+            "text": "WEEKS",
+            "value": "WEEKS"
+          },
+          {
+            "$$hashKey": "object:702",
+            "selected": true,
+            "text": "DAYS",
+            "value": "DAYS"
+          }
+        ],
+        "query": "WEEKS,DAYS",
         "type": "custom"
       }
     ]
@@ -560,5 +611,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 38
+  "version": 46
 }
