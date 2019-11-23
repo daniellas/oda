@@ -1,4 +1,4 @@
-package net.oda.rep.cfd
+package net.oda.cfd
 
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -9,14 +9,14 @@ import net.oda.Config.{props, reportsLocation}
 import net.oda.FileCache.usingCache
 import net.oda.FileIO.{lastModified, loadTextContent}
 import net.oda.RestApi.apiRoot
-import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
+import net.oda.jira.{Issue, JiraTimestampSerializer, Mappers}
 import net.oda.json.LocalDateSerializer
 import net.oda.vertx.Paths.{path, variable}
 import net.oda.vertx.RequestReaders.{param, params}
 import net.oda.vertx.ResponseWriters
 import net.oda.{Config, Time}
-import org.apache.spark.sql.{Dataset, Row}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Dataset, Row}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 
@@ -73,7 +73,7 @@ object CFDRest {
               .andThen(Serialization.read[List[Issue]])
               .andThen(_.map(Mappers.jiraIssueToWorkItem(_, props.jira.projects(pk).estimateMapping.get)))
               .andThen(workItems => {
-                val data = CFDReporter.generate(
+                val data = CfdReporter.generate(
                   pk,
                   start,
                   items.contains,
@@ -85,7 +85,7 @@ object CFDRest {
                   interval,
                   aggregate,
                   workItems)
-                val aggregates = CFDReporter.calculateAggregates(data)
+                val aggregates = CfdReporter.calculateAggregates(data)
 
                 CFDReport(
                   datasetToMaps(data),

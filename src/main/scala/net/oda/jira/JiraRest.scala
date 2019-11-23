@@ -1,4 +1,4 @@
-package net.oda.data.jira
+package net.oda.jira
 
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.{Router, RoutingContext}

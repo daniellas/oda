@@ -1,10 +1,10 @@
-package net.oda.rep.cfd
+package net.oda.cfd
 
 import java.time.LocalDateTime
 
 import net.oda.Time.{weeksBetween, _}
-import net.oda.data.jira.JiraTimestampSerializer
-import net.oda.model.WorkItemStatusHistory
+import net.oda.jira.JiraTimestampSerializer
+import net.oda.workitem.WorkItemStatusHistory
 import org.json4s.DefaultFormats
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -24,7 +24,7 @@ class CFDSpec extends FlatSpec with Matchers {
   val now = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
 
   it should "normalize flow" in {
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -36,7 +36,7 @@ class CFDSpec extends FlatSpec with Matchers {
       WorkItemStatusHistory(now.plusHours(2), "done")
     )
 
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -49,7 +49,7 @@ class CFDSpec extends FlatSpec with Matchers {
       WorkItemStatusHistory(now.plusHours(3), "done")
     )
 
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -64,7 +64,7 @@ class CFDSpec extends FlatSpec with Matchers {
       WorkItemStatusHistory(now.plusHours(5), "done")
     )
 
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -81,7 +81,7 @@ class CFDSpec extends FlatSpec with Matchers {
       WorkItemStatusHistory(now.plusHours(7), "done")
     )
 
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -97,7 +97,7 @@ class CFDSpec extends FlatSpec with Matchers {
       WorkItemStatusHistory(now.plusHours(6), "done")
     )
 
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -113,7 +113,7 @@ class CFDSpec extends FlatSpec with Matchers {
   }
 
   it should "ignore undefined following states" in {
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -127,7 +127,7 @@ class CFDSpec extends FlatSpec with Matchers {
   }
 
   it should "ignore undefined states" in {
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -143,7 +143,7 @@ class CFDSpec extends FlatSpec with Matchers {
   }
 
   it should "use first entry state" in {
-    CFDReporter.normalizeFlow(
+    CfdReporter.normalizeFlow(
       referenceFlow,
       entryState,
       finalState,
@@ -159,8 +159,8 @@ class CFDSpec extends FlatSpec with Matchers {
   }
 
   it should "calculateCycleTime" in {
-    CFDReporter.calculateCycleTime(weeksBetween, "2018-05-21", "2018-05-28") should equal(2)
-    CFDReporter.calculateCycleTime(weeksBetween, "2018-05-28", "2018-08-20") should equal(13)
+    CfdReporter.calculateCycleTime(weeksBetween, "2018-05-21", "2018-05-28") should equal(2)
+    CfdReporter.calculateCycleTime(weeksBetween, "2018-05-28", "2018-08-20") should equal(13)
   }
 
 }

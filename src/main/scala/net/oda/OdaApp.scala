@@ -1,8 +1,8 @@
 package net.oda
 
 import com.typesafe.scalalogging.Logger
-import net.oda.data.jira.JiraRest
-import net.oda.rep.cfd.CFDRest
+import net.oda.cfd.CFDRest
+import net.oda.jira.JiraRest
 import net.oda.vertx.VertxServices
 
 object OdaApp {

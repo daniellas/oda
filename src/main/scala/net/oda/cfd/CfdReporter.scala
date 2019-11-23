@@ -1,4 +1,4 @@
-package net.oda.rep.cfd
+package net.oda.cfd
 
 import java.sql.Timestamp
 import java.time.temporal.ChronoUnit
@@ -7,7 +7,7 @@ import java.time.{LocalDate, ZonedDateTime}
 import com.typesafe.scalalogging.Logger
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
-import net.oda.model.{WorkItem, WorkItemStatusHistory}
+import net.oda.workitem.{WorkItem, WorkItemStatusHistory}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
@@ -15,9 +15,14 @@ import org.apache.spark.sql.{Column, Dataset, Row}
 
 import scala.collection.SortedMap
 
-case class Item(id: String, `type`: String, created: Timestamp, status: String, estimate: Double)
+case class CfdItem(
+                        id: String,
+                        `type`: String,
+                        created: Timestamp,
+                        status: String,
+                        estimate: Double)
 
-object CFDReporter {
+object CfdReporter {
   private val log = Logger("cfd-reporter")
 
   val normalizeFlow = (
@@ -106,7 +111,7 @@ object CFDReporter {
         i.estimate,
         normalizeFlow(referenceFlow, entryState, finalState, stateMapping, i.statusHistory)))
       .filter(_.statusHistory.nonEmpty)
-      .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
+      .flatMap(i => i.statusHistory.map(h => CfdItem(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
 
     val values = statusHistory

@@ -1,4 +1,4 @@
-package net.oda.db
+package net.oda.influx
 
 import com.paulgoldbaum.influxdbclient.InfluxDB
 import net.oda.Config.props

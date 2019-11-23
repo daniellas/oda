@@ -5,20 +5,19 @@ import java.time.temporal.ChronoUnit
 
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import net.oda.Config.props
-import net.oda.data.jira.{Issue, JiraTimestampSerializer, Mappers}
-import net.oda.db.InfluxDb.db
-import net.oda.rep.cfd.{CFDInfluxDb, CFDReporter}
-import net.oda.{Config, FileIO, IT}
+import net.oda.cfd.{CfdInfluxDb, CfdReporter}
+import net.oda.influx.InfluxDb.db
+import net.oda.jira.{JiraData, JiraTimestampSerializer, Mappers}
+import net.oda.{Config, IT}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Dataset, Row}
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization
 import org.scalatest.FreeSpec
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class CFDInfluxSpec extends FreeSpec {
+class CfdReportsSpec extends FreeSpec {
   implicit val formats = DefaultFormats + JiraTimestampSerializer
   val dataLocation = Config.dataLocation
 
@@ -86,11 +85,11 @@ class CFDInfluxSpec extends FreeSpec {
                 priorities: String => Boolean,
                 interval: ChronoUnit
               ) = {
-    FileIO.loadTextContent
-      .andThen(Serialization.read[List[Issue]])
+    JiraData
+      .load
       .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
       .andThen(
-        CFDReporter.generate(
+        CfdReporter.generate(
           projectKey,
           LocalDate.MIN,
           types,
@@ -102,13 +101,12 @@ class CFDInfluxSpec extends FreeSpec {
           interval,
           count(lit(1)),
           _))
-      .apply(s"${dataLocation}/jira-issues-${projectKey}.json")
+      .apply(JiraData.location(projectKey))
   }
 
   def writeToDb(report: Dataset[Row], projectKey: String, qualifier: String, interval: ChronoUnit): Unit = {
-    val points = CFDInfluxDb.toPoints(
+    val points = CfdInfluxDb.toPoints(
       report,
-      "cfd",
       projectKey,
       qualifier,
       props.jira.projects(projectKey).entryState,

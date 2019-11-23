@@ -1,7 +1,7 @@
 package net.oda.it
 
 import com.typesafe.scalalogging.Logger
-import net.oda.data.jira.{JiraClient, JiraTimestampSerializer}
+import net.oda.jira.{JiraClient, JiraTimestampSerializer}
 import net.oda.{Config, FileIO, IT}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization

@@ -1,4 +1,4 @@
-package net.oda.model
+package net.oda.workitem
 
 import java.sql.Timestamp
 

@@ -1,7 +1,7 @@
-package net.oda.data.jira
+package net.oda.jira
 
 import net.oda.Time.toTimestamp
-import net.oda.model.{WorkItem, WorkItemStatusHistory}
+import net.oda.workitem.{WorkItem, WorkItemStatusHistory}
 
 object Mappers {
 

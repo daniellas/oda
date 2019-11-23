@@ -1,4 +1,4 @@
-package net.oda.data.jira
+package net.oda.jira
 
 import java.util.Base64
 
