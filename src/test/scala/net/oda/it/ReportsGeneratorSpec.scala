@@ -24,9 +24,10 @@ class ReportsGeneratorSpec extends FreeSpec {
   val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming").contains(state)
 
   Config.props.jira.projects.foreach(p => {
+    Await.result(ReportsGenerator.jiraCountByTypePriority(p._1, ChronoUnit.DAYS, p._2.stateMapping), 100 second)
+    Await.result(ReportsGenerator.jiraCountDistinctAuthors(p._1, ChronoUnit.DAYS, devStateFilter, "DEV/QA"), 100 second)
+
     intervals.foreach(i => {
-      Await.result(ReportsGenerator.jiraCountByTypePriority(p._1, i, p._2.stateMapping), 100 second)
-      Await.result(ReportsGenerator.jiraCountDistinctAuthors(p._1, i, devStateFilter, "DEV/QA"), 100 second)
       cfdSpecs
         .map(s => ReportsGenerator
           .jiraCfd(p._1, p._2.entryState, p._2.finalState, p._2.stateMapping, p._2.referenceFlow, s.typesFilter, s.priosFilter, i, s.qualifier))

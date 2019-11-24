@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574578842189,
+  "iteration": 1574578842225,
   "links": [
     {
       "icon": "external link",
@@ -67,6 +67,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:3294",
           "groupBy": [
             {
               "params": [
@@ -99,12 +100,6 @@
             },
             {
               "condition": "AND",
-              "key": "interval",
-              "operator": "=~",
-              "value": "/^$cfdInterval$/"
-            },
-            {
-              "condition": "AND",
               "key": "type",
               "operator": "!=",
               "value": "Info"
@@ -115,7 +110,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Items by type",
+      "title": "JIRA items by type",
       "tooltip": {
         "shared": false,
         "sort": 0,
@@ -189,10 +184,11 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:1922",
           "groupBy": [
             {
               "params": [
-                "1w"
+                "$jiraInterval"
               ],
               "type": "time"
             },
@@ -231,12 +227,6 @@
             },
             {
               "condition": "AND",
-              "key": "interval",
-              "operator": "=",
-              "value": "WEEKS"
-            },
-            {
-              "condition": "AND",
               "key": "type",
               "operator": "!=",
               "value": "Epic"
@@ -265,7 +255,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Stories & Bugs added (weekly)",
+      "title": "Stories & Bugs added",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -335,6 +325,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:3455",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -424,6 +415,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "oda",
+      "description": "",
       "fill": 1,
       "gridPos": {
         "h": 7,
@@ -439,7 +431,7 @@
         "hideZero": true,
         "max": false,
         "min": false,
-        "show": true,
+        "show": false,
         "total": false,
         "values": false
       },
@@ -451,6 +443,8 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
+      "repeat": null,
+      "repeatDirection": "h",
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
@@ -461,13 +455,13 @@
           "groupBy": [
             {
               "params": [
-                "1w"
+                "$jiraInterval"
               ],
               "type": "time"
             }
           ],
           "limit": "",
-          "measurement": "jira_state_distinct_authors",
+          "measurement": "state_distinct_authors",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -482,7 +476,7 @@
               },
               {
                 "params": [],
-                "type": "sum"
+                "type": "max"
               }
             ]
           ],
@@ -491,12 +485,6 @@
               "key": "project",
               "operator": "=~",
               "value": "/^$projectKey$/"
-            },
-            {
-              "condition": "AND",
-              "key": "interval",
-              "operator": "=",
-              "value": "WEEKS"
             },
             {
               "condition": "AND",
@@ -510,7 +498,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Active team members (weekly)",
+      "title": "Active team members",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -527,6 +515,7 @@
       "yaxes": [
         {
           "$$hashKey": "object:571",
+          "decimals": 0,
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -588,6 +577,7 @@
       ],
       "targets": [
         {
+          "$$hashKey": "object:3561",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -698,6 +688,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:3707",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -1010,6 +1001,7 @@
         "allValue": null,
         "current": {
           "selected": true,
+          "tags": [],
           "text": "CRYP",
           "value": "CRYP"
         },
@@ -1020,11 +1012,13 @@
         "name": "projectKey",
         "options": [
           {
+            "$$hashKey": "object:1549",
             "selected": true,
             "text": "CRYP",
             "value": "CRYP"
           },
           {
+            "$$hashKey": "object:1550",
             "selected": false,
             "text": "AW",
             "value": "AW"
@@ -1036,6 +1030,7 @@
       {
         "allValue": null,
         "current": {
+          "tags": [],
           "text": "All stories and bugs",
           "value": "All stories and bugs"
         },
@@ -1088,11 +1083,13 @@
         "name": "cfdInterval",
         "options": [
           {
+            "$$hashKey": "object:4866",
             "selected": true,
             "text": "WEEKS",
             "value": "WEEKS"
           },
           {
+            "$$hashKey": "object:4867",
             "selected": false,
             "text": "DAYS",
             "value": "DAYS"
@@ -1100,12 +1097,39 @@
         ],
         "query": "WEEKS,DAYS",
         "type": "custom"
+      },
+      {
+        "auto": false,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "text": "4w",
+          "value": "4w"
+        },
+        "hide": 0,
+        "label": "Interval",
+        "name": "jiraInterval",
+        "options": [
+          {
+            "selected": false,
+            "text": "1w",
+            "value": "1w"
+          },
+          {
+            "selected": true,
+            "text": "4w",
+            "value": "4w"
+          }
+        ],
+        "query": "1w,4w",
+        "refresh": 2,
+        "type": "interval"
       }
     ]
   },
   "time": {
-    "from": "2018-05-12T11:46:23.543Z",
-    "to": "2019-11-24T07:03:46.534Z"
+    "from": "2018-04-29T23:51:52.467Z",
+    "to": "2019-11-24T19:15:06.121Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -1135,5 +1159,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 93
+  "version": 115
 }

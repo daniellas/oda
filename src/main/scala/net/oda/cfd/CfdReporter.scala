@@ -6,8 +6,9 @@ import java.time.{LocalDate, ZonedDateTime}
 
 import com.typesafe.scalalogging.Logger
 import net.oda.Spark.session.implicits._
+import net.oda.Time
 import net.oda.Time._
-import net.oda.workitem.{WorkItem, Status}
+import net.oda.workitem.{Status, WorkItem}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
@@ -75,7 +76,6 @@ object CfdReporter {
   val createdCol = "created"
   val thCol = "TH"
   val timeCol = "Time"
-
   val ctCol = "CT"
 
   def generate(
@@ -91,7 +91,7 @@ object CfdReporter {
                 aggregate: Column,
                 workItems: List[WorkItem]): Dataset[Row] = {
     log.info("CFD report generation started")
-    val createTsMapper = (ts: ZonedDateTime) => if (interval == ChronoUnit.DAYS) day(ts) else weekStart(ts)
+    val createTsMapper = Time.interval.apply(interval, _)
     val tsDiffCalculator = (start: LocalDate, end: LocalDate) => interval.between(start, end)
     val rangeProvider = (start: LocalDate, end: LocalDate) => (0L to tsDiffCalculator.apply(start, end)).toList.map(start.plus(_, interval))
 

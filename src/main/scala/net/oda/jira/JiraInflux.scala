@@ -30,7 +30,7 @@ object JiraInflux {
                                 ): Array[Point] = {
     dataset
       .collect
-      .map(r => Point("jira_state_distinct_authors", r.getAs[Timestamp](0).getTime)
+      .map(r => Point("state_distinct_authors", r.getAs[Timestamp](0).getTime)
         .addTag("project", projectKey)
         .addTag("interval", interval)
         .addTag("qualifier", qualifier)
