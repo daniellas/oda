@@ -5,7 +5,7 @@ import java.sql.Timestamp
 import com.paulgoldbaum.influxdbclient.Point
 import org.apache.spark.sql.{Dataset, Row}
 
-object CfdInfluxDb {
+object CfdInflux {
   def toPoints(
                 dataset: Dataset[Row],
                 projectKey: String,

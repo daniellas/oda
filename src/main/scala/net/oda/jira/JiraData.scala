@@ -9,4 +9,5 @@ object JiraData {
 
   val location = (projectKey: String) => s"${Config.dataLocation}/jira-issues-${projectKey}.json"
   val load = FileIO.loadTextContent.andThen(Serialization.read[List[Issue]])
+  val loadAsWorkItems = load.andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
 }

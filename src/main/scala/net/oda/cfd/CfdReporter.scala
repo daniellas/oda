@@ -7,7 +7,7 @@ import java.time.{LocalDate, ZonedDateTime}
 import com.typesafe.scalalogging.Logger
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
-import net.oda.workitem.{WorkItem, WorkItemStatusHistory}
+import net.oda.workitem.{WorkItem, Status}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
@@ -16,11 +16,11 @@ import org.apache.spark.sql.{Column, Dataset, Row}
 import scala.collection.SortedMap
 
 case class CfdItem(
-                        id: String,
-                        `type`: String,
-                        created: Timestamp,
-                        status: String,
-                        estimate: Double)
+                    id: String,
+                    `type`: String,
+                    created: Timestamp,
+                    status: String,
+                    estimate: Double)
 
 object CfdReporter {
   private val log = Logger("cfd-reporter")
@@ -30,11 +30,11 @@ object CfdReporter {
                         entryState: String,
                         finalState: String,
                         stateMapping: Map[String, String],
-                        history: Seq[WorkItemStatusHistory]) =>
+                        history: Seq[Status]) =>
     history
       .sortBy(_.created.getTime)
-      .map(i => WorkItemStatusHistory(i.created, stateMapping.get(i.name).getOrElse(i.name)))
-      .foldLeft(List.empty[WorkItemStatusHistory])(
+      .map(i => Status(i.created, stateMapping.get(i.name).getOrElse(i.name), None))
+      .foldLeft(List.empty[Status])(
         (acc, i) => {
           if (acc.isEmpty && i.name == entryState) {
             i :: acc

@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit
 
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import net.oda.Config.props
-import net.oda.cfd.{CfdInfluxDb, CfdReporter}
+import net.oda.cfd.{CfdInflux, CfdReporter}
 import net.oda.influx.InfluxDb.db
 import net.oda.jira.{JiraData, JiraTimestampSerializer, Mappers}
 import net.oda.{Config, IT}
@@ -105,7 +105,7 @@ class CfdReportsSpec extends FreeSpec {
   }
 
   def writeToDb(report: Dataset[Row], projectKey: String, qualifier: String, interval: ChronoUnit): Unit = {
-    val points = CfdInfluxDb.toPoints(
+    val points = CfdInflux.toPoints(
       report,
       projectKey,
       qualifier,

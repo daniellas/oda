@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 import net.oda.Time.{weeksBetween, _}
 import net.oda.jira.JiraTimestampSerializer
-import net.oda.workitem.WorkItemStatusHistory
+import net.oda.workitem.Status
 import org.json4s.DefaultFormats
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -30,10 +30,10 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "todo"),
-        WorkItemStatusHistory(now.plusHours(2), "done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "todo"),
-      WorkItemStatusHistory(now.plusHours(2), "done")
+        Status(now.plusHours(1), "todo"),
+        Status(now.plusHours(2), "done"))) should contain only(
+      Status(now.plusHours(1), "todo"),
+      Status(now.plusHours(2), "done")
     )
 
     CfdReporter.normalizeFlow(
@@ -42,11 +42,11 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "todo"),
-        WorkItemStatusHistory(now.plusHours(2), "progress"),
-        WorkItemStatusHistory(now.plusHours(3), "done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "todo"),
-      WorkItemStatusHistory(now.plusHours(3), "done")
+        Status(now.plusHours(1), "todo"),
+        Status(now.plusHours(2), "progress"),
+        Status(now.plusHours(3), "done"))) should contain only(
+      Status(now.plusHours(1), "todo"),
+      Status(now.plusHours(3), "done")
     )
 
     CfdReporter.normalizeFlow(
@@ -55,13 +55,13 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "todo"),
-        WorkItemStatusHistory(now.plusHours(2), "progress"),
-        WorkItemStatusHistory(now.plusHours(3), "review"),
-        WorkItemStatusHistory(now.plusHours(4), "progress"),
-        WorkItemStatusHistory(now.plusHours(5), "done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "todo"),
-      WorkItemStatusHistory(now.plusHours(5), "done")
+        Status(now.plusHours(1), "todo"),
+        Status(now.plusHours(2), "progress"),
+        Status(now.plusHours(3), "review"),
+        Status(now.plusHours(4), "progress"),
+        Status(now.plusHours(5), "done"))) should contain only(
+      Status(now.plusHours(1), "todo"),
+      Status(now.plusHours(5), "done")
     )
 
     CfdReporter.normalizeFlow(
@@ -70,15 +70,15 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "todo"),
-        WorkItemStatusHistory(now.plusHours(2), "progress"),
-        WorkItemStatusHistory(now.plusHours(3), "review"),
-        WorkItemStatusHistory(now.plusHours(4), "todo"),
-        WorkItemStatusHistory(now.plusHours(5), "progress"),
-        WorkItemStatusHistory(now.plusHours(6), "testing"),
-        WorkItemStatusHistory(now.plusHours(7), "done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "todo"),
-      WorkItemStatusHistory(now.plusHours(7), "done")
+        Status(now.plusHours(1), "todo"),
+        Status(now.plusHours(2), "progress"),
+        Status(now.plusHours(3), "review"),
+        Status(now.plusHours(4), "todo"),
+        Status(now.plusHours(5), "progress"),
+        Status(now.plusHours(6), "testing"),
+        Status(now.plusHours(7), "done"))) should contain only(
+      Status(now.plusHours(1), "todo"),
+      Status(now.plusHours(7), "done")
     )
 
     CfdReporter.normalizeFlow(
@@ -87,14 +87,14 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "todo"),
-        WorkItemStatusHistory(now.plusHours(2), "progress"),
-        WorkItemStatusHistory(now.plusHours(3), "testing"),
-        WorkItemStatusHistory(now.plusHours(4), "progress"),
-        WorkItemStatusHistory(now.plusHours(5), "testing"),
-        WorkItemStatusHistory(now.plusHours(6), "done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "todo"),
-      WorkItemStatusHistory(now.plusHours(6), "done")
+        Status(now.plusHours(1), "todo"),
+        Status(now.plusHours(2), "progress"),
+        Status(now.plusHours(3), "testing"),
+        Status(now.plusHours(4), "progress"),
+        Status(now.plusHours(5), "testing"),
+        Status(now.plusHours(6), "done"))) should contain only(
+      Status(now.plusHours(1), "todo"),
+      Status(now.plusHours(6), "done")
     )
 
     CfdReporter.normalizeFlow(
@@ -103,11 +103,11 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "todo"),
-        WorkItemStatusHistory(now.plusHours(2), "invalid"),
+        Status(now.plusHours(1), "todo"),
+        Status(now.plusHours(2), "invalid"),
       )) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "todo"),
-      WorkItemStatusHistory(now.plusHours(2), "done")
+      Status(now.plusHours(1), "todo"),
+      Status(now.plusHours(2), "done")
     )
 
   }
@@ -119,10 +119,10 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "backlog"),
-        WorkItemStatusHistory(now.plusHours(2), "todo"),
-        WorkItemStatusHistory(now.plusHours(3), "progress"),
-        WorkItemStatusHistory(now.plusHours(4), "backlog")
+        Status(now.plusHours(1), "backlog"),
+        Status(now.plusHours(2), "todo"),
+        Status(now.plusHours(3), "progress"),
+        Status(now.plusHours(4), "backlog")
       )) should be(Nil)
   }
 
@@ -133,12 +133,12 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "backlog"),
-        WorkItemStatusHistory(now.plusHours(2), "todo"),
-        WorkItemStatusHistory(now.plusHours(3), "done")
+        Status(now.plusHours(1), "backlog"),
+        Status(now.plusHours(2), "todo"),
+        Status(now.plusHours(3), "done")
       )) should contain only(
-      WorkItemStatusHistory(now.plusHours(2), "todo"),
-      WorkItemStatusHistory(now.plusHours(3), "done")
+      Status(now.plusHours(2), "todo"),
+      Status(now.plusHours(3), "done")
     )
   }
 
@@ -149,12 +149,12 @@ class CFDSpec extends FlatSpec with Matchers {
       finalState,
       stateMapping,
       List(
-        WorkItemStatusHistory(now.plusHours(1), "todo"),
-        WorkItemStatusHistory(now.plusHours(2), "done"),
-        WorkItemStatusHistory(now.plusHours(3), "todo"),
-        WorkItemStatusHistory(now.plusHours(4), "done"))) should contain only(
-      WorkItemStatusHistory(now.plusHours(1), "todo"),
-      WorkItemStatusHistory(now.plusHours(4), "done")
+        Status(now.plusHours(1), "todo"),
+        Status(now.plusHours(2), "done"),
+        Status(now.plusHours(3), "todo"),
+        Status(now.plusHours(4), "done"))) should contain only(
+      Status(now.plusHours(1), "todo"),
+      Status(now.plusHours(4), "done")
     )
   }
 

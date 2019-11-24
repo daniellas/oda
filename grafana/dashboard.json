@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574308644731,
+  "iteration": 1574577545797,
   "links": [
     {
       "icon": "external link",
@@ -27,92 +27,65 @@
   ],
   "panels": [
     {
-      "columns": [],
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
       "datasource": null,
-      "fontSize": "100%",
+      "fill": 1,
       "gridPos": {
-        "h": 12,
-        "w": 13,
+        "h": 8,
+        "w": 9,
         "x": 0,
         "y": 0
       },
-      "id": 6,
-      "links": [],
-      "pageSize": null,
-      "scroll": true,
-      "showHeader": true,
-      "sort": {
-        "col": 0,
-        "desc": true
+      "id": 15,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": true,
+        "values": true
       },
-      "styles": [
-        {
-          "alias": "Time",
-          "dateFormat": "YYY-MM-DD",
-          "pattern": "Time",
-          "type": "date"
-        },
-        {
-          "alias": "",
-          "colorMode": null,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "decimals": 2,
-          "pattern": "/.*/",
-          "thresholds": [],
-          "type": "number",
-          "unit": "short"
-        }
-      ],
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:161",
-          "groupBy": [],
-          "measurement": "cfd",
+          "groupBy": [
+            {
+              "params": [
+                "type"
+              ],
+              "type": "tag"
+            }
+          ],
+          "limit": "",
+          "measurement": "work_items_count",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
-          "resultFormat": "table",
+          "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "CT"
-                ],
-                "type": "field"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "TH"
-                ],
-                "type": "field"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "WIP"
-                ],
-                "type": "field"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "To Do"
-                ],
-                "type": "field"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "Done"
+                  "count"
                 ],
                 "type": "field"
               }
@@ -126,22 +99,205 @@
             },
             {
               "condition": "AND",
-              "key": "qualifier",
-              "operator": "=~",
-              "value": "/^$qualifier$/"
-            },
-            {
-              "condition": "AND",
               "key": "interval",
               "operator": "=~",
               "value": "/^$cfdInterval$/"
+            },
+            {
+              "condition": "AND",
+              "key": "type",
+              "operator": "!=",
+              "value": "Info"
             }
           ]
         }
       ],
-      "title": "Table",
-      "transform": "table",
-      "type": "table"
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Items by type",
+      "tooltip": {
+        "shared": false,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "series",
+        "name": null,
+        "show": false,
+        "values": [
+          "total"
+        ]
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fill": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 15,
+        "x": 9,
+        "y": 0
+      },
+      "id": 9,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "$$hashKey": "object:682",
+          "groupBy": [
+            {
+              "params": [
+                "1w"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "type"
+              ],
+              "type": "tag"
+            }
+          ],
+          "limit": "",
+          "measurement": "work_items_count",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "count"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "project",
+              "operator": "=~",
+              "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "type",
+              "operator": "!=",
+              "value": "Epic"
+            },
+            {
+              "condition": "AND",
+              "key": "type",
+              "operator": "!=",
+              "value": "Info"
+            },
+            {
+              "condition": "AND",
+              "key": "type",
+              "operator": "!=",
+              "value": "Sub-task"
+            },
+            {
+              "condition": "AND",
+              "key": "type",
+              "operator": "!=",
+              "value": "Task"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Stories & Bugs added (weekly)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ]
     },
     {
       "aliasColors": {},
@@ -151,10 +307,10 @@
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 12,
-        "w": 11,
-        "x": 13,
-        "y": 0
+        "h": 7,
+        "w": 9,
+        "x": 0,
+        "y": 8
       },
       "id": 3,
       "legend": {
@@ -230,7 +386,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "CFD",
+      "title": "To Do/Done cumulative",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -265,16 +421,246 @@
     },
     {
       "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 15,
+        "x": 9,
+        "y": 8
+      },
+      "id": 17,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "$$hashKey": "object:182",
+          "groupBy": [],
+          "limit": "",
+          "measurement": "jira_state_distinct_authors",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "count"
+                ],
+                "type": "field"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "project",
+              "operator": "=~",
+              "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "qualifier",
+              "operator": "=",
+              "value": "DEV/QA"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Active team members (weekly)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ]
+    },
+    {
+      "columns": [],
+      "datasource": null,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 7,
+        "w": 9,
+        "x": 0,
+        "y": 15
+      },
+      "id": 6,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYY-MM-DD",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "groupBy": [],
+          "measurement": "cfd",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "CT"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "TH"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "WIP"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "To Do"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "Done"
+                ],
+                "type": "field"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "project",
+              "operator": "=~",
+              "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "qualifier",
+              "operator": "=~",
+              "value": "/^$qualifier$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=~",
+              "value": "/^$cfdInterval$/"
+            }
+          ]
+        }
+      ],
+      "title": "CFD",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 8,
-        "w": 13,
-        "x": 0,
-        "y": 12
+        "h": 7,
+        "w": 15,
+        "x": 9,
+        "y": 15
       },
       "id": 2,
       "legend": {
@@ -373,6 +759,118 @@
           "logBase": 1,
           "max": null,
           "min": null,
+          "show": true
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 15,
+        "x": 9,
+        "y": 22
+      },
+      "id": 16,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [],
+          "hide": false,
+          "measurement": "cfd",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "WIP"
+                ],
+                "type": "field"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "qualifier",
+              "operator": "=~",
+              "value": "/^$qualifier$/"
+            },
+            {
+              "condition": "AND",
+              "key": "project",
+              "operator": "=~",
+              "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=~",
+              "value": "/^$cfdInterval$/"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "WIP",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transparent": false,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 2,
+          "max": null,
+          "min": null,
           "show": false
         }
       ]
@@ -386,9 +884,9 @@
       "fill": 0,
       "gridPos": {
         "h": 8,
-        "w": 11,
-        "x": 13,
-        "y": 12
+        "w": 15,
+        "x": 9,
+        "y": 29
       },
       "id": 7,
       "legend": {
@@ -429,14 +927,6 @@
                 ],
                 "type": "field"
               }
-            ],
-            [
-              {
-                "params": [
-                  "WIP"
-                ],
-                "type": "field"
-              }
             ]
           ],
           "tags": [
@@ -463,7 +953,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "WIP & CT",
+      "title": "CT",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -490,10 +980,10 @@
         {
           "format": "short",
           "label": null,
-          "logBase": 1,
+          "logBase": 2,
           "max": null,
           "min": null,
-          "show": true
+          "show": false
         }
       ]
     }
@@ -534,23 +1024,23 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "Critical bugs",
-          "value": "Critical bugs"
+          "selected": true,
+          "text": "All",
+          "value": "All"
         },
         "hide": 0,
         "includeAll": false,
-        "label": "Qualifier",
+        "label": "CFD Qualifier",
         "multi": false,
         "name": "qualifier",
         "options": [
           {
-            "selected": false,
+            "selected": true,
             "text": "All",
             "value": "All"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "Critical bugs",
             "value": "Critical bugs"
           }
@@ -563,24 +1053,24 @@
         "current": {
           "selected": true,
           "tags": [],
-          "text": "DAYS",
-          "value": "DAYS"
+          "text": "WEEKS",
+          "value": "WEEKS"
         },
         "hide": 0,
         "includeAll": false,
-        "label": "Interval",
+        "label": "CFD Interval",
         "multi": false,
         "name": "cfdInterval",
         "options": [
           {
-            "$$hashKey": "object:121",
-            "selected": false,
+            "$$hashKey": "object:1324",
+            "selected": true,
             "text": "WEEKS",
             "value": "WEEKS"
           },
           {
-            "$$hashKey": "object:122",
-            "selected": true,
+            "$$hashKey": "object:1325",
+            "selected": false,
             "text": "DAYS",
             "value": "DAYS"
           }
@@ -591,8 +1081,8 @@
     ]
   },
   "time": {
-    "from": "now-90d",
-    "to": "now"
+    "from": "2018-05-04T07:04:36.614Z",
+    "to": "2019-11-24T06:51:09.138Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -622,5 +1112,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 47
+  "version": 90
 }

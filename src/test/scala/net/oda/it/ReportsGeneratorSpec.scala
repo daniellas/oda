@@ -1,16 +1,11 @@
 package net.oda.it
 
-import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import com.typesafe.scalalogging.Logger
-import net.oda.Config.props
-import net.oda.cfd.{CfdInfluxDb, CfdReporter}
-import net.oda.influx.InfluxDb.db
-import net.oda.jira.{JiraData, JiraInfluxDb, JiraReporter, Mappers}
+import net.oda.jira.{JiraData, JiraReporter}
+import net.oda.rep.ReportsGenerator
 import net.oda.{Config, IT}
-import org.apache.spark.sql.functions.{count, lit}
 import org.scalatest.FreeSpec
 
 import scala.concurrent.Await
@@ -24,61 +19,17 @@ class ReportsGeneratorSpec extends FreeSpec {
   val cfdSpecs = Seq(
     CfdSpec("All", Seq("Story", "Bug").contains, _ => true),
     CfdSpec("Critical bugs", "Bug".equals, "Critical".equals))
+  val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming").contains(state)
 
-  s"Generate reports" taggedAs (IT) in {
-    Config.props.jira.projects.foreach(p => {
-      intervals.foreach(i => {
-        jiraCountByTypePriority(p._1, i)
-        cfdSpecs.foreach(s => jiraCfd(p._1, p._2.entryState, p._2.finalState, s.typesFilter, s.priosFilter, i, s.qualifier))
-      })
+  Config.props.jira.projects.foreach(p => {
+    intervals.foreach(i => {
+      Await.result(ReportsGenerator.jiraCountByTypePriority(p._1, i, p._2.stateMapping), 100 second)
+      Await.result(ReportsGenerator.jiraCountDistinctAuthors(p._1, i, devStateFilter, "DEV/QA"), 100 second)
+      cfdSpecs
+        .map(s => ReportsGenerator
+          .jiraCfd(p._1, p._2.entryState, p._2.finalState, p._2.stateMapping, p._2.referenceFlow, s.typesFilter, s.priosFilter, i, s.qualifier))
+        .foreach(Await.result(_, 100 second))
     })
-  }
-
-  def jiraCountByTypePriority(projectKey: String, interval: ChronoUnit) = {
-    JiraData
-      .load
-      .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
-      .andThen(JiraReporter.countByTypePriority(_, Config.props.jira.projects(projectKey).stateMapping, interval))
-      .andThen(JiraInfluxDb.countByTypePriorityPoints(_, projectKey, interval.name))
-      .andThen(points => Await.result(db.bulkWrite(points, precision = Precision.MILLISECONDS), 100 second))
-      .apply(JiraData.location(projectKey))
-  }
-
-  def jiraCfd(
-               projectKey: String,
-               entryState: String,
-               finalState: String,
-               types: String => Boolean,
-               priorities: String => Boolean,
-               interval: ChronoUnit,
-               qualifier: String
-             ) = {
-    JiraData
-      .load
-      .andThen(_.map(Mappers.jiraIssueToWorkItem(_, _ => Some(0))))
-      .andThen(
-        CfdReporter.generate(
-          projectKey,
-          LocalDate.MIN,
-          types,
-          priorities,
-          props.jira.projects(projectKey).referenceFlow,
-          entryState,
-          finalState,
-          props.jira.projects(projectKey).stateMapping,
-          interval,
-          count(lit(1)),
-          _))
-      .andThen(
-        CfdInfluxDb.toPoints(
-          _,
-          projectKey,
-          qualifier,
-          props.jira.projects(projectKey).entryState,
-          props.jira.projects(projectKey).finalState,
-          interval.name))
-      .andThen(points => Await.result(db.bulkWrite(points, precision = Precision.MILLISECONDS), 100 second))
-      .apply(JiraData.location(projectKey))
-  }
+  })
 
 }
