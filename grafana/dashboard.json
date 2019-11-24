@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574577545797,
+  "iteration": 1574578842189,
   "links": [
     {
       "icon": "external link",
@@ -34,7 +34,7 @@
       "datasource": null,
       "fill": 1,
       "gridPos": {
-        "h": 8,
+        "h": 5,
         "w": 9,
         "x": 0,
         "y": 0
@@ -189,7 +189,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:682",
           "groupBy": [
             {
               "params": [
@@ -307,10 +306,10 @@
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 7,
+        "h": 10,
         "w": 9,
         "x": 0,
-        "y": 8
+        "y": 5
       },
       "id": 3,
       "legend": {
@@ -440,7 +439,7 @@
         "hideZero": true,
         "max": false,
         "min": false,
-        "show": false,
+        "show": true,
         "total": false,
         "values": false
       },
@@ -454,12 +453,19 @@
       "renderer": "flot",
       "seriesOverrides": [],
       "spaceLength": 10,
-      "stack": true,
+      "stack": false,
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:182",
-          "groupBy": [],
+          "$$hashKey": "object:369",
+          "groupBy": [
+            {
+              "params": [
+                "1w"
+              ],
+              "type": "time"
+            }
+          ],
           "limit": "",
           "measurement": "jira_state_distinct_authors",
           "orderByTime": "ASC",
@@ -473,6 +479,10 @@
                   "count"
                 ],
                 "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
               }
             ]
           ],
@@ -516,6 +526,7 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:571",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -524,6 +535,7 @@
           "show": true
         },
         {
+          "$$hashKey": "object:572",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -538,7 +550,7 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 7,
+        "h": 14,
         "w": 9,
         "x": 0,
         "y": 15
@@ -1024,9 +1036,8 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
-          "text": "All",
-          "value": "All"
+          "text": "All stories and bugs",
+          "value": "All stories and bugs"
         },
         "hide": 0,
         "includeAll": false,
@@ -1035,17 +1046,31 @@
         "name": "qualifier",
         "options": [
           {
+            "$$hashKey": "object:1028",
             "selected": true,
-            "text": "All",
-            "value": "All"
+            "text": "All stories and bugs",
+            "value": "All stories and bugs"
           },
           {
+            "$$hashKey": "object:1029",
+            "selected": false,
+            "text": "All stories",
+            "value": "All stories"
+          },
+          {
+            "$$hashKey": "object:1030",
+            "selected": false,
+            "text": "All bugs",
+            "value": "All bugs"
+          },
+          {
+            "$$hashKey": "object:1031",
             "selected": false,
             "text": "Critical bugs",
             "value": "Critical bugs"
           }
         ],
-        "query": "All,Critical bugs",
+        "query": "All stories and bugs,All stories,All bugs,Critical bugs",
         "type": "custom"
       },
       {
@@ -1063,13 +1088,11 @@
         "name": "cfdInterval",
         "options": [
           {
-            "$$hashKey": "object:1324",
             "selected": true,
             "text": "WEEKS",
             "value": "WEEKS"
           },
           {
-            "$$hashKey": "object:1325",
             "selected": false,
             "text": "DAYS",
             "value": "DAYS"
@@ -1081,8 +1104,8 @@
     ]
   },
   "time": {
-    "from": "2018-05-04T07:04:36.614Z",
-    "to": "2019-11-24T06:51:09.138Z"
+    "from": "2018-05-12T11:46:23.543Z",
+    "to": "2019-11-24T07:03:46.534Z"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -1112,5 +1135,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 90
+  "version": 93
 }
