@@ -31,4 +31,10 @@ object Time {
   val weeksRange = (start: LocalDate, end: LocalDate) => (0L to weeksBetween(start, end)).toList.map(start.plusWeeks)
 
   val daysRange = (start: LocalDate, end: LocalDate) => (0L to daysBetween(start, end)).toList.map(start.plusDays)
+
+  def interval(interval: ChronoUnit, ts: Timestamp): Timestamp = interval match {
+    case ChronoUnit.DAYS => day(ts)
+    case ChronoUnit.WEEKS => weekStart(ts)
+    case _ => ts
+  }
 }

@@ -1,4 +1,4 @@
-package net.oda.data.jira
+package net.oda.jira
 
 import java.time.ZonedDateTime
 
@@ -28,4 +28,9 @@ case class JiraIssues(
                        startAt: Integer,
                        maxResults: Integer,
                        total: Integer,
-                       issues: List[Issue])
+                       issues: List[Issue]) {
+}
+
+object JiraIssues {
+  def empty = JiraIssues(0, null, null, Nil)
+}

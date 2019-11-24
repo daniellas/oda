@@ -30,12 +30,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.empirica.algo</groupId>
-            <artifactId>rest-client-vertx</artifactId>
-            <version>2.0.1</version>
-        </dependency>
-
-        <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
             <version>3.5.4</version>
@@ -51,6 +45,12 @@
             <groupId>com.typesafe.scala-logging</groupId>
             <artifactId>scala-logging_${scala.compat}</artifactId>
             <version>3.9.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.paulgoldbaum</groupId>
+            <artifactId>scala-influxdb-client_${scala.compat}</artifactId>
+            <version>0.6.1</version>
         </dependency>
 
         <dependency>

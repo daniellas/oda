@@ -1,4 +1,4 @@
-package net.oda.rep.cfd
+package net.oda.cfd
 
 import java.sql.Timestamp
 import java.time.temporal.ChronoUnit
@@ -7,8 +7,7 @@ import java.time.{LocalDate, ZonedDateTime}
 import com.typesafe.scalalogging.Logger
 import net.oda.Spark.session.implicits._
 import net.oda.Time._
-import net.oda.model.{WorkItem, WorkItemStatusHistory}
-import net.oda.rep.cfd.CFDReporter.thCol
+import net.oda.workitem.{WorkItem, Status}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
@@ -16,9 +15,14 @@ import org.apache.spark.sql.{Column, Dataset, Row}
 
 import scala.collection.SortedMap
 
-case class Item(id: String, `type`: String, created: Timestamp, status: String, estimate: Double)
+case class CfdItem(
+                    id: String,
+                    `type`: String,
+                    created: Timestamp,
+                    status: String,
+                    estimate: Double)
 
-object CFDReporter {
+object CfdReporter {
   private val log = Logger("cfd-reporter")
 
   val normalizeFlow = (
@@ -26,16 +30,11 @@ object CFDReporter {
                         entryState: String,
                         finalState: String,
                         stateMapping: Map[String, String],
-                        history: Seq[WorkItemStatusHistory]) => {
-    val sortedHistory = history
+                        history: Seq[Status]) =>
+    history
       .sortBy(_.created.getTime)
-      .map(i => WorkItemStatusHistory(
-        i.created,
-        stateMapping.get(i.name).getOrElse(i.name)
-      ))
-
-    sortedHistory
-      .foldLeft(List.empty[WorkItemStatusHistory])(
+      .map(i => Status(i.created, stateMapping.get(i.name).getOrElse(i.name), None))
+      .foldLeft(List.empty[Status])(
         (acc, i) => {
           if (acc.isEmpty && i.name == entryState) {
             i :: acc
@@ -57,7 +56,6 @@ object CFDReporter {
         }
       )
       .sortBy(_.created.getTime)
-  }
 
   val calculateCycleTime = (tsDiffCalculator: (LocalDate, LocalDate) => Long, start: LocalDate, end: LocalDate) => tsDiffCalculator(start, end) + 1
 
@@ -113,7 +111,7 @@ object CFDReporter {
         i.estimate,
         normalizeFlow(referenceFlow, entryState, finalState, stateMapping, i.statusHistory)))
       .filter(_.statusHistory.nonEmpty)
-      .flatMap(i => i.statusHistory.map(h => Item(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
+      .flatMap(i => i.statusHistory.map(h => CfdItem(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
 
     val values = statusHistory
@@ -171,12 +169,12 @@ object CFDReporter {
     val res = cumulativeValues
       .join(cycleTime, 'created === cycleTime("ct_" + createdCol))
       .orderBy('created)
-      .withColumn(timeCol, date_format('created, "yyyy-MM-dd"))
-      .drop("ct_" + createdCol, createdCol, entryState, finalState, wipCol)
+      .drop("ct_" + createdCol, entryState, finalState, wipCol)
+      .withColumnRenamed("created", timeCol)
       .withColumnRenamed(cumulativeCol(entryState), entryState)
       .withColumnRenamed(cumulativeCol(finalState), finalState)
       .withColumnRenamed(cumulativeCol(wipCol), wipCol)
-      .withColumn(thCol, format_number(col(wipCol) / 'CT, 2))
+      .withColumn(thCol, col(wipCol) / 'CT)
       .repartition(1)
 
     log.info("CFD report generation complete")

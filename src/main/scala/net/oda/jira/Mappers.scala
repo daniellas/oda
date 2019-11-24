@@ -1,13 +1,13 @@
-package net.oda.data.jira
+package net.oda.jira
 
 import net.oda.Time.toTimestamp
-import net.oda.model.{WorkItem, WorkItemStatusHistory}
+import net.oda.workitem.{WorkItem, Status}
 
 object Mappers {
 
   implicit val jiraIssueToWorkItem = (issue: Issue, estimateCalculator: String => Option[Double]) => {
     val historyItems = issue.changelog.histories
-      .flatMap(h => h.items.map(i => (h.created, i.fieldId, i.toStr)))
+      .flatMap(h => h.items.map(i => (h.created, i.fieldId, i.toStr, h.author)))
     val size = historyItems
       .filter(_._2.exists("customfield_10035".equals))
       .sortBy(_._1.getTime)
@@ -35,6 +35,6 @@ object Mappers {
       size.flatMap(estimateCalculator).getOrElse(storyPoints.getOrElse(0.0)),
       historyItems
         .filter(_._2.exists("status".equals))
-        .map(i => WorkItemStatusHistory(i._1, i._3.orNull)))
+        .map(i => Status(i._1, i._3.orNull, Some(i._4.displayName))))
   }
 }
