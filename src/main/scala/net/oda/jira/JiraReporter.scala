@@ -37,4 +37,16 @@ object JiraReporter {
       .groupBy('ts)
       .agg(countDistinct('author))
   }
+
+  def teamProductivityFactor(
+                              workItems: Seq[WorkItem],
+                              stateFilter: String => Boolean,
+                              interval: ChronoUnit) = {
+    WorkItems.flatten(workItems)
+      .filter(i => stateFilter.apply(i.statusName))
+      .toDF
+      .groupBy('statusAuthor)
+      .agg(min('created), max('created))
+      .show()
+  }
 }
