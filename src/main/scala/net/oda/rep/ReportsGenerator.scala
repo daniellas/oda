@@ -13,6 +13,15 @@ import scala.concurrent.Future
 
 object ReportsGenerator {
 
+  def workItemsChangelog(projectKey: String, interval: ChronoUnit) = {
+    JiraData
+      .loadAsWorkItems
+      .andThen(JiraReporter.workItemsChangeLog(_, interval))
+      .andThen(JiraInflux.workItemsChangelog(_, projectKey, interval.name))
+      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .apply(JiraData.location(projectKey))
+  }
+
   def jiraCountByTypePriority(projectKey: String, interval: ChronoUnit, stateMapping: Map[String, String]) = {
     JiraData
       .loadAsWorkItems

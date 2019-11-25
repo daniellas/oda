@@ -28,7 +28,23 @@ case class WorkItemStatus(
                            estimate: Double,
                            statusCreated: Timestamp,
                            statusName: String,
-                           statusAuthor: Option[String])
+                           statusAuthor: Option[String]) {
+  def mapTimes(item: WorkItemStatus, mapper: Timestamp => Timestamp) = {
+    WorkItemStatus(
+      item.id,
+      item.name,
+      item.`type`,
+      item.priority,
+      mapper.apply(item.created),
+      item.closed,
+      item.createdBy,
+      item.size,
+      item.estimate,
+      mapper.apply(item.statusCreated),
+      item.statusName,
+      item.statusAuthor)
+  }
+}
 
 object WorkItems {
   def flatten(workItems: Seq[WorkItem]): Seq[WorkItemStatus] = workItems.flatMap(i => i.statusHistory.map(s =>

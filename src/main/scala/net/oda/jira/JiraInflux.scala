@@ -3,9 +3,27 @@ package net.oda.jira
 import java.sql.Timestamp
 
 import com.paulgoldbaum.influxdbclient.Point
+import net.oda.workitem.WorkItemStatus
 import org.apache.spark.sql.{Dataset, Row}
 
 object JiraInflux {
+  def workItemsChangelog(
+                          workItems: Seq[WorkItemStatus],
+                          projectKey: String,
+                          interval: String
+                        ): Array[Point] = {
+    workItems
+      .map(i => Point("work_items_change_log", i.statusCreated.getTime)
+        .addTag("project", projectKey)
+        .addTag("interval", interval)
+        .addTag("type", i.`type`)
+        .addTag("priority", i.priority)
+        .addTag("changedBy", i.statusAuthor.getOrElse("NONE"))
+        .addTag("status", i.statusName)
+        .addField("count", 1)
+      ).toArray
+  }
+
   def countByTypePriorityPoints(
                                  dataset: Dataset[Row],
                                  projectKey: String,

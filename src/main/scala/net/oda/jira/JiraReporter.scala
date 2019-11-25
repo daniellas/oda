@@ -4,14 +4,20 @@ import java.sql.Timestamp
 import java.time.temporal.ChronoUnit
 
 import org.apache.spark.sql.functions._
-
 import net.oda.Spark.session.implicits._
 import net.oda.Time
-import net.oda.workitem.{WorkItem, WorkItems}
+import net.oda.workitem.{WorkItem, WorkItemStatus, WorkItems}
 
 object JiraReporter {
 
   case class TypePriority(ts: Timestamp, `type`: String, priority: String)
+
+  def workItemsChangeLog(
+                          workItems: Seq[WorkItem],
+                          interval: ChronoUnit) = {
+    WorkItems.flatten(workItems)
+      .map(i => i.mapTimes(i, Time.interval(interval, _)))
+  }
 
   def countByTypePriority(
                            workItems: Seq[WorkItem],

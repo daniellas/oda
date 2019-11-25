@@ -15,12 +15,15 @@ class SingleReportsSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
 
   s"Generate" taggedAs (IT) in {
-    val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming").contains(state)
+    val devStateFilter = (state: String) => Seq("In Progress", "In Review", "Ready to test", "In testing").contains(state)
 
-    JiraData
-      .loadAsWorkItems
-      .andThen(JiraReporter.teamProductivityFactor(_, devStateFilter, ChronoUnit.WEEKS))
-      .apply(JiraData.location("CRYP"))
+//    JiraData
+//      .loadAsWorkItems
+//      .andThen(JiraReporter.teamProductivityFactor(_, devStateFilter, ChronoUnit.WEEKS))
+//      .apply(JiraData.location("CRYP"))
+
+    Await.result(ReportsGenerator.workItemsChangelog("CRYP", ChronoUnit.DAYS), 100 second)
+
   }
 
 }

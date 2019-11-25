@@ -25,6 +25,7 @@ class ReportsGeneratorSpec extends FreeSpec {
 
   s"Generate" taggedAs (IT) in {
     Config.props.jira.projects.foreach(p => {
+      Await.result(ReportsGenerator.workItemsChangelog(p._1, ChronoUnit.DAYS), 100 second)
       Await.result(ReportsGenerator.jiraCountByTypePriority(p._1, ChronoUnit.DAYS, p._2.stateMapping), 100 second)
       Await.result(ReportsGenerator.jiraCountDistinctAuthors(p._1, ChronoUnit.DAYS, devStateFilter, "DEV/QA"), 100 second)
 
