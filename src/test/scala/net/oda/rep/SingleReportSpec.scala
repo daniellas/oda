@@ -3,7 +3,7 @@ package net.oda.rep
 import java.time.temporal.ChronoUnit
 
 import com.typesafe.scalalogging.Logger
-import net.oda.IT
+import net.oda.{Config, IT}
 import org.scalatest.FreeSpec
 
 import scala.concurrent.Await
@@ -13,9 +13,21 @@ class SingleReportsSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
 
   s"Generate" taggedAs (IT) in {
-    val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming", "Done").contains(state)
+    val project = Config.props.jira.projects("CRYP")
 
-    Await.result(ReportsGenerator.teamProductivityFactor("CRYP", devStateFilter, ChronoUnit.DAYS, 12D * 7), 100 second)
+    Await.result(
+      ReportsGenerator
+        .jiraCfd(
+          "CRYP",
+          project.entryState,
+          project.finalState,
+          project.stateMapping,
+          project.referenceFlow,
+          Seq("Story", "Bug").contains,
+          _ => true,
+          ChronoUnit.MONTHS,
+          "All stories and bugs"
+        ), 100 second)
   }
 
 }

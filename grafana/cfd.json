@@ -2,7 +2,7 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:1292",
+        "$$hashKey": "object:95",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574800090399,
+  "iteration": 1574801660279,
   "links": [
     {
       "icon": "external link",
@@ -773,7 +773,7 @@
         "current": false,
         "max": false,
         "min": false,
-        "show": true,
+        "show": false,
         "total": false,
         "values": false
       },
@@ -791,6 +791,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:281",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -887,7 +888,7 @@
         "current": false,
         "max": false,
         "min": false,
-        "show": true,
+        "show": false,
         "total": false,
         "values": false
       },
@@ -905,6 +906,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:407",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -999,7 +1001,7 @@
         "current": false,
         "max": false,
         "min": false,
-        "show": true,
+        "show": false,
         "total": false,
         "values": false
       },
@@ -1017,6 +1019,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "$$hashKey": "object:533",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -1104,8 +1107,8 @@
         "current": {
           "selected": true,
           "tags": [],
-          "text": "CRYP",
-          "value": "CRYP"
+          "text": "AW",
+          "value": "AW"
         },
         "hide": 0,
         "includeAll": false,
@@ -1114,12 +1117,14 @@
         "name": "projectKey",
         "options": [
           {
-            "selected": true,
+            "$$hashKey": "object:664",
+            "selected": false,
             "text": "CRYP",
             "value": "CRYP"
           },
           {
-            "selected": false,
+            "$$hashKey": "object:665",
+            "selected": true,
             "text": "AW",
             "value": "AW"
           }
@@ -1130,7 +1135,7 @@
       {
         "allValue": null,
         "current": {
-          "tags": [],
+          "selected": true,
           "text": "All stories and bugs",
           "value": "All stories and bugs"
         },
@@ -1169,8 +1174,8 @@
         "current": {
           "selected": true,
           "tags": [],
-          "text": "WEEKS",
-          "value": "WEEKS"
+          "text": "MONTHS",
+          "value": "MONTHS"
         },
         "hide": 0,
         "includeAll": false,
@@ -1179,17 +1184,25 @@
         "name": "cfdInterval",
         "options": [
           {
+            "$$hashKey": "object:644",
             "selected": true,
+            "text": "MONTHS",
+            "value": "MONTHS"
+          },
+          {
+            "$$hashKey": "object:645",
+            "selected": false,
             "text": "WEEKS",
             "value": "WEEKS"
           },
           {
+            "$$hashKey": "object:646",
             "selected": false,
             "text": "DAYS",
             "value": "DAYS"
           }
         ],
-        "query": "WEEKS,DAYS",
+        "query": "MONTHS,WEEKS,DAYS",
         "type": "custom"
       },
       {
@@ -1253,5 +1266,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 123
+  "version": 127
 }
