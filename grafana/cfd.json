@@ -2,7 +2,7 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:92",
+        "$$hashKey": "object:1292",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574578842225,
+  "iteration": 1574800090399,
   "links": [
     {
       "icon": "external link",
@@ -67,7 +67,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:3294",
           "groupBy": [
             {
               "params": [
@@ -184,7 +183,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:1922",
           "groupBy": [
             {
               "params": [
@@ -325,7 +323,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:3455",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -447,11 +444,10 @@
       "repeatDirection": "h",
       "seriesOverrides": [],
       "spaceLength": 10,
-      "stack": false,
+      "stack": true,
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:369",
           "groupBy": [
             {
               "params": [
@@ -514,7 +510,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:571",
           "decimals": 0,
           "format": "short",
           "label": null,
@@ -524,7 +519,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:572",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -577,7 +571,6 @@
       ],
       "targets": [
         {
-          "$$hashKey": "object:3561",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -657,12 +650,122 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "oda",
-      "fill": 0,
+      "description": "",
+      "fill": 1,
       "gridPos": {
         "h": 7,
         "w": 15,
         "x": 9,
         "y": 15
+      },
+      "id": 18,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeatDirection": "h",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [],
+          "limit": "",
+          "measurement": "team_productivity_factor",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "experienceFactor"
+                ],
+                "type": "field"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "project",
+              "operator": "=~",
+              "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Team productivity factor",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "percentunit",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 15,
+        "x": 9,
+        "y": 22
       },
       "id": 2,
       "legend": {
@@ -688,7 +791,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:3707",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -777,7 +879,7 @@
         "h": 7,
         "w": 15,
         "x": 9,
-        "y": 22
+        "y": 29
       },
       "id": 16,
       "legend": {
@@ -889,7 +991,7 @@
         "h": 8,
         "w": 15,
         "x": 9,
-        "y": 29
+        "y": 36
       },
       "id": 7,
       "legend": {
@@ -1012,13 +1114,11 @@
         "name": "projectKey",
         "options": [
           {
-            "$$hashKey": "object:1549",
             "selected": true,
             "text": "CRYP",
             "value": "CRYP"
           },
           {
-            "$$hashKey": "object:1550",
             "selected": false,
             "text": "AW",
             "value": "AW"
@@ -1041,25 +1141,21 @@
         "name": "qualifier",
         "options": [
           {
-            "$$hashKey": "object:1028",
             "selected": true,
             "text": "All stories and bugs",
             "value": "All stories and bugs"
           },
           {
-            "$$hashKey": "object:1029",
             "selected": false,
             "text": "All stories",
             "value": "All stories"
           },
           {
-            "$$hashKey": "object:1030",
             "selected": false,
             "text": "All bugs",
             "value": "All bugs"
           },
           {
-            "$$hashKey": "object:1031",
             "selected": false,
             "text": "Critical bugs",
             "value": "Critical bugs"
@@ -1083,13 +1179,11 @@
         "name": "cfdInterval",
         "options": [
           {
-            "$$hashKey": "object:4866",
             "selected": true,
             "text": "WEEKS",
             "value": "WEEKS"
           },
           {
-            "$$hashKey": "object:4867",
             "selected": false,
             "text": "DAYS",
             "value": "DAYS"
@@ -1128,8 +1222,8 @@
     ]
   },
   "time": {
-    "from": "2018-04-29T23:51:52.467Z",
-    "to": "2019-11-24T19:15:06.121Z"
+    "from": "now-1y",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -1159,5 +1253,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 115
+  "version": 123
 }

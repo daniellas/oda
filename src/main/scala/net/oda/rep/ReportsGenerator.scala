@@ -61,4 +61,18 @@ object ReportsGenerator {
       .apply(JiraData.location(projectKey))
   }
 
+  def teamProductivityFactor(
+                              projectKey: String,
+                              stateFilter: String => Boolean,
+                              interval: ChronoUnit,
+                              learningTime: Double
+                            ) = {
+    JiraData
+      .loadAsWorkItems
+      .andThen(JiraReporter.teamProductivityFactor(_, stateFilter, interval, learningTime))
+      .andThen(JiraInflux.teamProductivityFactor(_, projectKey, interval.name()))
+      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .apply(JiraData.location(projectKey))
+  }
+
 }

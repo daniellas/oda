@@ -21,13 +21,14 @@ class ReportsGeneratorSpec extends FreeSpec {
     CfdSpec("All stories", Seq("Story").contains, _ => true),
     CfdSpec("All bugs", Seq("Bug").contains, _ => true),
     CfdSpec("Critical bugs", "Bug".equals, "Critical".equals))
-  val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming").contains(state)
+  val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming", "Done").contains(state)
 
   s"Generate" taggedAs (IT) in {
     Config.props.jira.projects.foreach(p => {
       Await.result(ReportsGenerator.workItemsChangelog(p._1, ChronoUnit.DAYS), 100 second)
       Await.result(ReportsGenerator.jiraCountByTypePriority(p._1, ChronoUnit.DAYS, p._2.stateMapping), 100 second)
       Await.result(ReportsGenerator.jiraCountDistinctAuthors(p._1, ChronoUnit.DAYS, devStateFilter, "DEV/QA"), 100 second)
+      Await.result(ReportsGenerator.teamProductivityFactor(p._1, devStateFilter, ChronoUnit.WEEKS, 12D), 100 second)
 
       intervals.foreach(i => {
         cfdSpecs

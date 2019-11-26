@@ -37,4 +37,7 @@ object Time {
     case ChronoUnit.WEEKS => weekStart(ts)
     case _ => ts
   }
+
+  val range: (ChronoUnit, Timestamp, Timestamp) => Seq[Timestamp] = (interval: ChronoUnit, start: Timestamp, end: Timestamp) =>
+    (0L to interval.between(start.toLocalDate, end.toLocalDate)).map(start.toLocalDate.plus(_, interval)).map(toTimestamp)
 }

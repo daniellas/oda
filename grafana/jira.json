@@ -2,6 +2,7 @@
   "annotations": {
     "list": [
       {
+        "$$hashKey": "object:1107",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -16,6 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
+  "iteration": 1574800034571,
   "links": [],
   "panels": [
     {
@@ -58,19 +60,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:507",
+          "$$hashKey": "object:1152",
           "groupBy": [
             {
               "params": [
                 "4w"
               ],
               "type": "time"
-            },
-            {
-              "params": [
-                "changedBy"
-              ],
-              "type": "tag"
             }
           ],
           "measurement": "work_items_change_log",
@@ -99,30 +95,6 @@
               "key": "project",
               "operator": "=",
               "value": "CRYP"
-            },
-            {
-              "condition": "AND",
-              "key": "type",
-              "operator": "=",
-              "value": "Story"
-            },
-            {
-              "condition": "AND",
-              "key": "status",
-              "operator": "=",
-              "value": "In Progress"
-            },
-            {
-              "condition": "OR",
-              "key": "status",
-              "operator": "=",
-              "value": "In Review"
-            },
-            {
-              "condition": "AND",
-              "key": "status",
-              "operator": "=",
-              "value": "Ready to test"
             }
           ]
         }
@@ -146,7 +118,6 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:1384",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -155,7 +126,6 @@
           "show": true
         },
         {
-          "$$hashKey": "object:1385",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -171,10 +141,19 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "datasource": "oda",
+        "filters": [],
+        "hide": 0,
+        "label": null,
+        "name": "FIlter",
+        "type": "adhoc"
+      }
+    ]
   },
   "time": {
-    "from": "now-6M",
+    "from": "now-2y",
     "to": "now"
   },
   "timepicker": {
@@ -205,5 +184,5 @@
   "timezone": "",
   "title": "JIRA",
   "uid": "jk95UfxZz",
-  "version": 6
+  "version": 11
 }

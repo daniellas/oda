@@ -109,7 +109,8 @@ object CfdReporter {
         i.createdBy,
         i.size,
         i.estimate,
-        normalizeFlow(referenceFlow, entryState, finalState, stateMapping, i.statusHistory)))
+        normalizeFlow(referenceFlow, entryState, finalState, stateMapping, i.statusHistory),
+        i.epicName))
       .filter(_.statusHistory.nonEmpty)
       .flatMap(i => i.statusHistory.map(h => CfdItem(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
