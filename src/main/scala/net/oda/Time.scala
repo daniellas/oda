@@ -24,6 +24,8 @@ object Time {
 
   implicit def day(dt: ZonedDateTime) = dt.truncatedTo(ChronoUnit.DAYS)
 
+  implicit def monthStart(dt: ZonedDateTime) = dt.truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
+
   val weeksBetween = (start: LocalDate, end: LocalDate) => ChronoUnit.WEEKS.between(start, end)
 
   val daysBetween = (start: LocalDate, end: LocalDate) => ChronoUnit.DAYS.between(start, end)
@@ -35,6 +37,7 @@ object Time {
   val interval: (ChronoUnit, Timestamp) => Timestamp = (interval: ChronoUnit, ts: Timestamp) => interval match {
     case ChronoUnit.DAYS => day(ts)
     case ChronoUnit.WEEKS => weekStart(ts)
+    case ChronoUnit.MONTHS => monthStart(ts)
     case _ => ts
   }
 

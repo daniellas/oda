@@ -61,5 +61,10 @@
   },
   "http": {
     "port": 8090
+  },
+  "influxdb": {
+    "host": "localhost",
+    "port": 8086,
+    "db": "oda"
   }
 }
