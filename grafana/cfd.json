@@ -2,7 +2,7 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:92",
+        "$$hashKey": "object:1292",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574577545797,
+  "iteration": 1574800090399,
   "links": [
     {
       "icon": "external link",
@@ -34,7 +34,7 @@
       "datasource": null,
       "fill": 1,
       "gridPos": {
-        "h": 8,
+        "h": 5,
         "w": 9,
         "x": 0,
         "y": 0
@@ -99,12 +99,6 @@
             },
             {
               "condition": "AND",
-              "key": "interval",
-              "operator": "=~",
-              "value": "/^$cfdInterval$/"
-            },
-            {
-              "condition": "AND",
               "key": "type",
               "operator": "!=",
               "value": "Info"
@@ -115,7 +109,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Items by type",
+      "title": "JIRA items by type",
       "tooltip": {
         "shared": false,
         "sort": 0,
@@ -189,11 +183,10 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:682",
           "groupBy": [
             {
               "params": [
-                "1w"
+                "$jiraInterval"
               ],
               "type": "time"
             },
@@ -232,12 +225,6 @@
             },
             {
               "condition": "AND",
-              "key": "interval",
-              "operator": "=",
-              "value": "WEEKS"
-            },
-            {
-              "condition": "AND",
               "key": "type",
               "operator": "!=",
               "value": "Epic"
@@ -266,7 +253,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Stories & Bugs added (weekly)",
+      "title": "Stories & Bugs added",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -307,10 +294,10 @@
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 7,
+        "h": 10,
         "w": 9,
         "x": 0,
-        "y": 8
+        "y": 5
       },
       "id": 3,
       "legend": {
@@ -425,6 +412,7 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "oda",
+      "description": "",
       "fill": 1,
       "gridPos": {
         "h": 7,
@@ -452,16 +440,24 @@
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
+      "repeat": null,
+      "repeatDirection": "h",
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": true,
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:182",
-          "groupBy": [],
+          "groupBy": [
+            {
+              "params": [
+                "$jiraInterval"
+              ],
+              "type": "time"
+            }
+          ],
           "limit": "",
-          "measurement": "jira_state_distinct_authors",
+          "measurement": "state_distinct_authors",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -473,6 +469,10 @@
                   "count"
                 ],
                 "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
               }
             ]
           ],
@@ -481,12 +481,6 @@
               "key": "project",
               "operator": "=~",
               "value": "/^$projectKey$/"
-            },
-            {
-              "condition": "AND",
-              "key": "interval",
-              "operator": "=",
-              "value": "WEEKS"
             },
             {
               "condition": "AND",
@@ -500,7 +494,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Active team members (weekly)",
+      "title": "Active team members",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -516,6 +510,7 @@
       },
       "yaxes": [
         {
+          "decimals": 0,
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -538,7 +533,7 @@
       "datasource": null,
       "fontSize": "100%",
       "gridPos": {
-        "h": 7,
+        "h": 14,
         "w": 9,
         "x": 0,
         "y": 15
@@ -655,12 +650,122 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "oda",
-      "fill": 0,
+      "description": "",
+      "fill": 1,
       "gridPos": {
         "h": 7,
         "w": 15,
         "x": 9,
         "y": 15
+      },
+      "id": 18,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeatDirection": "h",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupBy": [],
+          "limit": "",
+          "measurement": "team_productivity_factor",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "experienceFactor"
+                ],
+                "type": "field"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "project",
+              "operator": "=~",
+              "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Team productivity factor",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "percentunit",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 15,
+        "x": 9,
+        "y": 22
       },
       "id": 2,
       "legend": {
@@ -774,7 +879,7 @@
         "h": 7,
         "w": 15,
         "x": 9,
-        "y": 22
+        "y": 29
       },
       "id": 16,
       "legend": {
@@ -886,7 +991,7 @@
         "h": 8,
         "w": 15,
         "x": 9,
-        "y": 29
+        "y": 36
       },
       "id": 7,
       "legend": {
@@ -998,6 +1103,7 @@
         "allValue": null,
         "current": {
           "selected": true,
+          "tags": [],
           "text": "CRYP",
           "value": "CRYP"
         },
@@ -1024,9 +1130,9 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
-          "text": "All",
-          "value": "All"
+          "tags": [],
+          "text": "All stories and bugs",
+          "value": "All stories and bugs"
         },
         "hide": 0,
         "includeAll": false,
@@ -1036,8 +1142,18 @@
         "options": [
           {
             "selected": true,
-            "text": "All",
-            "value": "All"
+            "text": "All stories and bugs",
+            "value": "All stories and bugs"
+          },
+          {
+            "selected": false,
+            "text": "All stories",
+            "value": "All stories"
+          },
+          {
+            "selected": false,
+            "text": "All bugs",
+            "value": "All bugs"
           },
           {
             "selected": false,
@@ -1045,7 +1161,7 @@
             "value": "Critical bugs"
           }
         ],
-        "query": "All,Critical bugs",
+        "query": "All stories and bugs,All stories,All bugs,Critical bugs",
         "type": "custom"
       },
       {
@@ -1063,13 +1179,11 @@
         "name": "cfdInterval",
         "options": [
           {
-            "$$hashKey": "object:1324",
             "selected": true,
             "text": "WEEKS",
             "value": "WEEKS"
           },
           {
-            "$$hashKey": "object:1325",
             "selected": false,
             "text": "DAYS",
             "value": "DAYS"
@@ -1077,12 +1191,39 @@
         ],
         "query": "WEEKS,DAYS",
         "type": "custom"
+      },
+      {
+        "auto": false,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "text": "4w",
+          "value": "4w"
+        },
+        "hide": 0,
+        "label": "Interval",
+        "name": "jiraInterval",
+        "options": [
+          {
+            "selected": false,
+            "text": "1w",
+            "value": "1w"
+          },
+          {
+            "selected": true,
+            "text": "4w",
+            "value": "4w"
+          }
+        ],
+        "query": "1w,4w",
+        "refresh": 2,
+        "type": "interval"
       }
     ]
   },
   "time": {
-    "from": "2018-05-04T07:04:36.614Z",
-    "to": "2019-11-24T06:51:09.138Z"
+    "from": "now-1y",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -1112,5 +1253,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 90
+  "version": 123
 }

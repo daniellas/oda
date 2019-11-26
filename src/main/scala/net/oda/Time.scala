@@ -32,9 +32,12 @@ object Time {
 
   val daysRange = (start: LocalDate, end: LocalDate) => (0L to daysBetween(start, end)).toList.map(start.plusDays)
 
-  def interval(interval: ChronoUnit, ts: Timestamp): Timestamp = interval match {
+  val interval: (ChronoUnit, Timestamp) => Timestamp = (interval: ChronoUnit, ts: Timestamp) => interval match {
     case ChronoUnit.DAYS => day(ts)
     case ChronoUnit.WEEKS => weekStart(ts)
     case _ => ts
   }
+
+  val range: (ChronoUnit, Timestamp, Timestamp) => Seq[Timestamp] = (interval: ChronoUnit, start: Timestamp, end: Timestamp) =>
+    (0L to interval.between(start.toLocalDate, end.toLocalDate)).map(start.toLocalDate.plus(_, interval)).map(toTimestamp)
 }

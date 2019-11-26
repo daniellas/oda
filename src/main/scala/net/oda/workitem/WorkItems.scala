@@ -14,7 +14,8 @@ case class WorkItem(
                      createdBy: String,
                      size: Option[String],
                      estimate: Double,
-                     statusHistory: Seq[Status])
+                     statusHistory: Seq[Status],
+                     epicName: Option[String])
 
 case class WorkItemStatus(
                            id: String,
@@ -26,9 +27,27 @@ case class WorkItemStatus(
                            createdBy: String,
                            size: Option[String],
                            estimate: Double,
+                           eppicName: Option[String],
                            statusCreated: Timestamp,
                            statusName: String,
-                           statusAuthor: Option[String])
+                           statusAuthor: Option[String]) {
+  def mapTimes(item: WorkItemStatus, mapper: Timestamp => Timestamp) = {
+    WorkItemStatus(
+      item.id,
+      item.name,
+      item.`type`,
+      item.priority,
+      mapper.apply(item.created),
+      item.closed,
+      item.createdBy,
+      item.size,
+      item.estimate,
+      item.eppicName,
+      mapper.apply(item.statusCreated),
+      item.statusName,
+      item.statusAuthor)
+  }
+}
 
 object WorkItems {
   def flatten(workItems: Seq[WorkItem]): Seq[WorkItemStatus] = workItems.flatMap(i => i.statusHistory.map(s =>
@@ -42,6 +61,7 @@ object WorkItems {
       i.createdBy,
       i.size,
       i.estimate,
+      i.epicName,
       s.created,
       s.name,
       s.author)))

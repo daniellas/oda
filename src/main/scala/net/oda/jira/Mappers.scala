@@ -22,6 +22,12 @@ object Mappers {
       .flatMap(_._3)
       .filter(!_.isEmpty)
       .map(_.toDouble)
+    val epicName = historyItems
+      .filter(_._2.exists("customfield_10005".equals))
+      .sortBy(_._1.getTime)
+      .reverse
+      .headOption
+      .flatMap(_._3)
 
     WorkItem(
       issue.key,
@@ -35,6 +41,7 @@ object Mappers {
       size.flatMap(estimateCalculator).getOrElse(storyPoints.getOrElse(0.0)),
       historyItems
         .filter(_._2.exists("status".equals))
-        .map(i => Status(i._1, i._3.orNull, Some(i._4.displayName))))
+        .map(i => Status(i._1, i._3.orNull, Some(i._4.displayName))),
+      epicName)
   }
 }

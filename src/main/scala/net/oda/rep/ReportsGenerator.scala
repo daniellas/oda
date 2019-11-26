@@ -13,6 +13,15 @@ import scala.concurrent.Future
 
 object ReportsGenerator {
 
+  def workItemsChangelog(projectKey: String, interval: ChronoUnit) = {
+    JiraData
+      .loadAsWorkItems
+      .andThen(JiraReporter.workItemsChangeLog(_, interval))
+      .andThen(JiraInflux.workItemsChangelog(_, projectKey, interval.name))
+      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .apply(JiraData.location(projectKey))
+  }
+
   def jiraCountByTypePriority(projectKey: String, interval: ChronoUnit, stateMapping: Map[String, String]) = {
     JiraData
       .loadAsWorkItems
@@ -48,6 +57,20 @@ object ReportsGenerator {
         CfdReporter
           .generate(projectKey, LocalDate.MIN, types, priorities, referenceFlow, entryState, finalState, stateMapping, interval, count(lit(1)), _))
       .andThen(CfdInflux.toPoints(_, projectKey, qualifier, entryState, finalState, interval.name))
+      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .apply(JiraData.location(projectKey))
+  }
+
+  def teamProductivityFactor(
+                              projectKey: String,
+                              stateFilter: String => Boolean,
+                              interval: ChronoUnit,
+                              learningTime: Double
+                            ) = {
+    JiraData
+      .loadAsWorkItems
+      .andThen(JiraReporter.teamProductivityFactor(_, stateFilter, interval, learningTime))
+      .andThen(JiraInflux.teamProductivityFactor(_, projectKey, interval.name()))
       .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
       .apply(JiraData.location(projectKey))
   }
