@@ -1,11 +1,9 @@
-package net.oda.it
+package net.oda.rep
 
 import java.time.temporal.ChronoUnit
 
 import com.typesafe.scalalogging.Logger
-import net.oda.jira.{JiraData, JiraReporter}
-import net.oda.rep.ReportsGenerator
-import net.oda.{Config, IT}
+import net.oda.IT
 import org.scalatest.FreeSpec
 
 import scala.concurrent.Await

@@ -1,4 +1,4 @@
-package net.oda.it
+package net.oda.rep
 
 import com.typesafe.scalalogging.Logger
 import net.oda.jira.{JiraClient, JiraTimestampSerializer}
