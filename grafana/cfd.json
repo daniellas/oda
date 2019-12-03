@@ -2,7 +2,7 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:95",
+        "$$hashKey": "object:5021",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -17,14 +17,8 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1574801660279,
-  "links": [
-    {
-      "icon": "external link",
-      "tags": [],
-      "type": "dashboards"
-    }
-  ],
+  "iteration": 1575343508333,
+  "links": [],
   "panels": [
     {
       "aliasColors": {},
@@ -183,18 +177,13 @@
       "steppedLine": false,
       "targets": [
         {
+          "alias": "Stories",
           "groupBy": [
             {
               "params": [
-                "$jiraInterval"
+                "1w"
               ],
               "type": "time"
-            },
-            {
-              "params": [
-                "type"
-              ],
-              "type": "tag"
             }
           ],
           "limit": "",
@@ -217,6 +206,7 @@
               }
             ]
           ],
+          "slimit": "",
           "tags": [
             {
               "key": "project",
@@ -226,26 +216,53 @@
             {
               "condition": "AND",
               "key": "type",
-              "operator": "!=",
-              "value": "Epic"
+              "operator": "=",
+              "value": "Story"
+            }
+          ]
+        },
+        {
+          "alias": "Bugs",
+          "groupBy": [
+            {
+              "params": [
+                "1w"
+              ],
+              "type": "time"
+            }
+          ],
+          "limit": "",
+          "measurement": "work_items_count",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "count"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "slimit": "",
+          "tags": [
+            {
+              "key": "project",
+              "operator": "=~",
+              "value": "/^$projectKey$/"
             },
             {
               "condition": "AND",
               "key": "type",
-              "operator": "!=",
-              "value": "Info"
-            },
-            {
-              "condition": "AND",
-              "key": "type",
-              "operator": "!=",
-              "value": "Sub-task"
-            },
-            {
-              "condition": "AND",
-              "key": "type",
-              "operator": "!=",
-              "value": "Task"
+              "operator": "=",
+              "value": "Bug"
             }
           ]
         }
@@ -303,6 +320,8 @@
       "legend": {
         "avg": false,
         "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
         "max": false,
         "min": false,
         "show": true,
@@ -323,6 +342,7 @@
       "steppedLine": false,
       "targets": [
         {
+          "alias": "",
           "groupBy": [],
           "measurement": "cfd",
           "orderByTime": "ASC",
@@ -353,7 +373,7 @@
             {
               "key": "qualifier",
               "operator": "=~",
-              "value": "/^$qualifier$/"
+              "value": "/^$cfdQualifier$/"
             },
             {
               "condition": "AND",
@@ -365,7 +385,7 @@
               "condition": "AND",
               "key": "interval",
               "operator": "=~",
-              "value": "/^$cfdInterval$/"
+              "value": "/^$repInterval$/"
             }
           ]
         }
@@ -448,10 +468,11 @@
       "steppedLine": false,
       "targets": [
         {
+          "alias": "",
           "groupBy": [
             {
               "params": [
-                "$jiraInterval"
+                "1w"
               ],
               "type": "time"
             }
@@ -487,6 +508,12 @@
               "key": "qualifier",
               "operator": "=",
               "value": "DEV/QA"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=",
+              "value": "DAYS"
             }
           ]
         }
@@ -581,7 +608,7 @@
             [
               {
                 "params": [
-                  "CT"
+                  "TH"
                 ],
                 "type": "field"
               }
@@ -589,7 +616,7 @@
             [
               {
                 "params": [
-                  "TH"
+                  "CT"
                 ],
                 "type": "field"
               }
@@ -629,13 +656,13 @@
               "condition": "AND",
               "key": "qualifier",
               "operator": "=~",
-              "value": "/^$qualifier$/"
+              "value": "/^$cfdQualifier$/"
             },
             {
               "condition": "AND",
               "key": "interval",
               "operator": "=~",
-              "value": "/^$cfdInterval$/"
+              "value": "/^$repInterval$/"
             }
           ]
         }
@@ -756,16 +783,196 @@
     },
     {
       "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "description": "",
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 15,
+        "x": 9,
+        "y": 22
+      },
+      "id": 19,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeatDirection": "h",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Sories",
+          "groupBy": [
+            {
+              "params": [
+                "1w"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "limit": "",
+          "measurement": "work_items_change_log",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "count"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "status",
+              "operator": "=",
+              "value": "Done"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=",
+              "value": "DAYS"
+            },
+            {
+              "condition": "AND",
+              "key": "type",
+              "operator": "=",
+              "value": "Story"
+            }
+          ]
+        },
+        {
+          "alias": "Bugs",
+          "groupBy": [
+            {
+              "params": [
+                "1w"
+              ],
+              "type": "time"
+            }
+          ],
+          "hide": false,
+          "limit": "",
+          "measurement": "work_items_change_log",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "count"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "count"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "status",
+              "operator": "=",
+              "value": "Done"
+            },
+            {
+              "condition": "AND",
+              "key": "interval",
+              "operator": "=",
+              "value": "DAYS"
+            },
+            {
+              "condition": "AND",
+              "key": "type",
+              "operator": "=",
+              "value": "Bug"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Stories & Bugs  Done",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 7,
+        "h": 5,
         "w": 15,
         "x": 9,
-        "y": 22
+        "y": 29
       },
       "id": 2,
       "legend": {
@@ -791,7 +998,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:281",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -813,7 +1019,7 @@
             {
               "key": "qualifier",
               "operator": "=~",
-              "value": "/^$qualifier$/"
+              "value": "/^$cfdQualifier$/"
             },
             {
               "condition": "AND",
@@ -825,7 +1031,7 @@
               "condition": "AND",
               "key": "interval",
               "operator": "=~",
-              "value": "/^$cfdInterval$/"
+              "value": "/^$repInterval$/"
             }
           ]
         }
@@ -833,7 +1039,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "TH",
+      "title": "Throughput",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -877,10 +1083,10 @@
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 7,
+        "h": 5,
         "w": 15,
         "x": 9,
-        "y": 29
+        "y": 34
       },
       "id": 16,
       "legend": {
@@ -906,7 +1112,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:407",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -928,7 +1133,7 @@
             {
               "key": "qualifier",
               "operator": "=~",
-              "value": "/^$qualifier$/"
+              "value": "/^$cfdQualifier$/"
             },
             {
               "condition": "AND",
@@ -940,7 +1145,7 @@
               "condition": "AND",
               "key": "interval",
               "operator": "=~",
-              "value": "/^$cfdInterval$/"
+              "value": "/^$repInterval$/"
             }
           ]
         }
@@ -948,7 +1153,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "WIP",
+      "title": "Work in progress",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -990,10 +1195,10 @@
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 15,
         "x": 9,
-        "y": 36
+        "y": 39
       },
       "id": 7,
       "legend": {
@@ -1019,7 +1224,6 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:533",
           "groupBy": [],
           "hide": false,
           "measurement": "cfd",
@@ -1041,7 +1245,7 @@
             {
               "key": "qualifier",
               "operator": "=~",
-              "value": "/^$qualifier$/"
+              "value": "/^$cfdQualifier$/"
             },
             {
               "condition": "AND",
@@ -1053,7 +1257,7 @@
               "condition": "AND",
               "key": "interval",
               "operator": "=~",
-              "value": "/^$cfdInterval$/"
+              "value": "/^$repInterval$/"
             }
           ]
         }
@@ -1061,7 +1265,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "CT",
+      "title": "Cycle time",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1106,9 +1310,8 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "tags": [],
-          "text": "AW",
-          "value": "AW"
+          "text": "CRYP",
+          "value": "CRYP"
         },
         "hide": 0,
         "includeAll": false,
@@ -1117,14 +1320,12 @@
         "name": "projectKey",
         "options": [
           {
-            "$$hashKey": "object:664",
-            "selected": false,
+            "selected": true,
             "text": "CRYP",
             "value": "CRYP"
           },
           {
-            "$$hashKey": "object:665",
-            "selected": true,
+            "selected": false,
             "text": "AW",
             "value": "AW"
           }
@@ -1136,6 +1337,32 @@
         "allValue": null,
         "current": {
           "selected": true,
+          "text": "WEEKS",
+          "value": "WEEKS"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Interval",
+        "multi": false,
+        "name": "repInterval",
+        "options": [
+          {
+            "selected": false,
+            "text": "MONTHS",
+            "value": "MONTHS"
+          },
+          {
+            "selected": true,
+            "text": "WEEKS",
+            "value": "WEEKS"
+          }
+        ],
+        "query": "MONTHS,WEEKS",
+        "type": "custom"
+      },
+      {
+        "allValue": null,
+        "current": {
           "text": "All stories and bugs",
           "value": "All stories and bugs"
         },
@@ -1143,7 +1370,7 @@
         "includeAll": false,
         "label": "CFD Qualifier",
         "multi": false,
-        "name": "qualifier",
+        "name": "cfdQualifier",
         "options": [
           {
             "selected": true,
@@ -1168,74 +1395,11 @@
         ],
         "query": "All stories and bugs,All stories,All bugs,Critical bugs",
         "type": "custom"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "selected": true,
-          "tags": [],
-          "text": "MONTHS",
-          "value": "MONTHS"
-        },
-        "hide": 0,
-        "includeAll": false,
-        "label": "CFD Interval",
-        "multi": false,
-        "name": "cfdInterval",
-        "options": [
-          {
-            "$$hashKey": "object:644",
-            "selected": true,
-            "text": "MONTHS",
-            "value": "MONTHS"
-          },
-          {
-            "$$hashKey": "object:645",
-            "selected": false,
-            "text": "WEEKS",
-            "value": "WEEKS"
-          },
-          {
-            "$$hashKey": "object:646",
-            "selected": false,
-            "text": "DAYS",
-            "value": "DAYS"
-          }
-        ],
-        "query": "MONTHS,WEEKS,DAYS",
-        "type": "custom"
-      },
-      {
-        "auto": false,
-        "auto_count": 30,
-        "auto_min": "10s",
-        "current": {
-          "text": "4w",
-          "value": "4w"
-        },
-        "hide": 0,
-        "label": "Interval",
-        "name": "jiraInterval",
-        "options": [
-          {
-            "selected": false,
-            "text": "1w",
-            "value": "1w"
-          },
-          {
-            "selected": true,
-            "text": "4w",
-            "value": "4w"
-          }
-        ],
-        "query": "1w,4w",
-        "refresh": 2,
-        "type": "interval"
       }
     ]
   },
   "time": {
-    "from": "now-1y",
+    "from": "now-90d",
     "to": "now"
   },
   "timepicker": {
@@ -1266,5 +1430,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 127
+  "version": 155
 }
