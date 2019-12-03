@@ -1,8 +1,8 @@
 package net.oda.cfd
 
 import java.sql.Timestamp
+import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import java.time.{LocalDate, ZonedDateTime}
 
 import com.typesafe.scalalogging.Logger
 import net.oda.Spark.session.implicits._
@@ -78,27 +78,16 @@ object CfdReporter {
   val timeCol = "Time"
   val ctCol = "CT"
 
-  def generate(
-                project: String,
-                startDate: LocalDate,
-                itemType: String => Boolean,
-                priority: String => Boolean,
-                referenceFlow: Map[String, Int],
-                entryState: String,
-                finalState: String,
-                stateMapping: Map[String, String],
-                interval: ChronoUnit,
-                aggregate: Column,
-                workItems: List[WorkItem]): Dataset[Row] = {
-    log.info("CFD report generation started")
-    val createTsMapper = Time.interval.apply(interval, _)
-    val tsDiffCalculator = (start: LocalDate, end: LocalDate) => interval.between(start, end)
-    val rangeProvider = (start: LocalDate, end: LocalDate) => (0L to tsDiffCalculator.apply(start, end)).toList.map(start.plus(_, interval))
+  val countAggregate = count(lit(1));
+  val sumEstimateAggregate = sum('estimate)
 
-    val statusHistory = workItems
-      .filter(i => itemType.apply(i.`type`))
-      .filter(i => priority.apply(i.priority))
-      .filter(i => startDate == LocalDate.MIN || i.created.after(startDate))
+  def normalizeWorkItems(
+                          workItems: Seq[WorkItem],
+                          referenceFlow: Map[String, Int],
+                          entryState: String,
+                          finalState: String,
+                          stateMapping: Map[String, String]): Seq[WorkItem] = {
+    workItems
       .map(i => WorkItem(
         i.id,
         i.name,
@@ -112,6 +101,35 @@ object CfdReporter {
         normalizeFlow(referenceFlow, entryState, finalState, stateMapping, i.statusHistory),
         i.epicName))
       .filter(_.statusHistory.nonEmpty)
+  }
+
+  def generate(
+                project: String,
+                startDate: LocalDate,
+                itemType: String => Boolean,
+                priority: String => Boolean,
+                referenceFlow: Map[String, Int],
+                entryState: String,
+                finalState: String,
+                stateMapping: Map[String, String],
+                interval: ChronoUnit,
+                aggregate: Column,
+                workItems: Seq[WorkItem]): Dataset[Row] = {
+    log.info("CFD report generation started")
+
+    val createTsMapper = Time.interval.apply(interval, _)
+    val tsDiffCalculator = (start: LocalDate, end: LocalDate) => interval.between(start, end)
+    val rangeProvider = (start: LocalDate, end: LocalDate) => (0L to tsDiffCalculator.apply(start, end)).toList.map(start.plus(_, interval))
+
+    val statusHistory = normalizeWorkItems(
+      workItems
+        .filter(i => itemType.apply(i.`type`))
+        .filter(i => priority.apply(i.priority))
+        .filter(i => startDate == LocalDate.MIN || i.created.after(startDate)),
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping)
       .flatMap(i => i.statusHistory.map(h => CfdItem(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
 
