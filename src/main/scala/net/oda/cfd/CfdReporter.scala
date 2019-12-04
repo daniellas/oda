@@ -71,6 +71,7 @@ object CfdReporter {
   }
 
   val cumulativeCol = (col: String) => col + " cumulative"
+  val changeCol = (col: String) => col + " change"
 
   val wipCol = "WIP"
   val createdCol = "created"
@@ -188,7 +189,9 @@ object CfdReporter {
     val res = cumulativeValues
       .join(cycleTime, 'created === cycleTime("ct_" + createdCol))
       .orderBy('created)
-      .drop("ct_" + createdCol, entryState, finalState, wipCol)
+      .drop("ct_" + createdCol, wipCol)
+      .withColumnRenamed(entryState, changeCol(entryState))
+      .withColumnRenamed(finalState, changeCol(finalState))
       .withColumnRenamed("created", timeCol)
       .withColumnRenamed(cumulativeCol(entryState), entryState)
       .withColumnRenamed(cumulativeCol(finalState), finalState)

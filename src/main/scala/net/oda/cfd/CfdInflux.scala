@@ -3,6 +3,7 @@ package net.oda.cfd
 import java.sql.Timestamp
 
 import com.paulgoldbaum.influxdbclient.Point
+import net.oda.cfd.CfdReporter.changeCol
 import org.apache.spark.sql.{Dataset, Row}
 
 object CfdInflux {
@@ -26,6 +27,8 @@ object CfdInflux {
         .addField(CfdReporter.wipCol, r.getAs[Long](CfdReporter.wipCol))
         .addField(entryState, r.getAs[Long](entryState))
         .addField(finalState, r.getAs[Long](finalState))
+        .addField(changeCol(entryState), r.getAs[Long](changeCol(entryState)))
+        .addField(changeCol(finalState), r.getAs[Long](changeCol(finalState)))
       )
   }
 
@@ -49,6 +52,8 @@ object CfdInflux {
         .addField(CfdReporter.wipCol, r.getAs[Double](CfdReporter.wipCol))
         .addField(entryState, r.getAs[Double](entryState))
         .addField(finalState, r.getAs[Double](finalState))
+        .addField(changeCol(entryState), r.getAs[Double](changeCol(entryState)))
+        .addField(changeCol(finalState), r.getAs[Double](changeCol(finalState)))
       )
   }
 
