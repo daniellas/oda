@@ -66,7 +66,7 @@ class SingleReportsSpec extends FreeSpec {
         '_3.as(CfdReporter.ctCol),
         '_4.as(CfdReporter.thCol))
 
-    CfdInflux.toPointsNormalized("cfd-normalized",normalized,projectKey,"")
+//    CfdInflux.toPointsNormalized("cfd-normalized",normalized,projectKey,"")
   }
 
 }
