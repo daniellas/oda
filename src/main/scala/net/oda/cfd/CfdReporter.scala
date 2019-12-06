@@ -12,7 +12,7 @@ import net.oda.workitem.{Status, WorkItem}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.{Column, Dataset, Row}
+import org.apache.spark.sql.{Column, Dataset, DatasetHolder, Row}
 
 import scala.collection.SortedMap
 
@@ -133,6 +133,10 @@ object CfdReporter {
       stateMapping)
       .flatMap(i => i.statusHistory.map(h => CfdItem(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
+
+    if(statusHistory.isEmpty) {
+      return statusHistory
+    }
 
     val values = statusHistory
       .groupBy('created, 'status)
