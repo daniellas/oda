@@ -185,7 +185,7 @@ object CfdReporter {
           if (r.getDouble(1) == r.getDouble(2)) 0L
           else findDateLastBelow(entryDatesByValue, r.getDouble(2))
             .map(calculateCycleTime(tsDiffCalculator, _, r.getTimestamp(0)))
-            .getOrElse(1L)
+            .getOrElse(0L)
         )
       )
       .select('_1.as("ct_" + createdCol), '_2.as(ctCol))
