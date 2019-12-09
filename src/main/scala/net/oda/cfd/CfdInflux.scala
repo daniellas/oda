@@ -24,7 +24,8 @@ object CfdInflux {
         .addTag("interval", interval)
         .addField(CfdReporter.ctCol, r.getAs[Long](CfdReporter.ctCol))
         .addField(CfdReporter.thCol, r.getAs[Double](CfdReporter.thCol))
-        .addField(CfdReporter.wipCol, r.getAs[Long](CfdReporter.wipCol))
+        .addField(CfdReporter.currentWipCol, r.getAs[Long](CfdReporter.currentWipCol))
+        .addField(CfdReporter.wipCol, r.getAs[Double](CfdReporter.wipCol))
         .addField(entryState, r.getAs[Long](entryState))
         .addField(finalState, r.getAs[Long](finalState))
         .addField(changeCol(entryState), r.getAs[Long](changeCol(entryState)))
@@ -49,6 +50,7 @@ object CfdInflux {
         .addTag("interval", interval)
         .addField(CfdReporter.ctCol, r.getAs[Long](CfdReporter.ctCol))
         .addField(CfdReporter.thCol, r.getAs[Double](CfdReporter.thCol))
+        .addField(CfdReporter.currentWipCol, r.getAs[Double](CfdReporter.currentWipCol))
         .addField(CfdReporter.wipCol, r.getAs[Double](CfdReporter.wipCol))
         .addField(entryState, r.getAs[Double](entryState))
         .addField(finalState, r.getAs[Double](finalState))
@@ -72,7 +74,7 @@ object CfdInflux {
         .addTag("interval", interval)
         .addField(CfdReporter.ctCol, r.getAs[Long](CfdReporter.ctCol))
         .addField(CfdReporter.thCol, r.getAs[Double](CfdReporter.thCol))
-        .addField(CfdReporter.wipCol, r.getAs[Double](CfdReporter.wipCol))
+        .addField(CfdReporter.currentWipCol, r.getAs[Double](CfdReporter.currentWipCol))
       )
   }
 
