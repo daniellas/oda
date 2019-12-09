@@ -19,7 +19,7 @@ class SingleReportsSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
 
   s"Generate" taggedAs (IT) in {
-    val projectKey = "HFT"
+    val projectKey = "CRYP"
     val project = Config.props.jira.projects(projectKey)
 
     JiraData

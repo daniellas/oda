@@ -60,24 +60,36 @@ object CfdReporter {
 
   val calculateCycleTime = (tsDiffCalculator: (LocalDate, LocalDate) => Long, start: LocalDate, end: LocalDate) => tsDiffCalculator(start, end) + 1
 
-  val findDateLastBelow = (m: SortedMap[Double, Timestamp], v: Double) => {
+  val findDateLastBelow = (m: SortedMap[Double, (Timestamp, Double)], v: Double) => {
     val to = m.to(v)
 
     if (to.isEmpty) {
       None
     } else {
-      Option(to.last._2)
+      Option(to.last._2._1)
+    }
+  }
+
+  val findFinalStateLastBelow = (m: SortedMap[Double, (Timestamp, Double)], v: Double) => {
+    val to = m.to(v)
+
+    if (to.isEmpty) {
+      None
+    } else {
+      Option(to.last._2._2)
     }
   }
 
   val cumulativeCol = (col: String) => col + " cumulative"
   val changeCol = (col: String) => col + " change"
 
+  val currentWipCol = "WIP current"
   val wipCol = "WIP"
   val createdCol = "created"
   val thCol = "TH"
   val timeCol = "Time"
   val ctCol = "CT"
+  val doneLaggedByCTCol = "doneLaggedByCT"
 
   val countAggregate = count(lit(1));
   val sumEstimateAggregate = sum('estimate)
@@ -105,7 +117,7 @@ object CfdReporter {
   }
 
   def generate(
-                project: String,
+                projectKey: String,
                 startDate: LocalDate,
                 itemType: String => Boolean,
                 priority: String => Boolean,
@@ -116,7 +128,7 @@ object CfdReporter {
                 interval: ChronoUnit,
                 aggregate: Column,
                 workItems: Seq[WorkItem]): Dataset[Row] = {
-    log.info("CFD report generation started")
+    log.info("{} CFD report generation started", projectKey)
 
     val createTsMapper = Time.interval.apply(interval, _)
     val tsDiffCalculator = (start: LocalDate, end: LocalDate) => interval.between(start, end)
@@ -134,7 +146,7 @@ object CfdReporter {
       .flatMap(i => i.statusHistory.map(h => CfdItem(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
 
-    if(statusHistory.isEmpty) {
+    if (statusHistory.isEmpty) {
       return statusHistory
     }
 
@@ -153,7 +165,7 @@ object CfdReporter {
     val filledValues = timeRange
       .join(values, 'r_created === values(createdCol), "outer")
       .na.fill(0)
-      .withColumn(wipCol, col(entryState) - col(finalState))
+      .withColumn(currentWipCol, col(entryState) - col(finalState))
       .drop('created)
       .withColumnRenamed("r_" + createdCol, createdCol)
 
@@ -170,10 +182,18 @@ object CfdReporter {
                 .rowsBetween(Window.unboundedPreceding, Window.currentRow)))
       )
 
-    val entryDatesByValue = cumulativeValues.select('created, col(cumulativeCol(entryState)).cast(DoubleType))
+    val entryValuesByEntryState = cumulativeValues
+      .select(
+        'created,
+        col(cumulativeCol(entryState)).cast(DoubleType),
+        col(cumulativeCol(finalState)).cast(DoubleType)
+      )
       .collect
-      .map(r => (r.getTimestamp(0), r.getAs[Double](cumulativeCol(entryState))))
-      .foldLeft(SortedMap.empty[Double, Timestamp])((acc, i) => acc + (i._2 -> i._1))
+      .map(r => (
+        r.getAs[Double](cumulativeCol(entryState)),
+        r.getTimestamp(0),
+        r.getAs[Double](cumulativeCol(finalState))))
+      .foldLeft(SortedMap.empty[Double, (Timestamp, Double)])((acc, i) => acc + (i._1 -> ((i._2, i._3))))
 
     val cycleTime = cumulativeValues.select(
       'created,
@@ -183,27 +203,32 @@ object CfdReporter {
         (
           r.getTimestamp(0),
           if (r.getDouble(1) == r.getDouble(2)) 0L
-          else findDateLastBelow(entryDatesByValue, r.getDouble(2))
+          else findDateLastBelow(entryValuesByEntryState, r.getDouble(2))
             .map(calculateCycleTime(tsDiffCalculator, _, r.getTimestamp(0)))
-            .getOrElse(1L)
+            .getOrElse(0L),
+          findFinalStateLastBelow(entryValuesByEntryState, r.getDouble(2))
+            .getOrElse(0D)
         )
       )
-      .select('_1.as("ct_" + createdCol), '_2.as(ctCol))
+      .select(
+        '_1.as("ct_" + createdCol),
+        '_2.as(ctCol),
+        '_3.as(doneLaggedByCTCol))
 
     val res = cumulativeValues
       .join(cycleTime, 'created === cycleTime("ct_" + createdCol))
       .orderBy('created)
-      .drop("ct_" + createdCol, wipCol)
+      .drop("ct_" + createdCol, currentWipCol)
       .withColumnRenamed(entryState, changeCol(entryState))
       .withColumnRenamed(finalState, changeCol(finalState))
       .withColumnRenamed("created", timeCol)
       .withColumnRenamed(cumulativeCol(entryState), entryState)
       .withColumnRenamed(cumulativeCol(finalState), finalState)
-      .withColumnRenamed(cumulativeCol(wipCol), wipCol)
-      .withColumn(thCol, col(wipCol) / 'CT)
-      .repartition(1)
+      .withColumnRenamed(cumulativeCol(currentWipCol), currentWipCol)
+      .withColumn(wipCol, col(finalState) - col(doneLaggedByCTCol))
+      .withColumn(thCol, col(wipCol) / col(ctCol))
 
-    log.info("CFD report generation complete")
+    log.info("{} CFD report generation complete", projectKey)
     res
   }
 
@@ -213,7 +238,7 @@ object CfdReporter {
         Map(
           thCol -> "avg",
           ctCol -> "avg",
-          wipCol -> "avg",
+          currentWipCol -> "avg",
         ))
   }
 }
