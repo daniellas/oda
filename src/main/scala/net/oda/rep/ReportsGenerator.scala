@@ -56,7 +56,7 @@ object ReportsGenerator {
       .andThen(
         CfdReporter
           .generate(projectKey, LocalDate.MIN, types, priorities, referenceFlow, entryState, finalState, stateMapping, interval, CfdReporter.countAggregate, _))
-      .andThen(CfdInflux.toPointsOfInts("cfd-count", _, projectKey, qualifier, entryState, finalState, interval.name))
+      .andThen(CfdInflux.toPointsOfInts("cfd_count", _, projectKey, qualifier, entryState, finalState, interval.name))
       .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
       .apply(JiraData.location(projectKey))
   }
@@ -77,7 +77,7 @@ object ReportsGenerator {
       .andThen(
         CfdReporter
           .generate(projectKey, LocalDate.MIN, types, priorities, referenceFlow, entryState, finalState, stateMapping, interval, CfdReporter.sumEstimateAggregate, _))
-      .andThen(CfdInflux.toPointsOfDecimals("cfd-estimate", _, projectKey, qualifier, entryState, finalState, interval.name))
+      .andThen(CfdInflux.toPointsOfDecimals("cfd_estimate", _, projectKey, qualifier, entryState, finalState, interval.name))
       .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
       .apply(JiraData.location(projectKey))
   }

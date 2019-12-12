@@ -31,7 +31,6 @@ class ReportsGeneratorSpec extends FreeSpec {
       Await.result(teamProductivityFactor(p._1, devStateFilter, ChronoUnit.WEEKS, 12D), 100 second)
 
       intervals.foreach(i => {
-        jiraCountCfd(p._1, "In Progress", p._2.finalState, p._2.stateMapping, p._2.referenceFlow, Seq("Story", "Bug").contains, _ => true, i, "All items from In Progress to Done")
         cfdSpecs
           .foreach(s => {
             Await.result(jiraCountCfd(p._1, p._2.entryState, p._2.finalState, p._2.stateMapping, p._2.referenceFlow, s.typesFilter, s.priosFilter, i, s.qualifier), 100 second)
