@@ -7,15 +7,15 @@ import net.oda.cfd.CfdReporter.changeCol
 import org.apache.spark.sql.{Dataset, Row}
 
 object CfdInflux {
-  def toPointsOfInts(
-                      measurement: String,
-                      dataset: Dataset[Row],
-                      projectKey: String,
-                      qualifier: String,
-                      entryState: String,
-                      finalState: String,
-                      interval: String
-                    ): Array[Point] = {
+  def toCfdCountPoints(
+                        measurement: String,
+                        dataset: Dataset[Row],
+                        projectKey: String,
+                        qualifier: String,
+                        entryState: String,
+                        finalState: String,
+                        interval: String
+                      ): Array[Point] = {
     dataset
       .collect
       .map(r => Point(measurement, r.getAs[Timestamp](CfdReporter.timeCol).getTime)
@@ -33,15 +33,15 @@ object CfdInflux {
       )
   }
 
-  def toPointsOfDecimals(
-                          measurement: String,
-                          dataset: Dataset[Row],
-                          projectKey: String,
-                          qualifier: String,
-                          entryState: String,
-                          finalState: String,
-                          interval: String
-                        ): Array[Point] = {
+  def toCfdEstimatePoints(
+                           measurement: String,
+                           dataset: Dataset[Row],
+                           projectKey: String,
+                           qualifier: String,
+                           entryState: String,
+                           finalState: String,
+                           interval: String
+                         ): Array[Point] = {
     dataset
       .collect
       .map(r => Point(measurement, r.getAs[Timestamp](CfdReporter.timeCol).getTime)
@@ -56,6 +56,24 @@ object CfdInflux {
         .addField(finalState, r.getAs[Double](finalState))
         .addField(changeCol(entryState), r.getAs[Double](changeCol(entryState)))
         .addField(changeCol(finalState), r.getAs[Double](changeCol(finalState)))
+      )
+  }
+
+  def toCfdDurationsPoints(
+                            dataset: Dataset[Row],
+                            projectKey: String,
+                            qualifier: String,
+                            interval: String
+                          ): Array[Point] = {
+    dataset
+      .collect
+      .map(r => Point("work_items_duration", r.getAs[Timestamp]("created").getTime)
+        .addTag("project", projectKey)
+        .addTag("qualifier", qualifier)
+        .addTag("interval", interval)
+        .addField("min", r.getAs[Long]("min"))
+        .addField("max", r.getAs[Long]("max"))
+        .addField("mean", r.getAs[Double]("mean"))
       )
   }
 

@@ -30,6 +30,8 @@ object Time {
 
   val daysBetween = (start: LocalDate, end: LocalDate) => ChronoUnit.DAYS.between(start, end)
 
+  val daysBetweenTimestamps = (start: Timestamp, end: Timestamp) => ChronoUnit.DAYS.between(start.toLocalDate, end.toLocalDate)
+
   val weeksRange = (start: LocalDate, end: LocalDate) => (0L to weeksBetween(start, end)).toList.map(start.plusWeeks)
 
   val daysRange = (start: LocalDate, end: LocalDate) => (0L to daysBetween(start, end)).toList.map(start.plusDays)

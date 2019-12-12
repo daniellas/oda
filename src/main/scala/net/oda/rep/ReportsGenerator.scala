@@ -6,7 +6,9 @@ import java.time.temporal.ChronoUnit
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import net.oda.Config
 import net.oda.cfd.{CfdInflux, CfdReporter}
+import net.oda.influx.InfluxDb
 import net.oda.influx.InfluxDb.db
+import net.oda.jira.JiraData.location
 import net.oda.jira.{JiraData, JiraInflux, JiraReporter}
 
 import scala.concurrent.Future
@@ -56,7 +58,7 @@ object ReportsGenerator {
       .andThen(
         CfdReporter
           .generate(projectKey, LocalDate.MIN, types, priorities, referenceFlow, entryState, finalState, stateMapping, interval, CfdReporter.countAggregate, _))
-      .andThen(CfdInflux.toPointsOfInts("cfd_count", _, projectKey, qualifier, entryState, finalState, interval.name))
+      .andThen(CfdInflux.toCfdCountPoints("cfd_count", _, projectKey, qualifier, entryState, finalState, interval.name))
       .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
       .apply(JiraData.location(projectKey))
   }
@@ -77,7 +79,7 @@ object ReportsGenerator {
       .andThen(
         CfdReporter
           .generate(projectKey, LocalDate.MIN, types, priorities, referenceFlow, entryState, finalState, stateMapping, interval, CfdReporter.sumEstimateAggregate, _))
-      .andThen(CfdInflux.toPointsOfDecimals("cfd_estimate", _, projectKey, qualifier, entryState, finalState, interval.name))
+      .andThen(CfdInflux.toCfdEstimatePoints("cfd_estimate", _, projectKey, qualifier, entryState, finalState, interval.name))
       .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
       .apply(JiraData.location(projectKey))
   }
@@ -96,4 +98,34 @@ object ReportsGenerator {
       .apply(JiraData.location(projectKey))
   }
 
+  def workItemsDuration(
+                         projectKey: String,
+                         entryState: String,
+                         finalState: String,
+                         stateMapping: Map[String, String],
+                         referenceFlow: Map[String, Int],
+                         types: String => Boolean,
+                         interval: ChronoUnit,
+                         qualifier: String
+                       ) = {
+    JiraData
+      .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
+      .andThen(
+        CfdReporter
+          .calculateWorkItemsDuration(
+            projectKey,
+            LocalDate.MIN,
+            types,
+            _ => true,
+            referenceFlow,
+            entryState,
+            finalState,
+            stateMapping,
+            interval,
+            _))
+      .andThen(CfdInflux.toCfdDurationsPoints(_, projectKey, qualifier, interval.name()))
+      .andThen(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .apply(location(projectKey))
+
+  }
 }

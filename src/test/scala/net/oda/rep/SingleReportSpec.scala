@@ -26,7 +26,7 @@ class SingleReportsSpec extends FreeSpec {
       .loadAsWorkItems(project.estimateMapping.get)
       .andThen(
         CfdReporter
-          .generate(
+          .calculateWorkItemsDuration(
             projectKey,
             LocalDate.MIN,
             Seq("Story", "Bug").contains,
@@ -36,11 +36,10 @@ class SingleReportsSpec extends FreeSpec {
             project.finalState,
             project.stateMapping,
             ChronoUnit.WEEKS,
-            CfdReporter.countAggregate,
             _))
-      .andThen(CfdInflux.toPointsOfInts("cfd-count", _, projectKey, "All stories and bugs", project.entryState, project.finalState, ChronoUnit.WEEKS.name()))
-      .andThen(InfluxDb.db.bulkWrite(_, Precision.MILLISECONDS))
-      .andThen(Await.result(_, 100 minute))
+      .andThen(CfdInflux.toCfdDurationsPoints(_, projectKey, "All stories and bugs", ChronoUnit.WEEKS.name()))
+      .andThen(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .andThen(Await.result(_, 100 second))
       .apply(location(projectKey))
   }
 
