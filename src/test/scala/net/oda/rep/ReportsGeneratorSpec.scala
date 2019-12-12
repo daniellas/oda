@@ -35,6 +35,7 @@ class ReportsGeneratorSpec extends FreeSpec {
           .foreach(s => {
             Await.result(jiraCountCfd(p._1, p._2.entryState, p._2.finalState, p._2.stateMapping, p._2.referenceFlow, s.typesFilter, s.priosFilter, i, s.qualifier), 100 second)
             Await.result(jiraEstimateCfd(p._1, p._2.entryState, p._2.finalState, p._2.stateMapping, p._2.referenceFlow, s.typesFilter, s.priosFilter, i, s.qualifier), 100 second)
+            Await.result(workItemsDuration(p._1, p._2.entryState, p._2.finalState, p._2.stateMapping, p._2.referenceFlow, s.typesFilter, i, s.qualifier), 100 second)
           })
       })
     })

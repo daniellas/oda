@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1576180354453,
+  "iteration": 1576180354473,
   "links": [],
   "panels": [
     {
@@ -28,7 +28,7 @@
       "datasource": null,
       "fill": 1,
       "gridPos": {
-        "h": 5,
+        "h": 8,
         "w": 9,
         "x": 0,
         "y": 0
@@ -385,10 +385,10 @@
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 9,
         "x": 0,
-        "y": 5
+        "y": 8
       },
       "id": 3,
       "legend": {
@@ -855,10 +855,136 @@
       "datasource": "oda",
       "fill": 0,
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 15,
         "x": 9,
         "y": 15
+      },
+      "id": 19,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "$$hashKey": "object:406",
+          "alias": "",
+          "groupBy": [],
+          "limit": "",
+          "measurement": "work_items_duration",
+          "orderByTime": "ASC",
+          "policy": "autogen",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "min"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "max"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "mean"
+                ],
+                "type": "field"
+              }
+            ]
+          ],
+          "slimit": "",
+          "tags": [
+            {
+              "key": "project",
+              "operator": "=~",
+              "value": "/^$projectKey$/"
+            },
+            {
+              "condition": "AND",
+              "key": "qualifier",
+              "operator": "=~",
+              "value": "/^$cfdQualifier$/"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Work items duration",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ]
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 15,
+        "x": 9,
+        "y": 23
       },
       "id": 2,
       "legend": {
@@ -973,7 +1099,7 @@
         "h": 7,
         "w": 15,
         "x": 9,
-        "y": 22
+        "y": 30
       },
       "id": 7,
       "legend": {
@@ -1087,8 +1213,8 @@
         "current": {
           "selected": true,
           "tags": [],
-          "text": "HFT",
-          "value": "HFT"
+          "text": "CRYP",
+          "value": "CRYP"
         },
         "hide": 0,
         "includeAll": false,
@@ -1098,13 +1224,13 @@
         "options": [
           {
             "$$hashKey": "object:919",
-            "selected": false,
+            "selected": true,
             "text": "CRYP",
             "value": "CRYP"
           },
           {
             "$$hashKey": "object:920",
-            "selected": true,
+            "selected": false,
             "text": "HFT",
             "value": "HFT"
           },
@@ -1132,11 +1258,13 @@
         "name": "repInterval",
         "options": [
           {
+            "$$hashKey": "object:2017",
             "selected": false,
             "text": "MONTHS",
             "value": "MONTHS"
           },
           {
+            "$$hashKey": "object:2018",
             "selected": true,
             "text": "WEEKS",
             "value": "WEEKS"
@@ -1190,7 +1318,7 @@
     ]
   },
   "time": {
-    "from": "now-90d",
+    "from": "now-1y",
     "to": "now"
   },
   "timepicker": {
@@ -1221,5 +1349,5 @@
   "timezone": "",
   "title": "ODA",
   "uid": "-HIwHzJZz",
-  "version": 169
+  "version": 174
 }

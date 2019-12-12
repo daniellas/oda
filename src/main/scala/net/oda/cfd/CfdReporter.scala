@@ -232,6 +232,43 @@ object CfdReporter {
     res
   }
 
+  def calculateWorkItemsDuration(
+                                  projectKey: String,
+                                  startDate: LocalDate,
+                                  itemType: String => Boolean,
+                                  priority: String => Boolean,
+                                  referenceFlow: Map[String, Int],
+                                  entryState: String,
+                                  finalState: String,
+                                  stateMapping: Map[String, String],
+                                  interval: ChronoUnit,
+                                  workItems: Seq[WorkItem]): Dataset[Row] = {
+    val createdMapper = udf(Time.interval.apply(interval, _))
+    val duration = udf(Time.daysBetweenTimestamps(_, _))
+
+    normalizeWorkItems(
+      workItems
+        .filter(i => itemType.apply(i.`type`))
+        .filter(i => priority.apply(i.priority))
+        .filter(i => startDate == LocalDate.MIN || i.created.after(startDate)),
+      referenceFlow,
+      entryState,
+      finalState,
+      stateMapping)
+      .flatMap(i => i.statusHistory.map(h => CfdItem(i.id, i.`type`, h.created, h.name, i.estimate)))
+      .toDF
+      .select('id, 'status, 'created)
+      .groupBy('id)
+      .agg(min('created).as('start), max('created).as('end))
+      .withColumn("durationDays", duration('start, 'end) + 1)
+      .withColumn("created", createdMapper('start))
+      .groupBy('created)
+      .agg(
+        avg('durationDays).as("mean"),
+        min('durationDays).as("min"),
+        max('durationDays).as("max"))
+  }
+
   def calculateAggregates(data: Dataset[Row]) = {
     data
       .agg(
