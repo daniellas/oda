@@ -27,8 +27,11 @@ case class HttpProps(port: Int)
 
 case class InluxdbProps(host: String, port: Int, db: String)
 
+case class GitlabProps(apiUrl: String, token: String)
+
 case class ConfigProps(
                         jira: JiraProps,
+                        gitlab: GitlabProps,
                         data: DataProps,
                         reports: ReportsProps,
                         http: HttpProps,

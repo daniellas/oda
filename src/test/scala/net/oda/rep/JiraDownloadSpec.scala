@@ -15,7 +15,7 @@ class JiraDownloadSpec extends FreeSpec {
   val log = Logger(classOf[JiraDownloadSpec])
   implicit val formats = DefaultFormats + JiraTimestampSerializer
 
-  s"Download issues" taggedAs (IT) in {
+  "Download issues" taggedAs (IT) in {
     Config.props.jira.projects.keys.foreach(download)
   }
 
