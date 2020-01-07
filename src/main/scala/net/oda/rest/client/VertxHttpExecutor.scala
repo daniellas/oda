@@ -1,8 +1,13 @@
 package net.oda.rest.client
 
-import io.vertx.core.Vertx
+import java.util
+import java.util.stream.Collectors
+
+import collection.JavaConverters._
+import io.vertx.core.{MultiMap, Vertx}
 import io.vertx.core.http.{HttpClient, HttpClientResponse, HttpMethod}
 
+import scala.collection.JavaConverters
 import scala.collection.JavaConverters._
 import scala.concurrent.Promise
 
@@ -69,8 +74,15 @@ object VertxHttpExecutor {
     prom.future
   }
 
+  def mapHeaders(headers: MultiMap): Map[String, Seq[String]] = {
+    JavaConverters
+      .iterableAsScalaIterable(headers.entries())
+      .groupBy(_.getKey)
+      .mapValues(_.toSeq.map(_.getValue))
+  }
+
   private def processResponse(prom: Promise[Response[String]], resp: HttpClientResponse): Unit = {
-    resp.bodyHandler(b => prom.success(Response(resp.statusCode, resp.statusMessage, null, Some(b.toString))))
+    resp.bodyHandler(b => prom.success(Response(resp.statusCode, resp.statusMessage, mapHeaders(resp.headers), Some(b.toString))))
   }
 
   private def processException(

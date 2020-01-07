@@ -10,7 +10,7 @@ import net.oda.FileCache.usingCache
 import net.oda.FileIO.{lastModified, loadTextContent}
 import net.oda.RestApi.apiRoot
 import net.oda.jira.{Issue, JiraTimestampSerializer, Mappers}
-import net.oda.json.LocalDateSerializer
+import net.oda.json.ZondedDateTimeSerializer
 import net.oda.vertx.Paths.{path, variable}
 import net.oda.vertx.RequestReaders.{param, params}
 import net.oda.vertx.ResponseWriters
@@ -23,7 +23,7 @@ import org.json4s.jackson.Serialization
 case class CFDReport(data: Seq[Map[String, Any]], aggregates: Seq[Map[String, Any]])
 
 object CFDRest {
-  implicit val formats = DefaultFormats + LocalDateSerializer + JiraTimestampSerializer
+  implicit val formats = DefaultFormats + ZondedDateTimeSerializer + JiraTimestampSerializer
   val root = "cfd"
 
   def init(router: Router): Unit = {
