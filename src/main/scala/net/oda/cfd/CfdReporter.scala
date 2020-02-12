@@ -33,6 +33,7 @@ object CfdReporter {
                         stateMapping: Map[String, String],
                         history: Seq[Status]) =>
     history
+      .filter(s => referenceFlow.contains(s.name))
       .sortBy(_.created.getTime)
       .map(i => Status(i.created, stateMapping.get(i.name).getOrElse(i.name), None))
       .foldLeft(List.empty[Status])(

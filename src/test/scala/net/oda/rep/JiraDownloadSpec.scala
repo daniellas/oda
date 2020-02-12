@@ -27,7 +27,7 @@ class JiraDownloadSpec extends FreeSpec {
 
     res.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${projectKey}.json", _: String)))
 
-    Await.result(res, 1 minute)
+    Await.result(res, 10 minutes)
     log.info("{} JIRA data downloaded", projectKey)
   }
 }
