@@ -135,7 +135,7 @@ object ReportsGenerator {
     .getProjects()
     .flatMap(ps => Future.sequence(
       ps.map(p => GitlabClient
-        .getCommits(p.id, "develop", since)
+        .getCommits(p.id, "develop", since, true)
         .map(cs => cs.filterNot(_.committer_email.startsWith("jenkins"))
           .map(c => (p, c))))))
     .map(_.flatten)

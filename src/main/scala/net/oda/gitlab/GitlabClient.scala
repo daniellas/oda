@@ -19,7 +19,9 @@ import scala.concurrent.{Future, Promise}
 
 case class Namespace(id: String, name: String, path: String, full_path: String, parent_id: Option[Int])
 
-case class Project(id: Int, name: String, name_with_namespace: String)
+case class Project(id: Int, name: String, name_with_namespace: String) {
+  def namespace() = name_with_namespace.substring(0, name_with_namespace.length - name.trim.length - 3)
+}
 
 case class Stats(additions: Int, deletions: Int, total: Int)
 
@@ -30,11 +32,24 @@ case class Commit(
                    message: String,
                    created_at: ZonedDateTime,
                    committer_email: String,
-                   stats: Stats)
+                   stats: Stats) {
+  def mapCommitterEmail(mapper: String => String) =
+    Commit(
+      this.id,
+      this.short_id,
+      this.title,
+      this.message,
+      this.created_at,
+      mapper(this.committer_email),
+      this.stats
+    )
+}
 
 object GitlabClient {
   val log = Logger("gitlab-client")
   implicit val formats = DefaultFormats + ZondedDateTimeSerializer
+  val dateTimeFormatter = DateTimeFormatter.ofPattern("yyy-MM-dd'T'HH:mm:ssZ")
+
   val restClient = RestClient.using(VertxHttpExecutor.of(VertxServices.vertx, VertxServices.httpClient, (m, e) => log.error(m, e), m => log.debug(m)))
     .service(Config.props.gitlab.apiUrl)
     .defaultHeaders(Map(
@@ -70,12 +85,16 @@ object GitlabClient {
         .map(Future.successful)
         .getOrElse(emptyBodyFailure()))
 
-  val dateTimeFormatter = DateTimeFormatter.ofPattern("yyy-MM-dd'T'HH:mm:ssZ")
-
-  def getCommits(projectId: Int, ref: String, since: ZonedDateTime): Future[Seq[Commit]] = {
+  def getCommits(projectId: Int, ref: String, since: ZonedDateTime, firstParent: Boolean): Future[Seq[Commit]] = {
     getPages(
       restClient
-        .resource("/projects/%s/repository/commits?per_page=100&ref_name=%s&since=%s&with_stats=true&page=%s", projectId, ref, since.format(dateTimeFormatter), _)
+        .resource(
+          "/projects/%s/repository/commits?per_page=100&ref_name=%s&since=%s&with_stats=true&page=%s&first_parent=%s",
+          projectId,
+          ref,
+          since.format(dateTimeFormatter),
+          firstParent,
+          _)
         .get()
         .execute()
         .map(_.map(Serialization.read[Seq[Commit]]))

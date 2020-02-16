@@ -30,7 +30,7 @@ object JiraClient {
 
   val expand = "changelog,-schema,-editmeta"
   val fields = "resolution,summary,reporter,created,resolutiondate,status,priority,project,issuetype,size"
-  val maxResults = 100
+  val maxResults = 1
 
   private def getIsses(project: String, issues: JiraIssues): Future[JiraIssues] = {
     log.info("Downloading issues {} to {}", issues.startAt, issues.startAt + maxResults)
