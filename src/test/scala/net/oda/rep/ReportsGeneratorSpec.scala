@@ -14,7 +14,7 @@ case class CfdSpec(qualifier: String, typesFilter: String => Boolean, priosFilte
 
 class ReportsGeneratorSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
-  val intervals = Seq(ChronoUnit.WEEKS, ChronoUnit.MONTHS)
+  val intervals = Seq(ChronoUnit.WEEKS)
   val cfdSpecs = Seq(
     CfdSpec("All stories and bugs", Seq("Story", "Bug").contains, _ => true),
     CfdSpec("All stories", Seq("Story").contains, _ => true),

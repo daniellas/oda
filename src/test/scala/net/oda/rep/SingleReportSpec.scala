@@ -13,7 +13,7 @@ class SingleReportsSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
 
   s"Generate" taggedAs (IT) in {
-    Await.result(ReportsGenerator.commits(ZonedDateTime.now().minusDays(30)), 10 minutes)
+    Await.result(ReportsGenerator.commits(ZonedDateTime.now().minusYears(5)), 20 minutes)
   }
 
 }

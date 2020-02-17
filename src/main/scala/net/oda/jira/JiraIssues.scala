@@ -14,7 +14,7 @@ case class Fields(
                    reporter: Person,
                    priority: Priority)
 
-case class Person(key: String, displayName: String)
+case class Person(accountId: String, displayName: String)
 
 case class HistoryItem(id: String, author: Person, created: ZonedDateTime, items: List[ChangeItem])
 

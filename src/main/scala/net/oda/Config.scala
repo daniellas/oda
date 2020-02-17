@@ -35,11 +35,14 @@ case class ConfigProps(
                         data: DataProps,
                         reports: ReportsProps,
                         http: HttpProps,
-                        influxdb: InluxdbProps)
+                        influxdb: InluxdbProps,
+                        emailMapping: Map[String, String])
 
 object Config {
   private implicit val formats = DefaultFormats
   val props = Serialization.read[ConfigProps](FileIO.loadTextContent("config.json"))
   val dataLocation = props.data.location
   val reportsLocation = props.reports.location
+
+  def mapEmail(email: String) = props.emailMapping.get(email).getOrElse(email)
 }
