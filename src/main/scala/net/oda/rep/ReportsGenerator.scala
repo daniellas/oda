@@ -1,17 +1,20 @@
 package net.oda.rep
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 import java.time.temporal.ChronoUnit
 
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import net.oda.Config
 import net.oda.cfd.{CfdInflux, CfdReporter}
+import net.oda.commits.CommitsInflux
+import net.oda.gitlab.GitlabClient
 import net.oda.influx.InfluxDb
 import net.oda.influx.InfluxDb.db
 import net.oda.jira.JiraData.location
 import net.oda.jira.{JiraData, JiraInflux, JiraReporter}
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object ReportsGenerator {
 
@@ -126,6 +129,16 @@ object ReportsGenerator {
       .andThen(CfdInflux.toCfdDurationsPoints(_, projectKey, qualifier, interval.name()))
       .andThen(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
       .apply(location(projectKey))
-
   }
+
+  def commits(since: ZonedDateTime) = GitlabClient
+    .getProjects()
+    .flatMap(ps => Future.sequence(
+      ps.map(p => GitlabClient
+        .getCommits(p.id, "develop", since)
+        .map(cs => cs.filterNot(_.committer_email.startsWith("jenkins"))
+          .map(c => (p, c))))))
+    .map(_.flatten)
+    .map(CommitsInflux.toCommitsPoints)
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
 }

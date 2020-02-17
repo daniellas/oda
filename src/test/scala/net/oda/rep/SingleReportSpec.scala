@@ -1,15 +1,9 @@
 package net.oda.rep
 
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
+import java.time.ZonedDateTime
 
-import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import com.typesafe.scalalogging.Logger
-import net.oda.cfd.{CfdInflux, CfdReporter}
-import net.oda.influx.InfluxDb
-import net.oda.jira.JiraData
-import net.oda.jira.JiraData.location
-import net.oda.{Config, IT}
+import net.oda.IT
 import org.scalatest.FreeSpec
 
 import scala.concurrent.Await
@@ -19,28 +13,7 @@ class SingleReportsSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
 
   s"Generate" taggedAs (IT) in {
-    val projectKey = "CRYP"
-    val project = Config.props.jira.projects(projectKey)
-
-    JiraData
-      .loadAsWorkItems(project.estimateMapping.get)
-      .andThen(
-        CfdReporter
-          .calculateWorkItemsDuration(
-            projectKey,
-            LocalDate.MIN,
-            Seq("Story", "Bug").contains,
-            _ => true,
-            project.referenceFlow,
-            project.entryState,
-            project.finalState,
-            project.stateMapping,
-            ChronoUnit.WEEKS,
-            _))
-      .andThen(CfdInflux.toCfdDurationsPoints(_, projectKey, "All stories and bugs", ChronoUnit.WEEKS.name()))
-      .andThen(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
-      .andThen(Await.result(_, 100 second))
-      .apply(location(projectKey))
+    Await.result(ReportsGenerator.commits(ZonedDateTime.now().minusDays(30)), 10 minutes)
   }
 
 }
