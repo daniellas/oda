@@ -194,7 +194,7 @@ object CfdReporter {
         r.getAs[Double](cumulativeCol(entryState)),
         r.getTimestamp(0),
         r.getAs[Double](cumulativeCol(finalState))))
-      .foldLeft(SortedMap.empty[Double, (Timestamp, Double)])((acc, i) => acc + (i._1 -> ((i._2, i._3))))
+      .foldLeft(SortedMap.empty[Double, (Timestamp, Double)])((acc, i) => acc + (i._1 -> (i._2, i._3)))
 
     val cycleTime = cumulativeValues.select(
       'created,
@@ -203,7 +203,7 @@ object CfdReporter {
       .map(r =>
         (
           r.getTimestamp(0),
-          if (r.getDouble(1) == r.getDouble(2)) 0L
+          if (r.getDouble(1) == r.getDouble(2)) 1L
           else findDateLastBelow(entryValuesByEntryState, r.getDouble(2))
             .map(calculateCycleTime(tsDiffCalculator, _, r.getTimestamp(0)))
             .getOrElse(0L),
@@ -216,6 +216,10 @@ object CfdReporter {
         '_2.as(ctCol),
         '_3.as(doneLaggedByCTCol))
 
+    val wip = udf((ct: Long, doneChange: Double, done: Double, doneLagged: Double) => {
+      if (ct == 1) doneChange else done - doneLagged
+    })
+
     val res = cumulativeValues
       .join(cycleTime, 'created === cycleTime("ct_" + createdCol))
       .orderBy('created)
@@ -226,7 +230,11 @@ object CfdReporter {
       .withColumnRenamed(cumulativeCol(entryState), entryState)
       .withColumnRenamed(cumulativeCol(finalState), finalState)
       .withColumnRenamed(cumulativeCol(currentWipCol), currentWipCol)
-      .withColumn(wipCol, col(finalState) - col(doneLaggedByCTCol))
+      .withColumn(wipCol, wip(
+        col(ctCol),
+        col(changeCol(finalState)),
+        col(finalState),
+        col(doneLaggedByCTCol)))
       .withColumn(thCol, col(wipCol) / col(ctCol))
 
     log.info("{} CFD report generation complete", projectKey)

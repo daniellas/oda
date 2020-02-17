@@ -36,7 +36,7 @@ object Mappers {
       issue.fields.priority.name,
       issue.fields.created,
       issue.fields.resolutiondate.map(toTimestamp),
-      s"${issue.fields.reporter.displayName} (${issue.fields.reporter.key})",
+      s"${issue.fields.reporter.displayName}",
       size,
       size.flatMap(estimateCalculator).getOrElse(storyPoints.getOrElse(0.0)),
       historyItems

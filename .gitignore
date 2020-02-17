@@ -6,9 +6,7 @@
 *.iml
 /data
 reports/
-config.properties
-config.yml
-config.json
+config.*
 target/
 .settings
 .cache-main
