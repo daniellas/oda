@@ -2,6 +2,7 @@
   "annotations": {
     "list": [
       {
+        "$$hashKey": "object:8769",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -16,6 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 4,
+  "iteration": 1582662661663,
   "links": [],
   "panels": [
     {
@@ -26,12 +28,12 @@
       "datasource": null,
       "fill": 1,
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 2,
+      "id": 7,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -51,7 +53,7 @@
       "lines": false,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null as zero",
+      "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -62,18 +64,17 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:14954",
-          "alias": "Effective $tag_namespace",
+          "alias": "$tag_committer $tag_project",
           "groupBy": [
             {
               "params": [
-                "1w"
+                "project"
               ],
-              "type": "time"
+              "type": "tag"
             },
             {
               "params": [
-                "namespace"
+                "committer"
               ],
               "type": "tag"
             },
@@ -84,134 +85,11 @@
               "type": "fill"
             }
           ],
-          "measurement": "commits",
+          "measurement": "commits_stats",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "effective"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "sum"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Effective",
-      "tooltip": {
-        "shared": false,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "transparent": true,
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ]
-    },
-    {
-      "aliasColors": {},
-      "bars": true,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fill": 1,
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 10
-      },
-      "id": 3,
-      "legend": {
-        "alignAsTable": true,
-        "avg": false,
-        "current": false,
-        "hideEmpty": true,
-        "hideZero": true,
-        "max": false,
-        "min": false,
-        "rightSide": true,
-        "show": true,
-        "sideWidth": null,
-        "sort": "total",
-        "sortDesc": true,
-        "total": true,
-        "values": true
-      },
-      "lines": false,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null as zero",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "$$hashKey": "object:15086",
-          "alias": "Additions $tag_namespace",
-          "groupBy": [
-            {
-              "params": [
-                "1w"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "namespace"
-              ],
-              "type": "tag"
-            },
-            {
-              "params": [
-                "0"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "commits",
-          "orderByTime": "ASC",
-          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -221,10 +99,6 @@
                   "additions"
                 ],
                 "type": "field"
-              },
-              {
-                "params": [],
-                "type": "sum"
               }
             ]
           ],
@@ -237,10 +111,10 @@
       "title": "Additions",
       "tooltip": {
         "shared": false,
-        "sort": 0,
+        "sort": 2,
         "value_type": "individual"
       },
-      "transparent": true,
+      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -251,7 +125,8 @@
       },
       "yaxes": [
         {
-          "format": "short",
+          "decimals": 0,
+          "format": "locale",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -276,12 +151,12 @@
       "datasource": null,
       "fill": 1,
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 7
       },
-      "id": 4,
+      "id": 8,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -301,7 +176,7 @@
       "lines": false,
       "linewidth": 1,
       "links": [],
-      "nullPointMode": "null as zero",
+      "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -312,18 +187,17 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:15241",
-          "alias": "Deletions $tag_namespace",
+          "alias": "$tag_committer $tag_project",
           "groupBy": [
             {
               "params": [
-                "1w"
+                "project"
               ],
-              "type": "time"
+              "type": "tag"
             },
             {
               "params": [
-                "namespace"
+                "committer"
               ],
               "type": "tag"
             },
@@ -334,9 +208,11 @@
               "type": "fill"
             }
           ],
-          "measurement": "commits",
+          "measurement": "commits_stats",
           "orderByTime": "ASC",
           "policy": "default",
+          "query": "SELECT \"additions\" FROM \"repos_activity_rank\" WHERE (\"project\" != 'empirica-algo / strategies / sapien-strategy') AND $timeFilter GROUP BY time(4w), \"project\"",
+          "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -346,10 +222,6 @@
                   "deletions"
                 ],
                 "type": "field"
-              },
-              {
-                "params": [],
-                "type": "sum"
               }
             ]
           ],
@@ -362,10 +234,10 @@
       "title": "Deletions",
       "tooltip": {
         "shared": false,
-        "sort": 0,
+        "sort": 2,
         "value_type": "individual"
       },
-      "transparent": true,
+      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -376,7 +248,8 @@
       },
       "yaxes": [
         {
-          "format": "short",
+          "decimals": 0,
+          "format": "locale",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -399,7 +272,28 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "datasource": "oda",
+        "filters": [
+          {
+            "condition": "AND",
+            "key": "committer",
+            "operator": "=",
+            "value": "daniel.las@empirica.pl"
+          },
+          {
+            "key": "namespace",
+            "operator": "=",
+            "value": "empirica-algo / mba"
+          }
+        ],
+        "hide": 0,
+        "label": "Filters",
+        "name": "filters",
+        "type": "adhoc"
+      }
+    ]
   },
   "time": {
     "from": "now-6M",
@@ -431,7 +325,7 @@
     ]
   },
   "timezone": "",
-  "title": "Gitlab namespace activity",
+  "title": "Gitlab metrics",
   "uid": "23jUWu8Zz",
-  "version": 34
+  "version": 65
 }

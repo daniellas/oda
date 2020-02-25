@@ -35,5 +35,11 @@ class GitlabClientTest extends AsyncFreeSpec with Matchers {
       .map(r => r.title should not be empty)
   }
 
+  "should get merge requests" taggedAs IT in {
+    GitlabClient.getMergeRequests("develop", ZonedDateTime.now().minusDays(30))
+      .map(r => {
+        println(r)
+        r should not be empty})
+  }
 
 }

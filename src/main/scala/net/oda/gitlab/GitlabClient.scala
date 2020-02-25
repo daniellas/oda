@@ -4,7 +4,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 import com.typesafe.scalalogging.Logger
-import io.netty.handler.codec.http.HttpResponseStatus
 import net.oda.Config
 import net.oda.json.ZondedDateTimeSerializer
 import net.oda.rest.client.{Response, RestClient, VertxHttpExecutor}
@@ -44,6 +43,20 @@ case class Commit(
       this.stats
     )
 }
+
+case class Author(id: Int, username: String)
+
+case class MergeRequest(
+                         id: Int,
+                         iid: Int,
+                         state: String,
+                         created_at: ZonedDateTime,
+                         author: Author,
+                         merged_at: Option[ZonedDateTime],
+                         closed_at: Option[ZonedDateTime],
+                         user_notes_count: Int,
+                         project_id: Int
+                       )
 
 object GitlabClient {
   val log = Logger("gitlab-client")
@@ -89,7 +102,7 @@ object GitlabClient {
     getPages(
       restClient
         .resource(
-          "/projects/%s/repository/commits?per_page=100&ref_name=%s&since=%s&with_stats=true&page=%s&first_parent=%s",
+          "/projects/%s/repository/commits?per_page=100&ref_name=%s&since=%s&with_stats=true&first_parent=%s&page=%s",
           projectId,
           ref,
           since.format(dateTimeFormatter),
@@ -111,6 +124,19 @@ object GitlabClient {
       .map(Serialization.read[Commit])
       .map(Future.successful)
       .getOrElse(emptyBodyFailure()))
+
+  def getMergeRequests(targetBranch: String, since: ZonedDateTime) = getPages(
+    restClient
+      .resource(
+        "/merge_requests?per_page=100&target_branch=%s&scope=all&created_after=%s&page=%s",
+        targetBranch,
+        since.format(dateTimeFormatter),
+        _)
+      .get()
+      .execute()
+      .map(_.map(Serialization.read[Seq[MergeRequest]])),
+    Seq.empty,
+    1)
 
   private def emptyBodyFailure[A](): Future[A] = Future.failed[A](new NoSuchElementException())
 

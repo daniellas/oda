@@ -6,7 +6,7 @@ import java.time.temporal.ChronoUnit
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import net.oda.Config
 import net.oda.cfd.{CfdInflux, CfdReporter}
-import net.oda.commits.CommitsInflux
+import net.oda.commits.{CommitsInflux, CommitsReporter}
 import net.oda.gitlab.GitlabClient
 import net.oda.influx.InfluxDb
 import net.oda.influx.InfluxDb.db
@@ -141,4 +141,30 @@ object ReportsGenerator {
     .map(_.flatten)
     .map(CommitsInflux.toCommitsPoints)
     .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def namespaceActivityRank(interval: ChronoUnit, max: Int) = CommitsInflux
+    .loadCommits()
+    .map(CommitsReporter.namespaceActivityRank(_, interval))
+    .map(CommitsInflux.toNamespaceActivityRankPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+
+  def reposActivityRank(interval: ChronoUnit, max: Int) = CommitsInflux
+    .loadCommits()
+    .map(CommitsReporter.reposActivityRank(_, interval))
+    .map(CommitsInflux.toReposActivityRankPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def committersActivityRank(interval: ChronoUnit, max: Int) = CommitsInflux
+    .loadCommits()
+    .map(CommitsReporter.committersActivityRank(_, interval))
+    .map(CommitsInflux.toCommittersActivityPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def commitsStats(interval: ChronoUnit) = CommitsInflux
+    .loadCommits()
+    .map(CommitsReporter.commitsStats(_, interval))
+    .map(CommitsInflux.toCommitsStatsPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
 }
