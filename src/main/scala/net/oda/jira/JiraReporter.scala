@@ -56,7 +56,7 @@ object JiraReporter {
     WorkItems.flatten(workItems)
       .filter(i => stateFilter.apply(i.statusName))
       .toDF
-      .withColumn("createdWeek", Spark.toIntervalStart(interval)('aa))
+      .withColumn("createdWeek", Spark.toIntervalStart(interval)('created))
       .groupBy('statusAuthor.as('author))
       .agg(min('createdWeek).as('min), max('createdWeek).as('max))
       .withColumn("range", range('min, 'max))
