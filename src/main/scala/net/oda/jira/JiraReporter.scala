@@ -1,16 +1,13 @@
 package net.oda.jira
 
 import java.sql.Timestamp
-import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-import org.apache.spark.sql.functions._
 import net.oda.Spark.session.implicits._
-import net.oda.Time
-import net.oda.Time._
-import net.oda.Time.toTimestamp
-import net.oda.workitem.{WorkItem, WorkItemStatus, WorkItems}
+import net.oda.{Spark, Time}
+import net.oda.workitem.{WorkItem, WorkItems}
 import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
 
 object JiraReporter {
 
@@ -53,14 +50,13 @@ object JiraReporter {
                               stateFilter: String => Boolean,
                               interval: ChronoUnit,
                               learningTime: Double) = {
-    val createdMapper = udf(Time.interval.apply(interval, _))
     val range = udf(Time.range(interval, _, _))
     val experience = udf((e: Long) => if (e < learningTime) e / learningTime else 1)
 
     WorkItems.flatten(workItems)
       .filter(i => stateFilter.apply(i.statusName))
       .toDF
-      .withColumn("createdWeek", createdMapper('created))
+      .withColumn("createdWeek", Spark.toIntervalStart(interval)('created))
       .groupBy('statusAuthor.as('author))
       .agg(min('createdWeek).as('min), max('createdWeek).as('max))
       .withColumn("range", range('min, 'max))

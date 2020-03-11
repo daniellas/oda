@@ -16,15 +16,21 @@ object Time {
 
   implicit def toLocalDate(ts: Timestamp) = LocalDate.from(ts.toInstant.atZone(ZoneId.systemDefault()))
 
+  implicit def toZonedDateTime(epochMillis: Long) = ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneId.systemDefault())
+
   implicit def toLocalDate(epochMillis: Long) = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate
 
   implicit def parseLocalDate(date: String) = LocalDate.parse(date)
+
+  implicit def parseZonedDateTime(dateTime: String) = ZonedDateTime.parse(dateTime)
 
   implicit def weekStart(dt: ZonedDateTime) = dt.truncatedTo(ChronoUnit.DAYS).`with`(DayOfWeek.MONDAY)
 
   implicit def day(dt: ZonedDateTime) = dt.truncatedTo(ChronoUnit.DAYS)
 
   implicit def monthStart(dt: ZonedDateTime) = dt.truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
+
+  def weekDay(dt: ZonedDateTime) = dt.getDayOfWeek.name()
 
   val weeksBetween = (start: LocalDate, end: LocalDate) => ChronoUnit.WEEKS.between(start, end)
 
