@@ -1,12 +1,11 @@
-package net.oda.commits
+package net.oda.gitlab
 
 import java.sql.Timestamp
 import java.time.temporal.ChronoUnit
 
 import com.paulgoldbaum.influxdbclient.{Point, Record}
-import net.oda.Config
+import net.oda.{Config, Time}
 import net.oda.Time._
-import net.oda.gitlab.{Commit, Project}
 import net.oda.influx.InfluxDb
 import org.apache.spark.sql.DataFrame
 
@@ -36,7 +35,7 @@ case object CommitRecord {
   )
 }
 
-object CommitsInflux {
+object GitlabInflux {
   def toCommitsPoints(pcs: Seq[(Project, Commit)]) = pcs
     .map(pc => Point("commits", pc._2.created_at.toInstant.toEpochMilli)
       .addTag("project", pc._1.name_with_namespace)
@@ -108,4 +107,14 @@ object CommitsInflux {
 
   def loadCommits() = InfluxDb.db.query("select * from commits")
     .map(_.series.head.records.map(CommitRecord.of))
+
+  def toMergeRequestsPoints(mrs: Seq[MergeRequest]) = mrs
+    .map(mr => Point("merge_requests", mr.created_at.toInstant.toEpochMilli)
+      .addTag("author", mr.author.username)
+      .addTag("state", mr.state)
+      .addTag("source_branch", mr.source_branch)
+      .addTag("target_branch", mr.target_branch)
+      .addField("user_notes_count", mr.user_notes_count)
+      .addField("duration_days", mr.merged_at.map(Time.daysBetweenTimestamps(mr.created_at, _)).getOrElse(0L)))
+
 }

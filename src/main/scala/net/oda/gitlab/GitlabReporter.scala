@@ -1,14 +1,13 @@
-package net.oda.commits
+package net.oda.gitlab
 
 import java.time.temporal.ChronoUnit
 
-import net.oda.{Spark, Time}
+import net.oda.Spark
 import net.oda.Spark.session.implicits._
 import org.apache.spark.sql.expressions.Window.partitionBy
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{dense_rank, sum}
 
-
-object CommitsReporter {
+object GitlabReporter {
 
   def namespaceActivityRank(
                              commits: Seq[CommitRecord],

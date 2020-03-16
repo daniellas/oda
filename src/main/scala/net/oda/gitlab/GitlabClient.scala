@@ -55,7 +55,9 @@ case class MergeRequest(
                          merged_at: Option[ZonedDateTime],
                          closed_at: Option[ZonedDateTime],
                          user_notes_count: Int,
-                         project_id: Int
+                         project_id: Int,
+                         source_branch: String,
+                         target_branch: String
                        )
 
 object GitlabClient {
@@ -125,11 +127,10 @@ object GitlabClient {
       .map(Future.successful)
       .getOrElse(emptyBodyFailure()))
 
-  def getMergeRequests(targetBranch: String, since: ZonedDateTime) = getPages(
+  def getMergeRequests(since: ZonedDateTime) = getPages(
     restClient
       .resource(
-        "/merge_requests?per_page=100&target_branch=%s&scope=all&created_after=%s&page=%s",
-        targetBranch,
+        "/merge_requests?per_page=100&scope=all&created_after=%s&page=%s",
         since.format(dateTimeFormatter),
         _)
       .get()
