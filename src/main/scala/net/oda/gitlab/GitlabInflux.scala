@@ -1,6 +1,7 @@
 package net.oda.gitlab
 
 import java.sql.Timestamp
+import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 import com.paulgoldbaum.influxdbclient.{Point, Record}
@@ -32,6 +33,35 @@ case object CommitRecord {
     record("deletions").asInstanceOf[BigDecimal].toInt,
     record("total").asInstanceOf[BigDecimal].toInt,
     record("effective").asInstanceOf[BigDecimal].toInt
+  )
+}
+
+case class MergeRequestRecord(
+                               createdAt: Timestamp,
+                               id: Int,
+                               projectId: Int,
+                               author: String,
+                               state: String,
+                               sourceBranch: String,
+                               targetBranch: String,
+                               userNotesCount: Int,
+                               mergedAt: Option[Timestamp])
+
+case object MergeRequestRecord {
+  def of(record: Record) = new MergeRequestRecord(
+    toTimestamp(parseZonedDateTime(record("time").asInstanceOf[String])),
+    record("id").asInstanceOf[String].toInt,
+    record("project_id").asInstanceOf[String].toInt,
+    record("author").asInstanceOf[String],
+    record("state").asInstanceOf[String],
+    record("source_branch").asInstanceOf[String],
+    record("target_branch").asInstanceOf[String],
+    record("user_notes_count").asInstanceOf[BigDecimal].toInt,
+    Option(record("merged_at_ts").asInstanceOf[BigDecimal])
+      .map(_.toLongExact)
+      .filterNot(_ == 0L)
+      .map(Time.toZonedDateTime)
+      .map(Time.toTimestamp)
   )
 }
 
@@ -110,11 +140,36 @@ object GitlabInflux {
 
   def toMergeRequestsPoints(mrs: Seq[MergeRequest]) = mrs
     .map(mr => Point("merge_requests", mr.created_at.toInstant.toEpochMilli)
+      .addTag("id", mr.id.toString)
+      .addTag("project_id", mr.project_id.toString)
       .addTag("author", mr.author.username)
       .addTag("state", mr.state)
       .addTag("source_branch", mr.source_branch)
       .addTag("target_branch", mr.target_branch)
       .addField("user_notes_count", mr.user_notes_count)
-      .addField("duration_days", mr.merged_at.map(Time.daysBetweenTimestamps(mr.created_at, _)).getOrElse(0L)))
+      .addField("merged_at_ts", mr.merged_at.map(_.toInstant.toEpochMilli).getOrElse(0L))
+      .addField("duration_days", mr.merged_at.map(Time.daysBetweenTimestamps(mr.created_at, _)).getOrElse(Time.daysBetweenTimestamps(mr.created_at, ZonedDateTime.now()))))
+
+  def toMergeRequestsStatsPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("merge_requests_stats", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("author", r.getString(1))
+        .addTag("state", r.getString(2))
+        .addTag("project", r.getString(3))
+        .addField("count", r.getLong(4)))
+  }
+
+  def toMergeRequestsMovingAveragePoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("merge_requests_moving_average", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("state", r.getString(1))
+        .addField("moving_average", r.getDouble(2)))
+  }
+
+  def loadMergeRequests() = InfluxDb.db.query("select * from merge_requests")
+    .map(_.series.head.records.map(MergeRequestRecord.of))
+
 
 }

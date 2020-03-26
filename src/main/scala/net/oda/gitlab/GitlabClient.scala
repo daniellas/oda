@@ -19,7 +19,11 @@ import scala.concurrent.{Future, Promise}
 case class Namespace(id: String, name: String, path: String, full_path: String, parent_id: Option[Int])
 
 case class Project(id: Int, name: String, name_with_namespace: String) {
-  def namespace() = name_with_namespace.substring(0, name_with_namespace.length - name.trim.length - 3)
+  def namespace() = Project.extractNamespace(name, name_with_namespace)
+}
+
+case object Project {
+  def extractNamespace(name: String, fullName: String): String = fullName.substring(0, fullName.length - name.trim.length - 3)
 }
 
 case class Stats(additions: Int, deletions: Int, total: Int)

@@ -1,5 +1,6 @@
 package net.oda.rep
 
+import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 import com.typesafe.scalalogging.Logger
@@ -22,8 +23,15 @@ class ReportsGeneratorSpec extends FreeSpec {
     CfdSpec("Critical bugs", "Bug".equals, "Critical".equals)
   )
   val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming", "Done").contains(state)
+  val months = 1
+
 
   s"Generate" taggedAs (IT) in {
+    generateGitlabReports()
+    generateJiraReports()
+  }
+
+  def generateJiraReports() = {
     Config.props.jira.projects.foreach(p => {
       Await.result(workItemsChangelog(p._1, ChronoUnit.DAYS), 100 second)
       Await.result(jiraCountByTypePriority(p._1, ChronoUnit.DAYS, p._2.stateMapping), 100 second)
@@ -41,4 +49,10 @@ class ReportsGeneratorSpec extends FreeSpec {
     })
   }
 
+  def generateGitlabReports() = {
+    Await.result(ReportsGenerator.commits(ZonedDateTime.now().minusMonths(months)), 20 minutes)
+    Await.result(ReportsGenerator.mergeRequests(ZonedDateTime.now().minusMonths(months)), 20 minutes)
+    Await.result(ReportsGenerator.mergeRequestsStats("develop", ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.mergeRequestsMovingAverage("develop", ChronoUnit.WEEKS), 5 minutes)
+  }
 }

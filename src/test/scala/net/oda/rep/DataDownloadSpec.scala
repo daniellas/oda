@@ -1,6 +1,7 @@
 package net.oda.rep
 
 import com.typesafe.scalalogging.Logger
+import net.oda.gitlab.GitlabClient
 import net.oda.jira.{JiraClient, JiraTimestampSerializer}
 import net.oda.{Config, FileIO, IT}
 import org.json4s.DefaultFormats
@@ -11,19 +12,28 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class JiraDownloadSpec extends FreeSpec {
-  val log = Logger(classOf[JiraDownloadSpec])
-  implicit val formats = DefaultFormats + JiraTimestampSerializer
+class DataDownloadSpec extends FreeSpec {
+  val log = Logger(classOf[DataDownloadSpec])
+  implicit val jiraFormats = DefaultFormats + JiraTimestampSerializer
 
-  "Download issues" taggedAs (IT) in {
-    Config.props.jira.projects.keys.foreach(download)
+  "Download Gitlab projects" taggedAs (IT) in {
+    val res = GitlabClient.getProjects()
+      .map(Serialization.write(_))
+
+    res.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/gitlab-projects.json", _: String)))
+
+    Await.result(res, 10 minutes)
   }
 
-  def download(projectKey: String) = {
+  "Download JIRA issues" taggedAs (IT) in {
+    Config.props.jira.projects.keys.foreach(downloadJiraData)
+  }
+
+  def downloadJiraData(projectKey: String) = {
     log.info("Downloading {} JIRA data", projectKey)
 
     val res = JiraClient.searchIssues(projectKey)
-      .map(Serialization.write(_)(formats))
+      .map(Serialization.write(_)(jiraFormats))
 
     res.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${projectKey}.json", _: String)))
 

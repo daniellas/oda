@@ -18,6 +18,8 @@ object Time {
 
   implicit def toZonedDateTime(epochMillis: Long) = ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneId.systemDefault())
 
+  implicit def toEpochMillis(ts: ZonedDateTime) = ts.toInstant.toEpochMilli
+
   implicit def toLocalDate(epochMillis: Long) = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate
 
   implicit def parseLocalDate(date: String) = LocalDate.parse(date)

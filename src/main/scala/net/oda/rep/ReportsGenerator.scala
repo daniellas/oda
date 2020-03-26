@@ -6,7 +6,7 @@ import java.time.temporal.ChronoUnit
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import net.oda.Config
 import net.oda.cfd.{CfdInflux, CfdReporter}
-import net.oda.gitlab.{GitlabInflux, GitlabReporter, GitlabClient}
+import net.oda.gitlab.{GitlabClient, GitlabData, GitlabInflux, GitlabReporter}
 import net.oda.influx.InfluxDb
 import net.oda.influx.InfluxDb.db
 import net.oda.jira.JiraData.location
@@ -168,6 +168,19 @@ object ReportsGenerator {
 
   def mergeRequests(since: ZonedDateTime) = GitlabClient
     .getMergeRequests(since)
-    .map(GitlabInflux.toMergeRequestsPoints(_))
+    .map(GitlabInflux.toMergeRequestsPoints)
     .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def mergeRequestsStats(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(GitlabReporter.mergeRequestsStats(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsStatsPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def mergeRequestsMovingAverage(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(GitlabReporter.mergeRequestsMovingAverage(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsMovingAveragePoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
 }
