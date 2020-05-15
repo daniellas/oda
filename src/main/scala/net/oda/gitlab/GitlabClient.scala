@@ -18,7 +18,7 @@ import scala.concurrent.{Future, Promise}
 
 case class Namespace(id: String, name: String, path: String, full_path: String, parent_id: Option[Int])
 
-case class Project(id: Int, name: String, name_with_namespace: String) {
+case class Project(id: Int, name: String, name_with_namespace: String, tag_list: Seq[String]) {
   def namespace() = Project.extractNamespace(name, name_with_namespace)
 }
 
@@ -61,7 +61,8 @@ case class MergeRequest(
                          user_notes_count: Int,
                          project_id: Int,
                          source_branch: String,
-                         target_branch: String
+                         target_branch: String,
+                         updated_at: ZonedDateTime
                        )
 
 object GitlabClient {
@@ -77,7 +78,7 @@ object GitlabClient {
 
   def getProjects(): Future[Seq[Project]] = getPages(
     restClient
-      .resource("/projects?archived=false&per_page=100&page=%s", _)
+      .resource("/projects?archived=false&per_page=100&simple=false&page=%s", _)
       .get()
       .execute()
       .map(_.map(Serialization.read[Seq[Project]])),

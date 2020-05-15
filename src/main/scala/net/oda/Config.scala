@@ -44,5 +44,5 @@ object Config {
   val dataLocation = props.data.location
   val reportsLocation = props.reports.location
 
-  def mapEmail(email: String) = props.emailMapping.get(email).getOrElse(email)
+  def mapEmail(email: String) = props.emailMapping.get(email.toLowerCase).getOrElse(email.toLowerCase)
 }

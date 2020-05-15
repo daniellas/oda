@@ -1,5 +1,7 @@
 package net.oda.rep
 
+import java.time.ZonedDateTime
+
 import com.typesafe.scalalogging.Logger
 import net.oda.gitlab.GitlabClient
 import net.oda.jira.{JiraClient, JiraTimestampSerializer}
@@ -14,26 +16,33 @@ import scala.concurrent.duration._
 
 class DataDownloadSpec extends FreeSpec {
   val log = Logger(classOf[DataDownloadSpec])
-  implicit val jiraFormats = DefaultFormats + JiraTimestampSerializer
+  implicit val jsonFormats = DefaultFormats + JiraTimestampSerializer
+  val months = 1
 
-  "Download Gitlab projects" taggedAs (IT) in {
-    val res = GitlabClient.getProjects()
+  "Download data" taggedAs (IT) in {
+    downloadGitlabData()
+    downloadJiraData()
+  }
+
+  def downloadGitlabData() = {
+    val projects = GitlabClient.getProjects()
       .map(Serialization.write(_))
 
-    res.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/gitlab-projects.json", _: String)))
-
-    Await.result(res, 10 minutes)
+    projects.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/gitlab-projects.json", _: String)))
+    Await.result(projects, 10 minutes)
+    Await.result(ReportsGenerator.commits(ZonedDateTime.now().minusMonths(months)), 20 minutes)
+    Await.result(ReportsGenerator.mergeRequests(ZonedDateTime.now().minusMonths(6 * months)), 20 minutes)
   }
 
-  "Download JIRA issues" taggedAs (IT) in {
-    Config.props.jira.projects.keys.foreach(downloadJiraData)
+  def downloadJiraData(): Unit = {
+    Config.props.jira.projects.keys.foreach(downloadJiraProjectData)
   }
 
-  def downloadJiraData(projectKey: String) = {
+  def downloadJiraProjectData(projectKey: String) = {
     log.info("Downloading {} JIRA data", projectKey)
 
     val res = JiraClient.searchIssues(projectKey)
-      .map(Serialization.write(_)(jiraFormats))
+      .map(Serialization.write(_)(jsonFormats))
 
     res.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${projectKey}.json", _: String)))
 

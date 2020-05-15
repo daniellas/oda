@@ -20,8 +20,21 @@ case class CommitRecord(
                          additions: Int,
                          deletions: Int,
                          total: Int,
-                         effective: Int
-                       )
+                         effective: Int,
+                         projectId: Int
+                       ) {
+  def mapCommitter(mapper: String => String) = CommitRecord(
+    this.createdAt,
+    this.project,
+    this.namespace,
+    mapper(this.committer),
+    this.additions,
+    this.deletions,
+    this.total,
+    this.effective,
+    this.projectId
+  )
+}
 
 case object CommitRecord {
   def of(record: Record) = new CommitRecord(
@@ -32,8 +45,10 @@ case object CommitRecord {
     record("additions").asInstanceOf[BigDecimal].toInt,
     record("deletions").asInstanceOf[BigDecimal].toInt,
     record("total").asInstanceOf[BigDecimal].toInt,
-    record("effective").asInstanceOf[BigDecimal].toInt
+    record("effective").asInstanceOf[BigDecimal].toInt,
+    record("projectId").asInstanceOf[String].toInt
   )
+
 }
 
 case class MergeRequestRecord(
@@ -45,7 +60,8 @@ case class MergeRequestRecord(
                                sourceBranch: String,
                                targetBranch: String,
                                userNotesCount: Int,
-                               mergedAt: Option[Timestamp])
+                               mergedAt: Option[Timestamp],
+                               updatedAt: Long)
 
 case object MergeRequestRecord {
   def of(record: Record) = new MergeRequestRecord(
@@ -61,8 +77,8 @@ case object MergeRequestRecord {
       .map(_.toLongExact)
       .filterNot(_ == 0L)
       .map(Time.toZonedDateTime)
-      .map(Time.toTimestamp)
-  )
+      .map(Time.toTimestamp),
+    record("updated_at").asInstanceOf[BigDecimal].toLong)
 }
 
 object GitlabInflux {
@@ -70,7 +86,8 @@ object GitlabInflux {
     .map(pc => Point("commits", pc._2.created_at.toInstant.toEpochMilli)
       .addTag("project", pc._1.name_with_namespace)
       .addTag("namespace", pc._1.namespace())
-      .addTag("committer", Config.mapEmail(pc._2.committer_email))
+      .addTag("committer", pc._2.committer_email)
+      .addTag("projectId", pc._1.id.toString)
       .addField("additions", pc._2.stats.additions)
       .addField("deletions", pc._2.stats.deletions)
       .addField("effective", pc._2.stats.additions - pc._2.stats.deletions)
@@ -135,6 +152,16 @@ object GitlabInflux {
         .addField("effective", r.getLong(7)))
   }
 
+  def toCommittersLifeSpanStatsPiont(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("committer_life_span_stats", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addField("count", r.getLong(1))
+        .addField("total", r.getLong(2))
+        .addField("avg", r.getDouble(3))
+        .addField("movAvg", r.getDouble(4)))
+  }
+
   def loadCommits() = InfluxDb.db.query("select * from commits")
     .map(_.series.head.records.map(CommitRecord.of))
 
@@ -146,18 +173,25 @@ object GitlabInflux {
       .addTag("state", mr.state)
       .addTag("source_branch", mr.source_branch)
       .addTag("target_branch", mr.target_branch)
+      .addField("updated_at", mr.updated_at.toInstant.toEpochMilli)
       .addField("user_notes_count", mr.user_notes_count)
       .addField("merged_at_ts", mr.merged_at.map(_.toInstant.toEpochMilli).getOrElse(0L))
       .addField("duration_days", mr.merged_at.map(Time.daysBetweenTimestamps(mr.created_at, _)).getOrElse(Time.daysBetweenTimestamps(mr.created_at, ZonedDateTime.now()))))
 
-  def toMergeRequestsStatsPoints(df: DataFrame, interval: ChronoUnit) = {
+  def toMergeRequestsByStatePoints(df: DataFrame, interval: ChronoUnit) = {
     df.collect()
-      .map(r => Point("merge_requests_stats", r.getTimestamp(0).toInstant.toEpochMilli)
+      .map(r => Point("merge_requests_by_state", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("state", r.getString(1))
+        .addField("count", r.getLong(2)))
+  }
+
+  def toMergeRequestsByAuthorPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("merge_requests_by_author", r.getTimestamp(0).toInstant.toEpochMilli)
         .addTag("interval", interval.name())
         .addTag("author", r.getString(1))
-        .addTag("state", r.getString(2))
-        .addTag("project", r.getString(3))
-        .addField("count", r.getLong(4)))
+        .addField("count", r.getLong(2)))
   }
 
   def toMergeRequestsMovingAveragePoints(df: DataFrame, interval: ChronoUnit) = {
@@ -168,8 +202,66 @@ object GitlabInflux {
         .addField("moving_average", r.getDouble(2)))
   }
 
+  def toMergeRequestsCommentsPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("merge_requests_comments", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("author", r.getString(1))
+        .addField("sum", r.getLong(2)))
+  }
+
+  def toMergeRequestsDurationPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("merge_requests_duration", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addField("duration_avg", r.getDouble(1))
+        .addField("duration_max", r.getLong(2))
+        .addField("duration_std_dev", r.getDouble(3)))
+  }
+
+  def toMergeRequestsAuthorsRatioPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("merge_requests_authors_ratio", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addField("ratio", r.getDouble(1))
+        .addField("moving_average", r.getDouble(2)))
+  }
+
   def loadMergeRequests() = InfluxDb.db.query("select * from merge_requests")
     .map(_.series.head.records.map(MergeRequestRecord.of))
 
+  def toCommitsStatsByProjectRolePoint(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("commits_stats_by_project_role", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("role", r.getString(1))
+        .addField("additions", r.getLong(2))
+        .addField("deletions", r.getLong(3)))
+  }
+
+  def toCommitsStatsByProjectCategoryPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("commits_stats_by_project_category", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("category", r.getString(1))
+        .addField("additions", r.getLong(2))
+        .addField("deletions", r.getLong(3)))
+  }
+
+  def toMergeRequestsByProjectRolePoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("merge_requests_by_project_role", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("role", r.getString(1))
+        .addField("count", r.getLong(2)))
+  }
+
+  def toMergeRequestsByProjectCategoryPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("merge_requests_by_project_category", r.getTimestamp(0).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("category", r.getString(1))
+        .addField("count", r.getLong(2)))
+  }
 
 }

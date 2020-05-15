@@ -11,9 +11,7 @@ import org.scalatest.FreeSpec
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-case class CfdSpec(qualifier: String, typesFilter: String => Boolean, priosFilter: String => Boolean)
-
-class ReportsGeneratorSpec extends FreeSpec {
+class PublicReportsGeneratorSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
   val intervals = Seq(ChronoUnit.WEEKS)
   val cfdSpecs = Seq(
@@ -25,7 +23,6 @@ class ReportsGeneratorSpec extends FreeSpec {
   val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming", "Done").contains(state)
 
   s"Generate" taggedAs (IT) in {
-    generateGitlabReports()
     generateJiraReports()
   }
 
@@ -47,18 +44,4 @@ class ReportsGeneratorSpec extends FreeSpec {
     })
   }
 
-  def generateGitlabReports() = {
-    Await.result(ReportsGenerator.mergeRequestsByState("develop", ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.mergeRequestsByAuthor("develop", ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.mergeRequestsComments("develop", ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.mergeRequestsMovingAverage("develop", ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.mergeRequestsDuration("develop", ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.mergeRequestsAuthorsRatio("develop", ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.mergeRequestsByProjectRole("develop", ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.mergeRequestsByProjectCategory("develop", ChronoUnit.WEEKS), 5 minutes)
-
-    Await.result(ReportsGenerator.commitsStats(ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.commitsStatsByProjectRole(ChronoUnit.WEEKS), 5 minutes)
-    Await.result(ReportsGenerator.commitsStatsByProjectCategory(ChronoUnit.WEEKS), 5 minutes)
-  }
 }

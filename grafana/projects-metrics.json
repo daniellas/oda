@@ -2,7 +2,6 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:24991",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -16,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 1,
-  "iteration": 1581972022004,
+  "id": 4,
+  "iteration": 1588743721221,
   "links": [],
   "panels": [
     {
@@ -109,6 +108,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Cumulative flow chart",
       "tooltip": {
@@ -141,7 +141,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -220,6 +224,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Throughput",
       "tooltip": {
@@ -255,11 +260,15 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "columns": [],
-      "datasource": null,
+      "datasource": "oda",
       "fontSize": "100%",
       "gridPos": {
         "h": 8,
@@ -444,6 +453,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Cycle time",
       "tooltip": {
@@ -477,14 +487,18 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "oda",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -561,6 +575,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "JIRA items by type",
       "tooltip": {
@@ -595,7 +610,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -678,6 +697,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Items completed",
       "tooltip": {
@@ -710,7 +730,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -806,6 +830,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Active JIRA reporters",
       "tooltip": {
@@ -839,7 +864,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -918,6 +947,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Work in progress",
       "tooltip": {
@@ -951,7 +981,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1044,6 +1078,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Work items duration",
       "tooltip": {
@@ -1076,7 +1111,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -1323,6 +1362,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "Team productivity factor",
       "tooltip": {
@@ -1356,7 +1396,11 @@
           "min": null,
           "show": false
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "refresh": false,
@@ -1396,6 +1440,7 @@
           }
         ],
         "query": "CRYP,HFT,AW",
+        "skipUrlSync": false,
         "type": "custom"
       },
       {
@@ -1432,6 +1477,7 @@
           }
         ],
         "query": "All stories and bugs,All stories,All bugs,Critical bugs",
+        "skipUrlSync": false,
         "type": "custom"
       },
       {
@@ -1459,13 +1505,14 @@
           }
         ],
         "query": "cfd_count,cfd_estimate",
+        "skipUrlSync": false,
         "type": "custom"
       }
     ]
   },
   "time": {
-    "from": "2019-10-14T23:01:55.920Z",
-    "to": "2020-02-16T08:15:56.114Z"
+    "from": "now-90d",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -1495,5 +1542,5 @@
   "timezone": "",
   "title": "Projects metrics",
   "uid": "-HIwHzJZz",
-  "version": 201
+  "version": 4
 }

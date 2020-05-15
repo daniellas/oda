@@ -1,8 +1,9 @@
 package net.oda
 
 import java.sql.Timestamp
-import java.time.temporal.ChronoUnit
+import java.time.temporal.{ChronoUnit, IsoFields, TemporalField, WeekFields}
 import java.time._
+import java.util.Locale
 
 object Time {
 
@@ -34,11 +35,15 @@ object Time {
 
   def weekDay(dt: ZonedDateTime) = dt.getDayOfWeek.name()
 
+  def yearWeek(ts: Timestamp) = toZonedDateTime(ts).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+
   val weeksBetween = (start: LocalDate, end: LocalDate) => ChronoUnit.WEEKS.between(start, end)
 
   val daysBetween = (start: LocalDate, end: LocalDate) => ChronoUnit.DAYS.between(start, end)
 
   val daysBetweenTimestamps = (start: Timestamp, end: Timestamp) => ChronoUnit.DAYS.between(start.toLocalDate, end.toLocalDate)
+
+  val hoursBetweenTimestamps = (start: Timestamp, end: Timestamp) => ChronoUnit.HOURS.between(start.toLocalDateTime, end.toLocalDateTime)
 
   val weeksRange = (start: LocalDate, end: LocalDate) => (0L to weeksBetween(start, end)).toList.map(start.plusWeeks)
 

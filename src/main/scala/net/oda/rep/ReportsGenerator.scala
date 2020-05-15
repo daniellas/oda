@@ -130,7 +130,20 @@ object ReportsGenerator {
       .apply(location(projectKey))
   }
 
-  def commits(since: ZonedDateTime) = GitlabClient
+  def commits(since: ZonedDateTime) = Future.sequence(
+    GitlabData
+      .loadProjects()
+      .map(p =>
+        GitlabClient.getCommits(p.id, "develop", since, true)
+          .map(cs =>
+            cs.filterNot(_.committer_email.startsWith("jenkins"))
+              .map(c => (p, c)))))
+    .map(_.flatten)
+    .map(GitlabInflux.toCommitsPoints)
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+
+  def commitsOld(since: ZonedDateTime) = GitlabClient
     .getProjects()
     .flatMap(ps => Future.sequence(
       ps.map(p => GitlabClient
@@ -171,16 +184,70 @@ object ReportsGenerator {
     .map(GitlabInflux.toMergeRequestsPoints)
     .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
 
-  def mergeRequestsStats(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+  def mergeRequestsByState(targetBranch: String, interval: ChronoUnit) = GitlabInflux
     .loadMergeRequests()
-    .map(GitlabReporter.mergeRequestsStats(_, GitlabData.loadProjects(), targetBranch, interval))
-    .map(GitlabInflux.toMergeRequestsStatsPoints(_, interval))
+    .map(GitlabReporter.mergeRequestsByState(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsByStatePoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def mergeRequestsByAuthor(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(GitlabReporter.mergeRequestsByAuthor(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsByAuthorPoints(_, interval))
     .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
 
   def mergeRequestsMovingAverage(targetBranch: String, interval: ChronoUnit) = GitlabInflux
     .loadMergeRequests()
     .map(GitlabReporter.mergeRequestsMovingAverage(_, targetBranch, interval))
     .map(GitlabInflux.toMergeRequestsMovingAveragePoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def mergeRequestsComments(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(GitlabReporter.mergeRequestsComments(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsCommentsPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def mergeRequestsDuration(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(GitlabReporter.mergeRequestsDuration(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsDurationPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def mergeRequestsAuthorsRatio(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(GitlabReporter.mergeRequestsAuthorsRatio(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsAuthorsRatioPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def commitsStatsByProjectRole(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(GitlabReporter.commitsStatsByProjectRole(GitlabData.loadProjects(), _, interval))
+    .map(GitlabInflux.toCommitsStatsByProjectRolePoint(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def commitsStatsByProjectCategory(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(GitlabReporter.commitsStatsByProjectCatogory(GitlabData.loadProjects(), _, interval))
+    .map(GitlabInflux.toCommitsStatsByProjectCategoryPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def mergeRequestsByProjectRole(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(GitlabReporter.mergeRequestsByProjectRole(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsByProjectRolePoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def mergeRequestsByProjectCategory(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(GitlabReporter.mergeRequestsByProjectCategory(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsByProjectCategoryPoints(_, interval))
+    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+
+  def committersLifeSpanStats(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(GitlabReporter.committersLifeSpanStats(_, interval))
+    .map(GitlabInflux.toCommittersLifeSpanStatsPiont(_, interval))
     .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
 
 }

@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 5,
-  "iteration": 1588827917767,
+  "iteration": 1585255913795,
   "links": [],
   "panels": [
     {
@@ -27,22 +27,25 @@
       "datasource": "oda",
       "fill": 1,
       "gridPos": {
-        "h": 10,
-        "w": 13,
+        "h": 11,
+        "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 10,
+      "id": 7,
       "legend": {
         "alignAsTable": false,
         "avg": false,
         "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
         "max": false,
         "min": false,
         "rightSide": false,
         "show": true,
-        "sort": null,
-        "sortDesc": null,
+        "sideWidth": null,
+        "sort": "total",
+        "sortDesc": true,
         "total": true,
         "values": true
       },
@@ -60,7 +63,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "$tag_state",
+          "alias": "Additions",
           "groupBy": [
             {
               "params": [
@@ -70,9 +73,48 @@
             },
             {
               "params": [
-                "state"
+                "none"
               ],
-              "type": "tag"
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "additions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            }
+          ]
+        },
+        {
+          "alias": "Deletions",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
             },
             {
               "params": [
@@ -81,16 +123,18 @@
               "type": "fill"
             }
           ],
-          "measurement": "merge_requests_by_state",
+          "measurement": "commits_stats",
           "orderByTime": "ASC",
           "policy": "default",
-          "refId": "A",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "B",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "count"
+                  "deletions"
                 ],
                 "type": "field"
               },
@@ -113,12 +157,13 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Merge requests by state",
+      "title": "Commits summary",
       "tooltip": {
-        "shared": true,
-        "sort": 0,
+        "shared": false,
+        "sort": 2,
         "value_type": "individual"
       },
+      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -129,254 +174,8 @@
       },
       "yaxes": [
         {
-          "decimals": null,
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "oda",
-      "fill": 1,
-      "gridPos": {
-        "h": 10,
-        "w": 11,
-        "x": 13,
-        "y": 0
-      },
-      "id": 14,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": true,
-        "max": true,
-        "min": true,
-        "rightSide": false,
-        "show": true,
-        "sort": null,
-        "sortDesc": null,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": true,
-      "steppedLine": false,
-      "targets": [
-        {
-          "alias": "$tag_state",
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "state"
-              ],
-              "type": "tag"
-            },
-            {
-              "params": [
-                "none"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "merge_requests_moving_average",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "moving_average"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "interval",
-              "operator": "=",
-              "value": "WEEKS"
-            },
-            {
-              "condition": "AND",
-              "key": "state",
-              "operator": "=",
-              "value": "merged"
-            }
-          ]
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Merge requests moving average",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "decimals": null,
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "oda",
-      "fill": 1,
-      "gridPos": {
-        "h": 9,
-        "w": 13,
-        "x": 0,
-        "y": 10
-      },
-      "id": 11,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "hideEmpty": true,
-        "hideZero": true,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "alias": "",
-          "groupBy": [],
-          "measurement": "merge_requests_duration",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "duration_avg"
-                ],
-                "type": "field"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "duration_std_dev"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Merge requests duration",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
+          "decimals": 0,
+          "format": "locale",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -405,20 +204,25 @@
       "datasource": "oda",
       "fill": 1,
       "gridPos": {
-        "h": 9,
-        "w": 11,
-        "x": 13,
-        "y": 10
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 11
       },
-      "id": 12,
+      "id": 9,
       "legend": {
+        "alignAsTable": false,
         "avg": false,
         "current": false,
         "hideEmpty": true,
         "hideZero": true,
         "max": false,
         "min": false,
+        "rightSide": false,
         "show": true,
+        "sideWidth": null,
+        "sort": "total",
+        "sortDesc": true,
         "total": true,
         "values": true
       },
@@ -436,7 +240,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "$tag_author",
+          "alias": "$tag_committer",
           "groupBy": [
             {
               "params": [
@@ -446,7 +250,7 @@
             },
             {
               "params": [
-                "author"
+                "committer"
               ],
               "type": "tag"
             },
@@ -457,16 +261,18 @@
               "type": "fill"
             }
           ],
-          "measurement": "merge_requests_comments",
+          "measurement": "commits_stats",
           "orderByTime": "ASC",
           "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "sum"
+                  "additions"
                 ],
                 "type": "field"
               },
@@ -476,19 +282,26 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            }
+          ]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Merge requests comments",
+      "title": "Additions by committer",
       "tooltip": {
         "shared": true,
-        "sort": 0,
+        "sort": 2,
         "value_type": "individual"
       },
+      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -499,7 +312,8 @@
       },
       "yaxes": [
         {
-          "format": "short",
+          "decimals": 0,
+          "format": "locale",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -529,19 +343,22 @@
       "fill": 1,
       "gridPos": {
         "h": 11,
-        "w": 13,
+        "w": 24,
         "x": 0,
-        "y": 19
+        "y": 21
       },
-      "id": 13,
+      "id": 11,
       "legend": {
         "alignAsTable": false,
         "avg": false,
-        "current": false,
+        "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
         "max": false,
         "min": false,
         "rightSide": false,
         "show": true,
+        "sideWidth": null,
         "sort": "total",
         "sortDesc": true,
         "total": true,
@@ -561,17 +378,17 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "$tag_author",
+          "alias": "$tag_namespace",
           "groupBy": [
             {
               "params": [
-                "$interval"
+                "$__interval"
               ],
               "type": "time"
             },
             {
               "params": [
-                "author"
+                "namespace"
               ],
               "type": "tag"
             },
@@ -582,16 +399,18 @@
               "type": "fill"
             }
           ],
-          "measurement": "merge_requests_by_author",
+          "measurement": "commits_stats",
           "orderByTime": "ASC",
           "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "count"
+                  "additions"
                 ],
                 "type": "field"
               },
@@ -614,12 +433,13 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Merge requests by author",
+      "title": "Additions by namespace",
       "tooltip": {
-        "shared": true,
-        "sort": 0,
+        "shared": false,
+        "sort": 2,
         "value_type": "individual"
       },
+      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -630,8 +450,146 @@
       },
       "yaxes": [
         {
-          "decimals": null,
+          "decimals": 0,
+          "format": "locale",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
           "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 1,
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 10,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "sideWidth": null,
+        "sort": "total",
+        "sortDesc": true,
+        "total": true,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "$tag_project",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "project"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\" FROM \"repos_activity_rank\" WHERE (\"project\" != 'empirica-algo / strategies / sapien-strategy') AND $timeFilter GROUP BY time(4w), \"project\"",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "additions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Additions by project",
+      "tooltip": {
+        "shared": false,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "transparent": false,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "locale",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -671,7 +629,7 @@
     ]
   },
   "time": {
-    "from": "now-6M",
+    "from": "now-90d",
     "to": "now"
   },
   "timepicker": {
@@ -700,7 +658,7 @@
     ]
   },
   "timezone": "",
-  "title": "Gitlab metrics - Merge Requests",
-  "uid": "bAyQFLXZz",
-  "version": 8
+  "title": "Gitlab metrics - Commits",
+  "uid": "23jUWu8Zz",
+  "version": 32
 }
