@@ -7,10 +7,10 @@ case class IssueType(id: String, name: String)
 case class Priority(name: String)
 
 case class Fields(
+                   summary: String,
                    resolutiondate: Option[ZonedDateTime],
                    created: ZonedDateTime,
                    issuetype: IssueType,
-                   summary: String,
                    reporter: Person,
                    priority: Priority)
 
@@ -33,4 +33,27 @@ case class JiraIssues(
 
 object JiraIssues {
   def empty = JiraIssues(0, null, null, Nil)
+
+  def trimHistoryItems(issue: Issue) = {
+    Issue(
+      issue.key,
+      issue.fields,
+      Changelog(
+        issue.changelog.histories.map(h => HistoryItem(
+          h.id,
+          h.author,
+          h.created,
+          h.items
+            .filter(_.fieldId.contains("status"))
+            .map(i => ChangeItem(
+              i.fieldId,
+              i.from,
+              i.fromString,
+              i.to,
+              i.toStr
+            ))
+        )).filterNot(_.items.isEmpty)
+      )
+    )
+  }
 }

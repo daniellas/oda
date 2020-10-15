@@ -26,39 +26,6 @@ case class CfdItem(
 object CfdReporter {
   private val log = Logger("cfd-reporter")
 
-  val normalizeFlow = (
-                        referenceFlow: Map[String, Int],
-                        entryState: String,
-                        finalState: String,
-                        stateMapping: Map[String, String],
-                        history: Seq[Status]) =>
-    history
-      .filter(s => referenceFlow.contains(s.name))
-      .sortBy(_.created.getTime)
-      .map(i => Status(i.created, stateMapping.get(i.name).getOrElse(i.name), None))
-      .foldLeft(List.empty[Status])(
-        (acc, i) => {
-          if (acc.isEmpty && i.name == entryState) {
-            i :: acc
-          } else if (acc.headOption.map(_.name).contains(entryState) && i.name == finalState) {
-            i :: acc
-          } else if (acc.headOption.map(_.name).contains(finalState) && i.name == entryState) {
-            acc.tail
-          } else if (acc.headOption.map(_.name).contains(entryState) && i.name != finalState) {
-            if (referenceFlow(i.name) < referenceFlow(acc.head.name)) {
-              Nil
-            } else {
-              acc
-            }
-          } else if (acc.headOption.map(_.name).contains(finalState) && i.name != entryState) {
-            Nil
-          } else {
-            acc
-          }
-        }
-      )
-      .sortBy(_.created.getTime)
-
   val calculateCycleTime = (tsDiffCalculator: (LocalDate, LocalDate) => Long, start: LocalDate, end: LocalDate) => tsDiffCalculator(start, end) + 1
 
   val findDateLastBelow = (m: SortedMap[Double, (Timestamp, Double)], v: Double) => {
@@ -94,6 +61,39 @@ object CfdReporter {
 
   val countAggregate = count(lit(1));
   val sumEstimateAggregate = sum('estimate)
+
+  val normalizeFlow = (
+                        referenceFlow: Map[String, Int],
+                        entryState: String,
+                        finalState: String,
+                        stateMapping: Map[String, String],
+                        history: Seq[Status]) =>
+    history
+      .filter(s => referenceFlow.contains(stateMapping.get(s.name).getOrElse(s.name)))
+      .sortBy(_.created.getTime)
+      .map(i => Status(i.created, stateMapping.get(i.name).getOrElse(i.name), None))
+      .foldLeft(List.empty[Status])(
+        (acc, i) => {
+          if (acc.isEmpty && i.name == entryState) {
+            i :: acc
+          } else if (acc.headOption.map(_.name).contains(entryState) && i.name == finalState) {
+            i :: acc
+          } else if (acc.headOption.map(_.name).contains(finalState) && i.name == entryState) {
+            acc.tail
+          } else if (acc.headOption.map(_.name).contains(entryState) && i.name != finalState) {
+            if (referenceFlow(i.name) < referenceFlow(acc.head.name)) {
+              Nil
+            } else {
+              acc
+            }
+          } else if (acc.headOption.map(_.name).contains(finalState) && i.name != entryState) {
+            Nil
+          } else {
+            acc
+          }
+        }
+      )
+      .sortBy(_.created.getTime)
 
   def normalizeWorkItems(
                           workItems: Seq[WorkItem],
@@ -146,6 +146,8 @@ object CfdReporter {
       stateMapping)
       .flatMap(i => i.statusHistory.map(h => CfdItem(i.id, i.`type`, createTsMapper(h.created), h.name, i.estimate)))
       .toDF
+
+    //    statusHistory.groupBy('id).count.filter('count === 1).show
 
     if (statusHistory.isEmpty) {
       return statusHistory

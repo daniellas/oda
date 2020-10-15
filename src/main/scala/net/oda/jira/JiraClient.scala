@@ -32,19 +32,25 @@ object JiraClient {
   val fields = "resolution,summary,reporter,created,resolutiondate,status,priority,project,issuetype,size"
   val maxResults = 100
 
-  private def getIsses(project: String, issues: JiraIssues): Future[JiraIssues] = {
-    log.info("Downloading issues {} to {}", issues.startAt, issues.startAt + maxResults)
+  private def getIsses(project: String, take: Int, issues: JiraIssues): Future[JiraIssues] = {
+    log.info("Downloading {} issues {} to {}", project, issues.startAt, issues.startAt + maxResults)
 
     restClient
       .resource("/search?jql=%s&expand=%s&fields=%s&startAt=%s&maxResults=%s", s"project=$project", expand, fields, issues.startAt, maxResults)
       .get
       .execute
+      .map(r => {
+        log.info("Response status: {}", r.statusCode)
+        r
+      })
       .filter(_.statusCode == 200)
       .map(_.body.get)
       .map(Serialization.read[JiraIssues])
-      .flatMap(i => if (i.total > issues.startAt) getIsses(project, new JiraIssues(i.startAt + maxResults, maxResults, i.total, issues.issues ::: i.issues)) else Promise.successful(issues).future)
+      .flatMap(i => if (i.total > issues.startAt && (issues.startAt < take || take == -1)) getIsses(project, take, new JiraIssues(i.startAt + maxResults, maxResults, i.total, issues.issues ::: i.issues)) else Promise.successful(issues).future)
   }
 
-  def searchIssues(project: String) = getIsses(project, JiraIssues.empty).map(_.issues)
+  def searchIssues(project: String, take: Int): Future[List[Issue]] = getIsses(project, take, JiraIssues.empty).map(_.issues)
+
+  def searchIssues(project: String): Future[List[Issue]] = searchIssues(project, -1)
 
 }

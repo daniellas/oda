@@ -2,7 +2,6 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:8769",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -16,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 4,
-  "iteration": 1582662661663,
+  "id": 16,
+  "iteration": 1602700387486,
   "links": [],
   "panels": [
     {
@@ -25,15 +24,15 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "oda",
       "fill": 1,
       "gridPos": {
-        "h": 7,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 7,
+      "id": 5,
       "legend": {
         "alignAsTable": true,
         "avg": false,
@@ -44,9 +43,6 @@
         "min": false,
         "rightSide": true,
         "show": true,
-        "sideWidth": null,
-        "sort": "total",
-        "sortDesc": true,
         "total": true,
         "values": true
       },
@@ -60,36 +56,28 @@
       "renderer": "flot",
       "seriesOverrides": [],
       "spaceLength": 10,
-      "stack": false,
+      "stack": true,
       "steppedLine": false,
       "targets": [
         {
-          "alias": "$tag_committer $tag_project",
+          "alias": "$tag_namespace $tag_category",
           "groupBy": [
             {
               "params": [
-                "project"
+                "category"
               ],
               "type": "tag"
             },
             {
               "params": [
-                "committer"
+                "namespace"
               ],
               "type": "tag"
-            },
-            {
-              "params": [
-                "0"
-              ],
-              "type": "fill"
             }
           ],
-          "measurement": "commits_stats",
+          "measurement": "commits_stats_by_project_category_namespace",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
-          "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -102,19 +90,31 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "category",
+              "operator": "=~",
+              "value": "/^$category$/"
+            }
+          ]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
-      "title": "Additions",
+      "title": "Commits by project category",
       "tooltip": {
         "shared": false,
-        "sort": 2,
+        "sort": 0,
         "value_type": "individual"
       },
-      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -125,8 +125,7 @@
       },
       "yaxes": [
         {
-          "decimals": 0,
-          "format": "locale",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -141,35 +140,34 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "oda",
       "fill": 1,
       "gridPos": {
-        "h": 7,
+        "h": 10,
         "w": 24,
         "x": 0,
-        "y": 7
+        "y": 10
       },
-      "id": 8,
+      "id": 4,
       "legend": {
         "alignAsTable": true,
         "avg": false,
         "current": false,
-        "hideEmpty": true,
-        "hideZero": true,
         "max": false,
         "min": false,
         "rightSide": true,
         "show": true,
-        "sideWidth": null,
-        "sort": "total",
-        "sortDesc": true,
         "total": true,
         "values": true
       },
@@ -183,61 +181,65 @@
       "renderer": "flot",
       "seriesOverrides": [],
       "spaceLength": 10,
-      "stack": false,
+      "stack": true,
       "steppedLine": false,
       "targets": [
         {
-          "alias": "$tag_committer $tag_project",
+          "alias": "$tag_namespace $tag_role",
           "groupBy": [
             {
               "params": [
-                "project"
+                "role"
               ],
               "type": "tag"
             },
             {
               "params": [
-                "committer"
+                "namespace"
               ],
               "type": "tag"
-            },
-            {
-              "params": [
-                "0"
-              ],
-              "type": "fill"
             }
           ],
-          "measurement": "commits_stats",
+          "measurement": "commits_stats_by_project_role_namespace",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT \"additions\" FROM \"repos_activity_rank\" WHERE (\"project\" != 'empirica-algo / strategies / sapien-strategy') AND $timeFilter GROUP BY time(4w), \"project\"",
-          "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "deletions"
+                  "additions"
                 ],
                 "type": "field"
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "role",
+              "operator": "=~",
+              "value": "/^$role$/"
+            }
+          ]
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
-      "title": "Deletions",
+      "title": "Commits by project role",
       "tooltip": {
         "shared": false,
-        "sort": 2,
+        "sort": 0,
         "value_type": "individual"
       },
-      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -248,8 +250,7 @@
       },
       "yaxes": [
         {
-          "decimals": 0,
-          "format": "locale",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -264,34 +265,141 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
-  "refresh": false,
   "schemaVersion": 16,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
+        "allValue": null,
+        "current": {
+          "tags": [],
+          "text": "deployment",
+          "value": [
+            "deployment"
+          ]
+        },
         "datasource": "oda",
-        "filters": [
+        "definition": "SHOW TAG VALUES ON \"oda\" WITH KEY = \"role\"",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Role",
+        "multi": false,
+        "name": "role",
+        "options": [
           {
-            "condition": "AND",
-            "key": "committer",
-            "operator": "=",
-            "value": "daniel.las@empirica.pl"
+            "selected": false,
+            "text": "All",
+            "value": "$__all"
           },
           {
-            "key": "namespace",
-            "operator": "=",
-            "value": "empirica-algo / mba"
+            "selected": false,
+            "text": "component",
+            "value": "component"
+          },
+          {
+            "selected": true,
+            "text": "deployment",
+            "value": "deployment"
+          },
+          {
+            "selected": false,
+            "text": "integration",
+            "value": "integration"
+          },
+          {
+            "selected": false,
+            "text": "lib",
+            "value": "lib"
+          },
+          {
+            "selected": false,
+            "text": "service",
+            "value": "service"
+          },
+          {
+            "selected": false,
+            "text": "testing",
+            "value": "testing"
+          },
+          {
+            "selected": false,
+            "text": "utility",
+            "value": "utility"
           }
         ],
+        "query": "SHOW TAG VALUES ON \"oda\" WITH KEY = \"role\"",
+        "refresh": 0,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "tags": [],
+          "text": "feeds + trading",
+          "value": [
+            "feeds",
+            "trading"
+          ]
+        },
+        "datasource": "oda",
+        "definition": "SHOW TAG VALUES ON \"oda\" WITH KEY = \"category\"",
         "hide": 0,
-        "label": "Filters",
-        "name": "filters",
-        "type": "adhoc"
+        "includeAll": true,
+        "label": "Category",
+        "multi": false,
+        "name": "category",
+        "options": [
+          {
+            "selected": false,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": true,
+            "text": "feeds",
+            "value": "feeds"
+          },
+          {
+            "selected": false,
+            "text": "platform",
+            "value": "platform"
+          },
+          {
+            "selected": false,
+            "text": "strategy",
+            "value": "strategy"
+          },
+          {
+            "selected": true,
+            "text": "trading",
+            "value": "trading"
+          }
+        ],
+        "query": "SHOW TAG VALUES ON \"oda\" WITH KEY = \"category\"",
+        "refresh": 0,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       }
     ]
   },
@@ -325,7 +433,7 @@
     ]
   },
   "timezone": "",
-  "title": "Gitlab metrics",
-  "uid": "23jUWu8Zz",
-  "version": 65
+  "title": "Project roles & categories in namespace",
+  "uid": "FX8Br1cMk",
+  "version": 26
 }

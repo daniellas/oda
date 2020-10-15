@@ -1,6 +1,7 @@
 package net.oda.jira
 
 import java.sql.Timestamp
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 import net.oda.Spark.session.implicits._
@@ -77,4 +78,47 @@ object JiraReporter {
         sum('experienceFactor).as('totalExperience))
       .withColumn("experienceFactor", 'totalExperience / 'authors)
   }
+
+  def countByState(workItems: Seq[WorkItem], interval: ChronoUnit) = {
+    val range = udf(Time.range(interval, _, _))
+    val nowIfEmpty = udf((i: Timestamp) => if (i == null) Timestamp.from(Instant.now()) else i)
+
+    WorkItems
+      .flatten(workItems)
+      .toDF
+      .orderBy('id, 'statusCreated)
+      .select('id, 'statusCreated, 'statusName)
+      .withColumn(
+        "statusChanged",
+        first('statusCreated)
+          .over(
+            Window
+              .orderBy('statusCreated)
+              .partitionBy('id)
+              .rowsBetween(Window.currentRow + 1, Window.unboundedFollowing)
+          )
+      )
+      .withColumn("statusChanged", nowIfEmpty('statusChanged))
+      .withColumn("createdWeek", Spark.toIntervalStart(interval)('statusCreated))
+      .withColumn("changedWeek", Spark.toIntervalStart(interval)('statusChanged))
+      .withColumn("range", range('createdWeek, 'changedWeek))
+      .select('statusName, explode('range).as("week"))
+      .groupBy('week, 'statusName)
+      .count()
+  }
+
+  def countByStateMovingAverage(workItems: Seq[WorkItem], duration: Long, interval: ChronoUnit) = {
+    countByState(workItems, interval)
+      .withColumn(
+        "moving_average",
+        avg('count)
+          .over(
+            Window
+              .orderBy('week)
+              .partitionBy('statusName)
+              .rowsBetween(Window.currentRow - duration, Window.currentRow)
+          ))
+      .select('week, 'statusName, 'moving_average)
+  }
+
 }

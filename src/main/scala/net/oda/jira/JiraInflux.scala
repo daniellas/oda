@@ -21,7 +21,7 @@ object JiraInflux {
         .addTag("priority", i.priority)
         .addTag("changedBy", i.statusAuthor.getOrElse(""))
         .addTag("status", i.statusName)
-        .addTag("epic", i.eppicName.getOrElse("No epic"))
+        .addTag("epic", i.epicName.getOrElse("No epic"))
         .addField("count", 1)
       ).toArray
   }
@@ -71,6 +71,38 @@ object JiraInflux {
         .addField("authors", r.getAs[Long](1))
         .addField("totalExperience", r.getAs[Double](2))
         .addField("experienceFactor", r.getAs[Double](3))
+      )
+
+  }
+
+  def workItemsCountByStatePoints(
+                                   dataset: Dataset[Row],
+                                   projectKey: String,
+                                   interval: String
+                                 ): Array[Point] = {
+    dataset
+      .collect
+      .map(r => Point("work_items_count_by_state", r.getAs[Timestamp](0).getTime)
+        .addTag("project", projectKey)
+        .addTag("interval", interval)
+        .addTag("status", r.getString(1))
+        .addField("count", r.getLong(2))
+      )
+
+  }
+
+  def workItemsCountByStateMovingAveragePoints(
+                                                dataset: Dataset[Row],
+                                                projectKey: String,
+                                                interval: String
+                                              ): Array[Point] = {
+    dataset
+      .collect
+      .map(r => Point("work_items_count_by_state_moving_average", r.getAs[Timestamp](0).getTime)
+        .addTag("project", projectKey)
+        .addTag("interval", interval)
+        .addTag("status", r.getString(1))
+        .addField("moving_average", r.getDouble(2))
       )
 
   }

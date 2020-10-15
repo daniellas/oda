@@ -18,8 +18,16 @@ import scala.concurrent.{Future, Promise}
 
 case class Namespace(id: String, name: String, path: String, full_path: String, parent_id: Option[Int])
 
-case class Project(id: Int, name: String, name_with_namespace: String) {
-  def namespace() = name_with_namespace.substring(0, name_with_namespace.length - name.trim.length - 3)
+case class Project(id: Int, name: String, name_with_namespace: String, tag_list: Seq[String]) {
+  def namespace() = Project.extractNamespace(name, name_with_namespace)
+
+  def rootNamespace = Project.extractRootNamespace(name_with_namespace)
+}
+
+case object Project {
+  def extractNamespace(name: String, fullName: String): String = fullName.substring(0, fullName.length - name.trim.length - 3)
+
+  def extractRootNamespace(fullName: String) = fullName.split("/")(0).trim
 }
 
 case class Stats(additions: Int, deletions: Int, total: Int)
@@ -32,7 +40,7 @@ case class Commit(
                    created_at: ZonedDateTime,
                    committer_email: String,
                    stats: Stats) {
-  def mapCommitterEmail(mapper: String => String) =
+  def mapCommitterEmail(mapper: String => String): Commit =
     Commit(
       this.id,
       this.short_id,
@@ -42,6 +50,9 @@ case class Commit(
       mapper(this.committer_email),
       this.stats
     )
+
+  def mapCommitterEmail(mapping: Map[String, String]): Commit = mapCommitterEmail(a => mapping.get(a).getOrElse(a))
+
 }
 
 case class Author(id: Int, username: String)
@@ -55,7 +66,10 @@ case class MergeRequest(
                          merged_at: Option[ZonedDateTime],
                          closed_at: Option[ZonedDateTime],
                          user_notes_count: Int,
-                         project_id: Int
+                         project_id: Int,
+                         source_branch: String,
+                         target_branch: String,
+                         updated_at: ZonedDateTime
                        )
 
 object GitlabClient {
@@ -71,7 +85,7 @@ object GitlabClient {
 
   def getProjects(): Future[Seq[Project]] = getPages(
     restClient
-      .resource("/projects?archived=false&per_page=100&page=%s", _)
+      .resource("/projects?archived=false&per_page=100&simple=false&page=%s", _)
       .get()
       .execute()
       .map(_.map(Serialization.read[Seq[Project]])),
@@ -125,11 +139,10 @@ object GitlabClient {
       .map(Future.successful)
       .getOrElse(emptyBodyFailure()))
 
-  def getMergeRequests(targetBranch: String, since: ZonedDateTime) = getPages(
+  def getMergeRequests(since: ZonedDateTime) = getPages(
     restClient
       .resource(
-        "/merge_requests?per_page=100&target_branch=%s&scope=all&created_after=%s&page=%s",
-        targetBranch,
+        "/merge_requests?per_page=100&scope=all&created_after=%s&page=%s",
         since.format(dateTimeFormatter),
         _)
       .get()

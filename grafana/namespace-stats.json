@@ -1,0 +1,1231 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 11,
+  "iteration": 1596612221968,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 1,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "sideWidth": null,
+        "sort": "total",
+        "sortDesc": true,
+        "total": true,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Additions",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "additions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "namespace",
+              "operator": "=~",
+              "value": "/^$gitlab_namespace$/"
+            }
+          ]
+        },
+        {
+          "alias": "Deletions",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "deletions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "namespace",
+              "operator": "=~",
+              "value": "/^$gitlab_namespace$/"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Summary",
+      "tooltip": {
+        "shared": false,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "transparent": false,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "locale",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 1,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 10,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "sideWidth": null,
+        "sort": "total",
+        "sortDesc": true,
+        "total": true,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Additiona",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats_by_project_category",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "additions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "namespace",
+              "operator": "=~",
+              "value": "/^$gitlab_namespace$/"
+            },
+            {
+              "condition": "AND",
+              "key": "category",
+              "operator": "=",
+              "value": "trading"
+            }
+          ]
+        },
+        {
+          "alias": "Deletions",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats_by_project_category",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "deletions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "namespace",
+              "operator": "=~",
+              "value": "/^$gitlab_namespace$/"
+            },
+            {
+              "condition": "AND",
+              "key": "category",
+              "operator": "=",
+              "value": "trading"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Trading",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "transparent": false,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "locale",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 1,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 9,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "sideWidth": null,
+        "sort": "total",
+        "sortDesc": true,
+        "total": true,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "$tag_committer",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "committer"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "additions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "namespace",
+              "operator": "=~",
+              "value": "/^$gitlab_namespace$/"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Additions by author",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "transparent": false,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "locale",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "oda",
+      "fill": 1,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 11,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "sideWidth": null,
+        "sort": "total",
+        "sortDesc": true,
+        "total": true,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "Additions",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats_by_project_category",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "additions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "namespace",
+              "operator": "=~",
+              "value": "/^$gitlab_namespace$/"
+            },
+            {
+              "condition": "AND",
+              "key": "category",
+              "operator": "=",
+              "value": "feeds"
+            }
+          ]
+        },
+        {
+          "alias": "Deletions",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "commits_stats_by_project_category",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
+          "rawQuery": false,
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "deletions"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "interval",
+              "operator": "=",
+              "value": "WEEKS"
+            },
+            {
+              "condition": "AND",
+              "key": "namespace",
+              "operator": "=~",
+              "value": "/^$gitlab_namespace$/"
+            },
+            {
+              "condition": "AND",
+              "key": "category",
+              "operator": "=",
+              "value": "feeds"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Feeds",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "transparent": false,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "locale",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 16,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "tags": [],
+          "text": "empirica-algo / hitbtc",
+          "value": "empirica-algo / hitbtc"
+        },
+        "datasource": "oda",
+        "definition": "SHOW TAG VALUES ON \"oda\" WITH KEY = \"namespace\"",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Namespace",
+        "multi": false,
+        "name": "gitlab_namespace",
+        "options": [
+          {
+            "selected": false,
+            "text": "Aleksander",
+            "value": "Aleksander"
+          },
+          {
+            "selected": false,
+            "text": "Bartosz Lichenski",
+            "value": "Bartosz Lichenski"
+          },
+          {
+            "selected": false,
+            "text": "Daniel Las",
+            "value": "Daniel Las"
+          },
+          {
+            "selected": false,
+            "text": "Jakub Baczkiewicz",
+            "value": "Jakub Baczkiewicz"
+          },
+          {
+            "selected": false,
+            "text": "Joanna Mamczyńska",
+            "value": "Joanna Mamczyńska"
+          },
+          {
+            "selected": false,
+            "text": "Krzysztof Kolada",
+            "value": "Krzysztof Kolada"
+          },
+          {
+            "selected": false,
+            "text": "Michal Stolowski",
+            "value": "Michal Stolowski"
+          },
+          {
+            "selected": false,
+            "text": "Michał",
+            "value": "Michał"
+          },
+          {
+            "selected": false,
+            "text": "bautec",
+            "value": "bautec"
+          },
+          {
+            "selected": false,
+            "text": "bautec / mrt",
+            "value": "bautec / mrt"
+          },
+          {
+            "selected": false,
+            "text": "bautec / mrtserver",
+            "value": "bautec / mrtserver"
+          },
+          {
+            "selected": false,
+            "text": "docker",
+            "value": "docker"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo",
+            "value": "empirica-algo"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / bibo",
+            "value": "empirica-algo / bibo"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / binance",
+            "value": "empirica-algo / binance"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / bitbay",
+            "value": "empirica-algo / bitbay"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / bitblinx",
+            "value": "empirica-algo / bitblinx"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / bitfinex",
+            "value": "empirica-algo / bitfinex"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / bitmex",
+            "value": "empirica-algo / bitmex"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / bitpanda",
+            "value": "empirica-algo / bitpanda"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / brasil-plural",
+            "value": "empirica-algo / brasil-plural"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / bundles",
+            "value": "empirica-algo / bundles"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / bvmf",
+            "value": "empirica-algo / bvmf"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / clm",
+            "value": "empirica-algo / clm"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / coindeal",
+            "value": "empirica-algo / coindeal"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / credentials",
+            "value": "empirica-algo / credentials"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / docker",
+            "value": "empirica-algo / docker"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / esim",
+            "value": "empirica-algo / esim"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / exchange-features",
+            "value": "empirica-algo / exchange-features"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / exchange-routing",
+            "value": "empirica-algo / exchange-routing"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / external-communication",
+            "value": "empirica-algo / external-communication"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / fraud-detection",
+            "value": "empirica-algo / fraud-detection"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / frontend-web",
+            "value": "empirica-algo / frontend-web"
+          },
+          {
+            "selected": true,
+            "text": "empirica-algo / ftx",
+            "value": "empirica-algo / ftx"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / gdax",
+            "value": "empirica-algo / gdax"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / gemini",
+            "value": "empirica-algo / gemini"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / hitbtc",
+            "value": "empirica-algo / hitbtc"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / indicators",
+            "value": "empirica-algo / indicators"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / karaf",
+            "value": "empirica-algo / karaf"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / libs",
+            "value": "empirica-algo / libs"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / mba",
+            "value": "empirica-algo / mba"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / mdp",
+            "value": "empirica-algo / mdp"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / mercuriex",
+            "value": "empirica-algo / mercuriex"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / messengers",
+            "value": "empirica-algo / messengers"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / messengers / mattermost",
+            "value": "empirica-algo / messengers / mattermost"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / metrics",
+            "value": "empirica-algo / metrics"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / notifications",
+            "value": "empirica-algo / notifications"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / oms",
+            "value": "empirica-algo / oms"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / order-flow",
+            "value": "empirica-algo / order-flow"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / orderengine",
+            "value": "empirica-algo / orderengine"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / osl",
+            "value": "empirica-algo / osl"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / paper",
+            "value": "empirica-algo / paper"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / persister",
+            "value": "empirica-algo / persister"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / recorder",
+            "value": "empirica-algo / recorder"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / rules",
+            "value": "empirica-algo / rules"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / sapien",
+            "value": "empirica-algo / sapien"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / sdk",
+            "value": "empirica-algo / sdk"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / security",
+            "value": "empirica-algo / security"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / security-definition",
+            "value": "empirica-algo / security-definition"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / status",
+            "value": "empirica-algo / status"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / strategies",
+            "value": "empirica-algo / strategies"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / strategies / libs",
+            "value": "empirica-algo / strategies / libs"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / strategies-hft",
+            "value": "empirica-algo / strategies-hft"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / strategyexecutor",
+            "value": "empirica-algo / strategyexecutor"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / templates",
+            "value": "empirica-algo / templates"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / tradepad",
+            "value": "empirica-algo / tradepad"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / vertx",
+            "value": "empirica-algo / vertx"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / wse",
+            "value": "empirica-algo / wse"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / xdp",
+            "value": "empirica-algo / xdp"
+          },
+          {
+            "selected": false,
+            "text": "empirica-algo / xtb",
+            "value": "empirica-algo / xtb"
+          },
+          {
+            "selected": false,
+            "text": "empirica-crypto",
+            "value": "empirica-crypto"
+          },
+          {
+            "selected": false,
+            "text": "empirica-efl",
+            "value": "empirica-efl"
+          },
+          {
+            "selected": false,
+            "text": "fintech / robo-advisor",
+            "value": "fintech / robo-advisor"
+          },
+          {
+            "selected": false,
+            "text": "fintech / robo-advisor / docker",
+            "value": "fintech / robo-advisor / docker"
+          },
+          {
+            "selected": false,
+            "text": "frontend / templates",
+            "value": "frontend / templates"
+          },
+          {
+            "selected": false,
+            "text": "libs",
+            "value": "libs"
+          },
+          {
+            "selected": false,
+            "text": "sonar-tools",
+            "value": "sonar-tools"
+          },
+          {
+            "selected": false,
+            "text": "stream-capital",
+            "value": "stream-capital"
+          },
+          {
+            "selected": false,
+            "text": "swiss-real-coin",
+            "value": "swiss-real-coin"
+          },
+          {
+            "selected": false,
+            "text": "swissborg",
+            "value": "swissborg"
+          },
+          {
+            "selected": false,
+            "text": "tools",
+            "value": "tools"
+          }
+        ],
+        "query": "SHOW TAG VALUES ON \"oda\" WITH KEY = \"namespace\"",
+        "refresh": 0,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6M",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "Gitlab metrics - Namespace stats",
+  "uid": "vZiTckIMk",
+  "version": 18
+}

@@ -4,16 +4,19 @@ import java.time.{LocalDate, ZonedDateTime}
 import java.time.temporal.ChronoUnit
 
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
+import com.paulgoldbaum.influxdbclient.Point
 import net.oda.Config
+import net.oda.cfd.CfdInflux.toCfdCountPoints
+import net.oda.cfd.CfdReporter.generate
 import net.oda.cfd.{CfdInflux, CfdReporter}
-import net.oda.commits.{CommitsInflux, CommitsReporter}
-import net.oda.gitlab.GitlabClient
+import net.oda.gitlab.{CommitsReporter, GitlabClient, GitlabData, GitlabInflux, GitlabReporter, MergeRequestsReporter}
 import net.oda.influx.InfluxDb
 import net.oda.influx.InfluxDb.db
 import net.oda.jira.JiraData.location
 import net.oda.jira.{JiraData, JiraInflux, JiraReporter}
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object ReportsGenerator {
@@ -23,7 +26,7 @@ object ReportsGenerator {
       .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
       .andThen(JiraReporter.workItemsChangeLog(_, interval))
       .andThen(JiraInflux.workItemsChangelog(_, projectKey, interval.name))
-      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .andThen(writeChunks)
       .apply(JiraData.location(projectKey))
   }
 
@@ -32,7 +35,7 @@ object ReportsGenerator {
       .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
       .andThen(JiraReporter.countByTypePriority(_, stateMapping, interval))
       .andThen(JiraInflux.countByTypePriorityPoints(_, projectKey, interval.name))
-      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .andThen(writeChunks)
       .apply(JiraData.location(projectKey))
   }
 
@@ -41,7 +44,7 @@ object ReportsGenerator {
       .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
       .andThen(JiraReporter.countDistinctAuthor(_, stateFilter, interval))
       .andThen(JiraInflux.countDistinctAuthorsPoints(_, projectKey, interval.name, qualifier))
-      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .andThen(writeChunks)
       .apply(JiraData.location(projectKey))
   }
 
@@ -55,14 +58,24 @@ object ReportsGenerator {
                     priorities: String => Boolean,
                     interval: ChronoUnit,
                     qualifier: String
-                  ): Future[Boolean] = {
+                  ) = {
     JiraData
       .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
       .andThen(
-        CfdReporter
-          .generate(projectKey, LocalDate.MIN, types, priorities, referenceFlow, entryState, finalState, stateMapping, interval, CfdReporter.countAggregate, _))
-      .andThen(CfdInflux.toCfdCountPoints("cfd_count", _, projectKey, qualifier, entryState, finalState, interval.name))
-      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+        generate(
+          projectKey,
+          LocalDate.MIN,
+          types,
+          priorities,
+          referenceFlow,
+          entryState,
+          finalState,
+          stateMapping,
+          interval,
+          CfdReporter.countAggregate,
+          _))
+      .andThen(toCfdCountPoints("cfd_count", _, projectKey, qualifier, entryState, finalState, interval.name))
+      .andThen(writeChunks)
       .apply(JiraData.location(projectKey))
   }
 
@@ -76,14 +89,13 @@ object ReportsGenerator {
                        priorities: String => Boolean,
                        interval: ChronoUnit,
                        qualifier: String
-                     ): Future[Boolean] = {
+                     ) = {
     JiraData
       .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
       .andThen(
-        CfdReporter
-          .generate(projectKey, LocalDate.MIN, types, priorities, referenceFlow, entryState, finalState, stateMapping, interval, CfdReporter.sumEstimateAggregate, _))
+        generate(projectKey, LocalDate.MIN, types, priorities, referenceFlow, entryState, finalState, stateMapping, interval, CfdReporter.sumEstimateAggregate, _))
       .andThen(CfdInflux.toCfdEstimatePoints("cfd_estimate", _, projectKey, qualifier, entryState, finalState, interval.name))
-      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .andThen(writeChunks)
       .apply(JiraData.location(projectKey))
   }
 
@@ -97,7 +109,7 @@ object ReportsGenerator {
       .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
       .andThen(JiraReporter.teamProductivityFactor(_, stateFilter, interval, learningTime))
       .andThen(JiraInflux.teamProductivityFactor(_, projectKey, interval.name()))
-      .andThen(db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .andThen(writeChunks)
       .apply(JiraData.location(projectKey))
   }
 
@@ -127,44 +139,190 @@ object ReportsGenerator {
             interval,
             _))
       .andThen(CfdInflux.toCfdDurationsPoints(_, projectKey, qualifier, interval.name()))
-      .andThen(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+      .andThen(writeChunks)
       .apply(location(projectKey))
   }
 
-  def commits(since: ZonedDateTime) = GitlabClient
-    .getProjects()
-    .flatMap(ps => Future.sequence(
-      ps.map(p => GitlabClient
-        .getCommits(p.id, "develop", since, true)
-        .map(cs => cs.filterNot(_.committer_email.startsWith("jenkins"))
-          .map(c => (p, c))))))
+  def workItemsCountByState(
+                             projectKey: String,
+                             interval: ChronoUnit
+                           ) = {
+    JiraData
+      .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
+      .andThen(JiraReporter.countByState(_, interval))
+      .andThen(JiraInflux.workItemsCountByStatePoints(_, projectKey, interval.name()))
+      .andThen(writeChunks)
+      .apply(JiraData.location(projectKey))
+  }
+
+  def workItemsCountByStateMovingAverage(
+                                          projectKey: String,
+                                          duration: Long,
+                                          interval: ChronoUnit
+                                        ) = {
+    JiraData
+      .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
+      .andThen(JiraReporter.countByStateMovingAverage(_, duration, interval))
+      .andThen(JiraInflux.workItemsCountByStateMovingAveragePoints(_, projectKey, interval.name()))
+      .andThen(writeChunks)
+      .apply(JiraData.location(projectKey))
+  }
+
+  def commits(since: ZonedDateTime) = Future.sequence(
+    GitlabData
+      .loadProjects()
+      .map(p =>
+        GitlabClient.getCommits(p.id, "develop", since, true)
+          .map(cs => cs.filterNot(_.committer_email.startsWith("jenkins"))
+            .map(_.mapCommitterEmail(Config.props.emailMapping))
+            .map(c => (p, c)))))
     .map(_.flatten)
-    .map(CommitsInflux.toCommitsPoints)
-    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+    .map(GitlabInflux.toCommitsPoints)
+    .map(writeChunks)
 
-  def namespaceActivityRank(interval: ChronoUnit, max: Int) = CommitsInflux
+  def namespaceActivityRank(interval: ChronoUnit, max: Int) = GitlabInflux
     .loadCommits()
-    .map(CommitsReporter.namespaceActivityRank(_, interval))
-    .map(CommitsInflux.toNamespaceActivityRankPoints(_, interval))
-    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+    .map(GitlabReporter.namespaceActivityRank(_, interval))
+    .map(GitlabInflux.toNamespaceActivityRankPoints(_, interval))
+    .map(writeChunks)
 
 
-  def reposActivityRank(interval: ChronoUnit, max: Int) = CommitsInflux
+  def reposActivityRank(interval: ChronoUnit, max: Int) = GitlabInflux
     .loadCommits()
-    .map(CommitsReporter.reposActivityRank(_, interval))
-    .map(CommitsInflux.toReposActivityRankPoints(_, interval))
-    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+    .map(GitlabReporter.reposActivityRank(_, interval))
+    .map(GitlabInflux.toReposActivityRankPoints(_, interval))
+    .map(writeChunks)
 
-  def committersActivityRank(interval: ChronoUnit, max: Int) = CommitsInflux
+  def committersActivityRank(interval: ChronoUnit, max: Int) = GitlabInflux
     .loadCommits()
-    .map(CommitsReporter.committersActivityRank(_, interval))
-    .map(CommitsInflux.toCommittersActivityPoints(_, interval))
-    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+    .map(GitlabReporter.committersActivityRank(_, interval))
+    .map(GitlabInflux.toCommittersActivityPoints(_, interval))
+    .map(writeChunks)
 
-  def commitsStats(interval: ChronoUnit) = CommitsInflux
+  def commitsStats(interval: ChronoUnit) = GitlabInflux
     .loadCommits()
     .map(CommitsReporter.commitsStats(_, interval))
-    .map(CommitsInflux.toCommitsStatsPoints(_, interval))
-    .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS))
+    .map(GitlabInflux.toCommitsStatsPoints(_, interval))
+    .map(writeChunks)
+
+  def commitsSummary(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(CommitsReporter.commitsSummary(_, interval))
+    .map(GitlabInflux.toCommitsSummaryPoints(_, interval))
+    .map(writeChunks)
+
+  def commitsByNamespace(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(CommitsReporter.commitsByNamespace(_, interval))
+    .map(GitlabInflux.toCommitsByNamespacePoints(_, interval))
+    .map(writeChunks)
+
+  def activeCommitters(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(CommitsReporter.activeCommitters(_, interval))
+    .map(GitlabInflux.toActiveCommittersPoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequests(since: ZonedDateTime) = GitlabClient
+    .getMergeRequests(since)
+    .map(GitlabInflux.toMergeRequestsPoints)
+    .map(writeChunks)
+
+  def mergeRequestsByState(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestsByState(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsByStatePoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequestsByAuthor(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestsByAuthor(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsByAuthorPoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequestsMovingAverage(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestsMovingAverage(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsMovingAveragePoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequestsComments(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestsComments(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsCommentsPoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequestsDuration(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestsDuration(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsDurationPoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequestsAuthorsRatio(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestsAuthorsRatio(_, targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsAuthorsRatioPoints(_, interval))
+    .map(writeChunks)
+
+  def commitsStatsByProjectRole(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(CommitsReporter.commitsStatsByProjectRole(GitlabData.loadProjects(), _, interval))
+    .map(GitlabInflux.toCommitsStatsByProjectRolePoints(_, interval))
+    .map(writeChunks)
+
+  def commitsStatsByProjectCategory(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(CommitsReporter.commitsStatsByProjectCategory(GitlabData.loadProjects(), _, interval))
+    .map(GitlabInflux.toCommitsStatsByProjectCategoryPoints(_, interval))
+    .map(writeChunks)
+
+  def commitsStatsByProjectRoleNamespace(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(CommitsReporter.commitsStatsByProjectRoleNamespace(GitlabData.loadProjects(), _, interval))
+    .map(GitlabInflux.toCommitsStatsByProjectRoleNamespacePoints(_, interval))
+    .map(writeChunks)
+
+  def commitsStatsByProjectCategoryNamespace(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(CommitsReporter.commitsStatsByProjectCategoryNamespace(GitlabData.loadProjects(), _, interval))
+    .map(GitlabInflux.toCommitsStatsByProjectCategoryNamespacePoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequestsByProjectRole(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestsByProjectRole(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsByProjectRolePoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequestsByProjectCategory(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestsByProjectCategory(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestsByProjectCategoryPoints(_, interval))
+    .map(writeChunks)
+
+  def mergeRequestStatsByProject(targetBranch: String, interval: ChronoUnit) = GitlabInflux
+    .loadMergeRequests()
+    .map(MergeRequestsReporter.mergeRequestStatsByProject(_, GitlabData.loadProjects(), targetBranch, interval))
+    .map(GitlabInflux.toMergeRequestStatsByProjectPoints(_, interval))
+    .map(writeChunks)
+
+  def committersLifeSpanStats(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(GitlabReporter.committersLifeSpanStats(_, interval))
+    .map(GitlabInflux.toCommittersLifeSpanStatsPiont(_, interval))
+    .map(writeChunks)
+
+  private def writeChunks(points: Seq[Point]): Future[Boolean] = {
+    points.sliding(100)
+      .foreach(s => Await.result(InfluxDb.db.bulkWrite(s, precision = Precision.MILLISECONDS), 10 minutes))
+
+    //    Future.sequence(
+    //      points.sliding(100)
+    //        .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS)))
+
+    Future.successful(true)
+  }
+
+  private def writeChunks(points: Array[Point]): Future[Boolean] = writeChunks(points.toSeq)
 
 }
