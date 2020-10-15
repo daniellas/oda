@@ -27,7 +27,7 @@ case class WorkItemStatus(
                            createdBy: String,
                            size: Option[String],
                            estimate: Double,
-                           eppicName: Option[String],
+                           epicName: Option[String],
                            statusCreated: Timestamp,
                            statusName: String,
                            statusAuthor: Option[String]) {
@@ -42,7 +42,7 @@ case class WorkItemStatus(
       item.createdBy,
       item.size,
       item.estimate,
-      item.eppicName,
+      item.epicName,
       mapper.apply(item.statusCreated),
       item.statusName,
       item.statusAuthor)

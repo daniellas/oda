@@ -20,10 +20,14 @@ case class Namespace(id: String, name: String, path: String, full_path: String, 
 
 case class Project(id: Int, name: String, name_with_namespace: String, tag_list: Seq[String]) {
   def namespace() = Project.extractNamespace(name, name_with_namespace)
+
+  def rootNamespace = Project.extractRootNamespace(name_with_namespace)
 }
 
 case object Project {
   def extractNamespace(name: String, fullName: String): String = fullName.substring(0, fullName.length - name.trim.length - 3)
+
+  def extractRootNamespace(fullName: String) = fullName.split("/")(0).trim
 }
 
 case class Stats(additions: Int, deletions: Int, total: Int)
@@ -36,7 +40,7 @@ case class Commit(
                    created_at: ZonedDateTime,
                    committer_email: String,
                    stats: Stats) {
-  def mapCommitterEmail(mapper: String => String) =
+  def mapCommitterEmail(mapper: String => String): Commit =
     Commit(
       this.id,
       this.short_id,
@@ -46,6 +50,9 @@ case class Commit(
       mapper(this.committer_email),
       this.stats
     )
+
+  def mapCommitterEmail(mapping: Map[String, String]): Commit = mapCommitterEmail(a => mapping.get(a).getOrElse(a))
+
 }
 
 case class Author(id: Int, username: String)

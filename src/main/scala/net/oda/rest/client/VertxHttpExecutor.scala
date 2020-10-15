@@ -1,11 +1,7 @@
 package net.oda.rest.client
 
-import java.util
-import java.util.stream.Collectors
-
-import collection.JavaConverters._
-import io.vertx.core.{MultiMap, Vertx}
 import io.vertx.core.http.{HttpClient, HttpClientResponse, HttpMethod}
+import io.vertx.core.{MultiMap, Vertx}
 
 import scala.collection.JavaConverters
 import scala.collection.JavaConverters._
@@ -31,7 +27,7 @@ object VertxHttpExecutor {
           httpClient: HttpClient,
           receiveTimeoutMs: Long,
           maxRetryAttempts: Int,
-          retryDelayer: (Int => Long),
+          retryDelayer: Int => Long,
           errorLog: (String, Throwable) => Unit,
           debugLog: String => Unit): HttpExecutor[String] =
     (url, headers, method, body) =>

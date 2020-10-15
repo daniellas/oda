@@ -15,10 +15,10 @@ class PublicReportsGeneratorSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
   val intervals = Seq(ChronoUnit.WEEKS)
   val cfdSpecs = Seq(
-    CfdSpec("All stories and bugs", Seq("Story", "Bug").contains, _ => true),
-    CfdSpec("All stories", Seq("Story").contains, _ => true),
-    CfdSpec("All bugs", Seq("Bug").contains, _ => true),
-    CfdSpec("Critical bugs", "Bug".equals, "Critical".equals)
+    CfdSpec("All stories and bugs", Seq("Story", "Bug").contains, _ => true, "In Progress", "Done", ChronoUnit.WEEKS),
+    CfdSpec("All stories", Seq("Story").contains, _ => true, "In Progress", "Done", ChronoUnit.WEEKS),
+    CfdSpec("All bugs", Seq("Bug").contains, _ => true, "In Progress", "Done", ChronoUnit.WEEKS),
+    CfdSpec("Critical bugs", "Bug".equals, "Critical".equals, "In Progress", "Done", ChronoUnit.WEEKS)
   )
   val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming", "Done").contains(state)
 

@@ -17,13 +17,10 @@ class TimeSpec extends FreeSpec with Matchers {
     }
 
     "should generate weeks range" in {
-      weeksRange("2019-09-02", "2019-09-30") should (
+      weeksRange("2020-10-12" , "2020-10-19") should (
         contain allOf(
-          LocalDate.of(2019, 9, 2),
-          LocalDate.of(2019, 9, 9),
-          LocalDate.of(2019, 9, 16),
-          LocalDate.of(2019, 9, 23),
-          LocalDate.of(2019, 9, 30))
+          LocalDate.of(2020, 10, 12),
+          LocalDate.of(2020, 10, 19))
         )
     }
   }

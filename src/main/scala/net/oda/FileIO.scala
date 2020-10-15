@@ -1,5 +1,6 @@
 package net.oda
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths, StandardOpenOption}
 
 import scala.util.{Failure, Success, Try}

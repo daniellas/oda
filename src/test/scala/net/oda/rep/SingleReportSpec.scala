@@ -5,9 +5,9 @@ import java.time.temporal.ChronoUnit
 
 import com.typesafe.scalalogging.Logger
 import net.oda.cfd.CfdReporter
-import net.oda.{Config, FileIO, IT}
-import net.oda.gitlab.{GitlabClient, GitlabInflux, GitlabReporter}
-import net.oda.jira.JiraData
+import net.oda.{Config, FileIO, IT, Spark, Time}
+import net.oda.gitlab.{GitlabClient, GitlabData, GitlabInflux, GitlabReporter}
+import net.oda.jira.{JiraData, JiraReporter}
 import net.oda.rep.ReportsGenerator.{jiraCountByTypePriority, jiraCountCfd, jiraCountDistinctAuthors, jiraEstimateCfd, teamProductivityFactor, workItemsChangelog, workItemsDuration}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
@@ -16,6 +16,11 @@ import org.scalatest.FreeSpec
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import net.oda.Spark.session.implicits._
+import net.oda.workitem.WorkItems
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
 
 class SingleReportsSpec extends FreeSpec {
   val log = Logger(classOf[SingleReportsSpec])
@@ -28,55 +33,42 @@ class SingleReportsSpec extends FreeSpec {
     "Ready to test" -> 4,
     "In testing" -> 5,
     "Done" -> 6)
-  val projectKey = "HFT"
+  val projectKey = "CRYP"
   val entryState = "In Progress"
   val finalState = "Done"
 
   s"Generate" taggedAs (IT) in {
     val workItems = JiraData
       .loadAsWorkItems(Config.props.jira.projects(projectKey).estimateMapping.get)
-      .apply(JiraData.location(projectKey))
+      .apply(JiraData.location(projectKey));
 
-    workItems
-      .filter(i => Seq("Story", "Bug").contains(i.`type`))
-      .map(i => (
-        i.statusHistory,
-        CfdReporter.normalizeFlow(referenceFlow, entryState, finalState, stateMapping, i.statusHistory),
-        i))
-      .filter(_._2.isEmpty)
-      .filterNot(_._1.filter(s => s.name == "Done").isEmpty)
-      .take(100)
-      .foreach(i => println(i._3.`type` + " " + i._3.name + ": " + i._1.sortBy(_.created.toInstant.toEpochMilli).map(_.name)))
+    val interval = ChronoUnit.WEEKS
+    val range = udf(Time.range(interval, _, _))
 
+    WorkItems.flatten(workItems)
+      .toDF
+      .orderBy('id, 'statusCreated)
+      .select('id, 'statusCreated, 'statusName)
+      .withColumn(
+        "statusChanged",
+        first('statusCreated)
+          .over(
+            Window
+              .orderBy('statusCreated)
+              .partitionBy('id)
+              .rowsBetween(Window.currentRow + 1, Window.unboundedFollowing)
+          )
+      )
+      .filter('statusChanged.isNotNull)
+      .withColumn("createdWeek", Spark.toIntervalStart(interval)('statusCreated))
+      .withColumn("changedWeek", Spark.toIntervalStart(interval)('statusChanged))
+      .withColumn("range", range('createdWeek, 'changedWeek))
+      .select('statusName, explode('range).as("week"))
+      .groupBy('week, 'statusName)
+      .count()
+      .orderBy('week, 'statusName)
+      .show(100)
 
-    //Await.result(ReportsGenerator.namespaceActivityRank(ChronoUnit.WEEKS, 10), 20 minutes)
-    //Await.result(ReportsGenerator.reposActivityRank(ChronoUnit.WEEKS, 10), 20 minutes)
-    //Await.result(ReportsGenerator.committersActivityRank(ChronoUnit.WEEKS, 10), 20 minutes)
-    //Await.result(ReportsGenerator.commitsStats(ChronoUnit.DAYS), 20 minutes)
-    //    Await.result(ReportsGenerator.mergeRequests(ZonedDateTime.now().minusMonths(months)), 20 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsComments("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsDuration("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsAuthorsRatio("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.commitsStatsByProjectRole(ChronoUnit.WEEKS), 5 minutes)
-
-    //    val projects = GitlabClient.getProjects()
-    //      .map(Serialization.write(_))
-    //
-    //    projects.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/gitlab-projects.json", _: String)))
-    //    Await.result(projects, 10 minutes)
-    //
-    //    Await.result(ReportsGenerator.commitsStatsByProjectRole(ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.commitsStatsByProjectCategory(ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsByProjectRole("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsByProjectCategory("develop", ChronoUnit.WEEKS), 5 minutes)
-
-    //    Await.result(ReportsGenerator.commits(ZonedDateTime.now().minusMonths(months)), 20 minutes)
-    //    Await.result(ReportsGenerator.committersLifeSpanStats(ChronoUnit.MONTHS), 5 minutes)
-
-    //    Await.result(GitlabInflux.loadMergeRequests().map(GitlabReporter.mergeRequestsCorrelation), 5 minutes)
-    //        Await.result(ReportsGenerator.mergeRequests(ZonedDateTime.now().minusMonths(6)), 20 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsByState("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsByAuthor("develop", ChronoUnit.WEEKS), 5 minutes)
   }
 
 }

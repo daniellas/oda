@@ -7,7 +7,8 @@ object Mappers {
 
   implicit val jiraIssueToWorkItem = (issue: Issue, estimateCalculator: String => Option[Double]) => {
     val historyItems = issue.changelog.histories
-      .flatMap(h => h.items.map(i => (h.created, i.fieldId, i.toStr, h.author)))
+      .flatMap(h => h.items
+        .map(i => (h.created, i.fieldId, i.toStr, h.author)))
     val size = historyItems
       .filter(_._2.exists("customfield_10035".equals))
       .sortBy(_._1.getTime)

@@ -15,43 +15,34 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 12,
-  "iteration": 1602700272771,
+  "id": 17,
   "links": [],
   "panels": [
     {
       "aliasColors": {},
-      "bars": true,
+      "bars": false,
       "dashLength": 10,
       "dashes": false,
       "datasource": "oda",
       "fill": 1,
       "gridPos": {
-        "h": 12,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "id": 7,
+      "id": 2,
       "legend": {
-        "alignAsTable": false,
         "avg": false,
-        "current": true,
-        "hideEmpty": true,
-        "hideZero": true,
+        "current": false,
         "max": false,
         "min": false,
-        "rightSide": false,
         "show": true,
-        "sideWidth": null,
-        "sort": "total",
-        "sortDesc": true,
-        "total": true,
-        "values": true
+        "total": false,
+        "values": false
       },
-      "lines": false,
+      "lines": true,
       "linewidth": 1,
-      "links": [],
       "nullPointMode": "null",
       "percentage": false,
       "pointradius": 5,
@@ -59,24 +50,29 @@
       "renderer": "flot",
       "seriesOverrides": [],
       "spaceLength": 10,
-      "stack": false,
+      "stack": true,
       "steppedLine": false,
       "targets": [
         {
-          "alias": "Additions",
-          "groupBy": [],
-          "measurement": "commits_by_namespace",
+          "alias": "$tag_status",
+          "groupBy": [
+            {
+              "params": [
+                "status"
+              ],
+              "type": "tag"
+            }
+          ],
+          "measurement": "work_items_count_by_state",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
-          "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "additions"
+                  "count"
                 ],
                 "type": "field"
               }
@@ -86,25 +82,30 @@
             {
               "key": "interval",
               "operator": "=",
-              "value": "WEEKS"
+              "value": "DAYS"
             }
           ]
         },
         {
-          "alias": "Deletions",
-          "groupBy": [],
-          "measurement": "commits_by_namespace",
+          "alias": "$tag_status MA",
+          "groupBy": [
+            {
+              "params": [
+                "status"
+              ],
+              "type": "tag"
+            }
+          ],
+          "measurement": "work_items_count_by_state_moving_average",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT \"additions\", \"deletions\" FROM \"commits_stats\" WHERE $timeFilter GROUP BY \"project\", \"committer\" fill(0)",
-          "rawQuery": false,
           "refId": "B",
           "resultFormat": "time_series",
           "select": [
             [
               {
                 "params": [
-                  "deletions"
+                  "moving_average"
                 ],
                 "type": "field"
               }
@@ -114,7 +115,7 @@
             {
               "key": "interval",
               "operator": "=",
-              "value": "WEEKS"
+              "value": "DAYS"
             }
           ]
         }
@@ -123,13 +124,12 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Commits summary",
+      "title": "Panel Title",
       "tooltip": {
         "shared": true,
-        "sort": 2,
+        "sort": 0,
         "value_type": "individual"
       },
-      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -140,8 +140,7 @@
       },
       "yaxes": [
         {
-          "decimals": 0,
-          "format": "locale",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -163,31 +162,14 @@
       }
     }
   ],
-  "refresh": false,
   "schemaVersion": 16,
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": [
-      {
-        "datasource": "oda",
-        "filters": [
-          {
-            "key": "namespace",
-            "operator": "=",
-            "value": "empirica-algo / bibo"
-          }
-        ],
-        "hide": 0,
-        "label": "Filters",
-        "name": "filters",
-        "skipUrlSync": false,
-        "type": "adhoc"
-      }
-    ]
+    "list": []
   },
   "time": {
-    "from": "now-90d",
+    "from": "now-1y",
     "to": "now"
   },
   "timepicker": {
@@ -216,7 +198,7 @@
     ]
   },
   "timezone": "",
-  "title": "Gitlab metrics - Commits",
-  "uid": "23jUWu8Zz",
-  "version": 17
+  "title": "Work items queue",
+  "uid": "uZz50BcGz",
+  "version": 3
 }
