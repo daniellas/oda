@@ -16,7 +16,10 @@ case class JiraProps(
                       apiUrl: String,
                       user: String,
                       apiKey: String,
-                      projects: Map[String, JiraProject]
+                      projects: Map[String, JiraProject],
+                      storyPointsField: Option[String],
+                      estimateField: Option[String],
+                      epicNameField: Option[String]
                     )
 
 case class DataProps(location: String = "./")

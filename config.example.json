@@ -7,6 +7,9 @@
     "apiUrl": "",
     "user": "",
     "apiKey": "",
+    "storyPointsField": "customfield_10014",
+    "estimateField": "customfield_10035",
+    "epicNameField": "customfield_10005",
     "projects": {
       "PROJECT_ID": {
         "estimateMapping": {
