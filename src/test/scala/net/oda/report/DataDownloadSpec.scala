@@ -22,8 +22,8 @@ class DataDownloadSpec extends FreeSpec {
 
   "Download data" taggedAs (IT) in {
     //downloadGitlabProjects()
-    downloadGitlabCommits()
-    //downloadGitlabMergeRequests()
+    //    downloadGitlabCommits()
+    downloadGitlabMergeRequests()
     //downloadJiraIssuesData()
     //downloadJiraVersionsData()
   }
@@ -46,8 +46,8 @@ class DataDownloadSpec extends FreeSpec {
 
   def downloadGitlabMergeRequests() = {
     val promise = GitlabInflux.findLastMergeRequestTime()
-      .map(_.getOrElse(defaultStart))
-      .flatMap(s => ReportsGenerator.mergeRequests(s, s.plusMonths(interval)))
+      .map(_.map(_.minusMonths(interval)).getOrElse(defaultStart))
+      .flatMap(s => ReportsGenerator.mergeRequests(s, s.plusMonths(2 * interval)))
 
     Await.result(promise, 20 minutes)
   }

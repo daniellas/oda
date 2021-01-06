@@ -31,8 +31,8 @@ class ReportsGeneratorSpec extends FreeSpec {
 
   s"Generate" taggedAs (IT) in {
     //    generateJiraReports()
-    //    generateGitlabMergeRequestsReports()
-    generateGitlabCommitsReports()
+    generateGitlabMergeRequestsReports()
+    //    generateGitlabCommitsReports()
   }
 
   def generateJiraReports() = {
@@ -52,28 +52,26 @@ class ReportsGeneratorSpec extends FreeSpec {
 
   def generateGitlabMergeRequestsReports() = {
     Await.result(ReportsGenerator.mergeRequestsByState("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsByAuthor("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsComments("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsMovingAverage("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsDuration("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsByProjectRole("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestsByProjectCategory("develop", ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.mergeRequestStatsByProject("develop", ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.mergeRequestsByAuthor("develop", ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.mergeRequestsComments("develop", ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.mergeRequestsMovingAverage("develop", ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.mergeRequestsDuration("develop", ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.mergeRequestsByProjectRole("develop", ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.mergeRequestsByProjectCategory("develop", ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.mergeRequestStatsByProject("develop", ChronoUnit.WEEKS), 5 minutes)
   }
 
   def generateGitlabCommitsReports() = {
     Await.result(ReportsGenerator.activeCommitters(ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.commitsSummary(ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.commitsStats(ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.commitsStatsByProjectRole(ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.commitsStatsByProjectCategory(ChronoUnit.WEEKS), 5 minutes)
-    //
-    //    Await.result(ReportsGenerator.commitsStatsByProjectRoleNamespace(ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.commitsStatsByProjectCategoryNamespace(ChronoUnit.WEEKS), 5 minutes)
-    //
-    //    Await.result(ReportsGenerator.commitsByNamespace(ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.commitsSummary(ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.commitsStats(ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.commitsStatsByProjectRole(ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.commitsStatsByProjectCategory(ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.commitsStatsByProjectRoleNamespace(ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.commitsStatsByProjectCategoryNamespace(ChronoUnit.WEEKS), 5 minutes)
+    Await.result(ReportsGenerator.commitsByNamespace(ChronoUnit.WEEKS), 5 minutes)
     Await.result(ReportsGenerator.committersLifeSpan(ChronoUnit.MONTHS), 5 minutes)
-//    Await.result(ReportsGenerator.committersLifeSpanStats(ChronoUnit.MONTHS), 5 minutes)
+    Await.result(ReportsGenerator.committersLifeSpanStats(ChronoUnit.MONTHS), 5 minutes)
   }
 
 }
