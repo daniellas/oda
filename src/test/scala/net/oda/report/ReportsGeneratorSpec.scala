@@ -30,9 +30,9 @@ class ReportsGeneratorSpec extends FreeSpec {
   val devStateFilter = (state: String) => !Seq("Backlog", "Upcoming", "Done").contains(state)
 
   s"Generate" taggedAs (IT) in {
-    generateJiraReports()
+    //    generateJiraReports()
     //    generateGitlabMergeRequestsReports()
-    //    generateGitlabCommitsReports()
+    generateGitlabCommitsReports()
   }
 
   def generateJiraReports() = {
@@ -72,7 +72,8 @@ class ReportsGeneratorSpec extends FreeSpec {
     //    Await.result(ReportsGenerator.commitsStatsByProjectCategoryNamespace(ChronoUnit.WEEKS), 5 minutes)
     //
     //    Await.result(ReportsGenerator.commitsByNamespace(ChronoUnit.WEEKS), 5 minutes)
-    //    Await.result(ReportsGenerator.committersLifeSpanStats(ChronoUnit.MONTHS), 5 minutes)
+    Await.result(ReportsGenerator.committersLifeSpan(ChronoUnit.MONTHS), 5 minutes)
+//    Await.result(ReportsGenerator.committersLifeSpanStats(ChronoUnit.MONTHS), 5 minutes)
   }
 
 }

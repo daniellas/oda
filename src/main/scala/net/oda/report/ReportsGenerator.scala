@@ -307,10 +307,16 @@ object ReportsGenerator {
     .map(GitlabInflux.toMergeRequestStatsByProjectPoints(_, interval))
     .map(writeChunks)
 
+  def committersLifeSpan(interval: ChronoUnit) = GitlabInflux
+    .loadCommits()
+    .map(GitlabReporter.committersLifeSpan(_, interval))
+    .map(GitlabInflux.toCommittersLifeSpanPoints(_, interval))
+    .map(writeChunks)
+
   def committersLifeSpanStats(interval: ChronoUnit) = GitlabInflux
     .loadCommits()
     .map(GitlabReporter.committersLifeSpanStats(_, interval))
-    .map(GitlabInflux.toCommittersLifeSpanStatsPiont(_, interval))
+    .map(GitlabInflux.toCommittersLifeSpanStatsPoints(_, interval))
     .map(writeChunks)
 
   private def writeChunks(points: Seq[Point]): Future[Boolean] = {

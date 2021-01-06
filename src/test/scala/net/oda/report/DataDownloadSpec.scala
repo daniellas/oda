@@ -3,9 +3,9 @@ package net.oda.report
 import java.time.ZonedDateTime
 
 import com.typesafe.scalalogging.Logger
-import net.oda.gitlab.{CommitRecord, GitlabClient, GitlabInflux}
+import net.oda.gitlab.{GitlabClient, GitlabInflux}
 import net.oda.jira.{JiraClient, JiraDateSerializer, JiraIssues, JiraTimestampSerializer}
-import net.oda.{Config, FileIO, IT, Time}
+import net.oda.{Config, FileIO, IT}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 import org.scalatest.FreeSpec
@@ -21,11 +21,11 @@ class DataDownloadSpec extends FreeSpec {
   val interval = 12
 
   "Download data" taggedAs (IT) in {
-    //    downloadGitlabProjects()
-    //    downloadGitlabCommits()
-    //    downloadGitlabMergeRequests()
-    downloadJiraIssuesData()
-    //    downloadJiraVersionsData()
+    //downloadGitlabProjects()
+    downloadGitlabCommits()
+    //downloadGitlabMergeRequests()
+    //downloadJiraIssuesData()
+    //downloadJiraVersionsData()
   }
 
   def downloadGitlabProjects(): Unit = {

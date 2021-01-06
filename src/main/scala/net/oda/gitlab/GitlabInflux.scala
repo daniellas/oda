@@ -184,7 +184,15 @@ object GitlabInflux {
         .addField("count", r.getLong(2)))
   }
 
-  def toCommittersLifeSpanStatsPiont(df: DataFrame, interval: ChronoUnit) = {
+  def toCommittersLifeSpanPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("committer_life_span", r.getTimestamp(3).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("committer", r.getString(0))
+        .addField("duration", r.getLong(4)))
+  }
+
+  def toCommittersLifeSpanStatsPoints(df: DataFrame, interval: ChronoUnit) = {
     df.collect()
       .map(r => Point("committer_life_span_stats", r.getTimestamp(0).toInstant.toEpochMilli)
         .addTag("interval", interval.name())
