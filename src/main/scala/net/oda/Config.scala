@@ -25,7 +25,7 @@ case class ReportsProps(location: String = "./")
 
 case class HttpProps(port: Int)
 
-case class InluxdbProps(host: String, port: Int, db: String)
+case class InluxdbProps(host: String, port: Int, db: String, connectTimeout: Int, receiveTimeout: Int)
 
 case class GitlabProps(apiUrl: String, token: String)
 

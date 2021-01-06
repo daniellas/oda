@@ -15,7 +15,8 @@ case class WorkItem(
                      size: Option[String],
                      estimate: Double,
                      statusHistory: Seq[Status],
-                     epicName: Option[String])
+                     epicName: Option[String],
+                     version: Option[Int])
 
 case class WorkItemStatus(
                            id: String,

@@ -1,10 +1,14 @@
 {
+  "gitlab": {
+    "apiUrl": "",
+    "token": ""
+  },
   "jira": {
     "apiUrl": "",
     "user": "",
     "apiKey": "",
     "projects": {
-      "CRYP": {
+      "PROJECT_ID": {
         "estimateMapping": {
           "S": 3,
           "M": 5,
@@ -36,28 +40,14 @@
           "Low",
           "Lowest"
         ]
-      },
-      "AW": {
-        "estimateMapping": {},
-        "referenceFlow": {
-          "To Do": 1,
-          "In Progress": 2,
-          "MR": 3,
-          "Ready to test": 4,
-          "In testing": 5,
-          "Done": 6
-        },
-        "entryState": "To Do",
-        "finalState": "Done",
-        "stateMapping": {}
       }
     }
   },
   "data": {
-    "location": ""
+    "location": "path to folder with downloaded data files"
   },
   "reports": {
-    "location": ""
+    "location": "path to folder with generated reports"
   },
   "http": {
     "port": 8090
@@ -65,6 +55,11 @@
   "influxdb": {
     "host": "localhost",
     "port": 8086,
-    "db": "oda"
+    "db": "oda",
+    "connectTimeout": 60000,
+    "receiveTimeout": 600000
+  },
+  "emailMapping": {
+    "user@gmail.com": "user@company.com"
   }
 }

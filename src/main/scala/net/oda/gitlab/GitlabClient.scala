@@ -112,14 +112,15 @@ object GitlabClient {
         .map(Future.successful)
         .getOrElse(emptyBodyFailure()))
 
-  def getCommits(projectId: Int, ref: String, since: ZonedDateTime, firstParent: Boolean): Future[Seq[Commit]] = {
+  def getCommits(projectId: Int, ref: String, firstParent: Boolean, since: ZonedDateTime, until: ZonedDateTime): Future[Seq[Commit]] = {
     getPages(
       restClient
         .resource(
-          "/projects/%s/repository/commits?per_page=100&ref_name=%s&since=%s&with_stats=true&first_parent=%s&page=%s",
+          "/projects/%s/repository/commits?per_page=100&ref_name=%s&since=%s&until=%s&with_stats=true&first_parent=%s&page=%s",
           projectId,
           ref,
           since.format(dateTimeFormatter),
+          until.format(dateTimeFormatter),
           firstParent,
           _)
         .get()
@@ -139,11 +140,12 @@ object GitlabClient {
       .map(Future.successful)
       .getOrElse(emptyBodyFailure()))
 
-  def getMergeRequests(since: ZonedDateTime) = getPages(
+  def getMergeRequests(after: ZonedDateTime, before: ZonedDateTime) = getPages(
     restClient
       .resource(
-        "/merge_requests?per_page=100&scope=all&created_after=%s&page=%s",
-        since.format(dateTimeFormatter),
+        "/merge_requests?per_page=100&scope=all&created_after=%s&created_before%s&page=%s",
+        after.format(dateTimeFormatter),
+        before.format(dateTimeFormatter),
         _)
       .get()
       .execute()

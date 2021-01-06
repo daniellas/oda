@@ -1,7 +1,5 @@
 package net.oda.vertx
 
-import java.util
-
 import io.vertx.ext.web.RoutingContext
 
 import scala.collection.JavaConverters

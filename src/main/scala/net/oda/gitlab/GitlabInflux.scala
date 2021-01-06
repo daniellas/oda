@@ -7,10 +7,11 @@ import java.time.temporal.ChronoUnit
 import com.paulgoldbaum.influxdbclient.{Point, Record}
 import net.oda.Time
 import net.oda.Time._
-import net.oda.influx.InfluxDb
+import net.oda.influx.Influx
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 case class CommitRecord(
                          createdAt: Timestamp,
@@ -183,7 +184,15 @@ object GitlabInflux {
         .addField("count", r.getLong(2)))
   }
 
-  def toCommittersLifeSpanStatsPiont(df: DataFrame, interval: ChronoUnit) = {
+  def toCommittersLifeSpanPoints(df: DataFrame, interval: ChronoUnit) = {
+    df.collect()
+      .map(r => Point("committer_life_span", r.getTimestamp(3).toInstant.toEpochMilli)
+        .addTag("interval", interval.name())
+        .addTag("committer", r.getString(0))
+        .addField("duration", r.getLong(4)))
+  }
+
+  def toCommittersLifeSpanStatsPoints(df: DataFrame, interval: ChronoUnit) = {
     df.collect()
       .map(r => Point("committer_life_span_stats", r.getTimestamp(0).toInstant.toEpochMilli)
         .addTag("interval", interval.name())
@@ -193,8 +202,11 @@ object GitlabInflux {
         .addField("movAvg", r.getDouble(4)))
   }
 
-  def loadCommits() = InfluxDb.db.query("select * from commits")
+  def loadCommits(): Future[List[CommitRecord]] = Influx.db.query("select * from commits")
     .map(_.series.head.records.map(CommitRecord.of))
+
+  def findLastCommitTime(): Future[Option[ZonedDateTime]] = Influx.db.query("select last(additions) from commits")
+    .map(_.series.headOption.flatMap(_.records.headOption.map(r => r("time").asInstanceOf[String]).map(parseZonedDateTime)))
 
   def toMergeRequestsPoints(mrs: Seq[MergeRequest]) = mrs
     .map(mr => Point("merge_requests", mr.created_at.toInstant.toEpochMilli)
@@ -261,8 +273,11 @@ object GitlabInflux {
         .addField("moving_average", r.getDouble(2)))
   }
 
-  def loadMergeRequests() = InfluxDb.db.query("select * from merge_requests")
+  def loadMergeRequests() = Influx.db.query("select * from merge_requests")
     .map(_.series.head.records.map(MergeRequestRecord.of))
+
+  def findLastMergeRequestTime(): Future[Option[ZonedDateTime]] = Influx.db.query("select last(user_notes_count) from merge_requests")
+    .map(_.series.headOption.flatMap(_.records.headOption.map(r => r("time").asInstanceOf[String]).map(parseZonedDateTime)))
 
   def toCommitsStatsByProjectRolePoints(df: DataFrame, interval: ChronoUnit) = {
     df.collect()

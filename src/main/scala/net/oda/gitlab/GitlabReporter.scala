@@ -79,7 +79,7 @@ object GitlabReporter {
       .withColumn("effectiveRank", dense_rank().over(partitionBy('created).orderBy('effective)))
   }
 
-  def committersLifeSpanStats(commits: Seq[CommitRecord], interval: ChronoUnit) = {
+  def committersLifeSpan(commits: Seq[CommitRecord], interval: ChronoUnit) = {
     val duration = udf((start: Timestamp, end: Timestamp) => interval.between(toZonedDateTime(start), toZonedDateTime(end)) + 1)
     val isCommitterValid = udf((committer: String) =>
       !committer.contains("-")
@@ -89,7 +89,7 @@ object GitlabReporter {
         && !committer.contains("tomashanak.com")
         && !committer.contains("gmail.com"))
 
-    val committersDuration = commits
+    commits
       .toDF()
       .groupBy('committer)
       .agg(
@@ -97,14 +97,12 @@ object GitlabReporter {
         max('createdAt).as("end"))
       .filter(isCommitterValid('committer))
       .filter('start =!= 'end)
+      .withColumn("ts", Spark.toIntervalStart(interval)('start))
       .withColumn("duration", duration('start, 'end))
+  }
 
-    committersDuration
-      .coalesce(1)
-      .write.format("csv").mode(SaveMode.Overwrite)
-      .save(s"${Config.dataLocation}/committers_duration.csv")
-
-    committersDuration.withColumn("ts", Spark.toIntervalStart(interval)('start))
+  def committersLifeSpanStats(commits: Seq[CommitRecord], interval: ChronoUnit) = {
+    committersLifeSpan(commits, interval).withColumn("ts", Spark.toIntervalStart(interval)('start))
       .groupBy('ts)
       .agg(
         count('duration).as("durationCount"),

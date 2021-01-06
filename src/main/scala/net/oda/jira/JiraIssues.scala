@@ -34,6 +34,10 @@ case class JiraIssues(
 object JiraIssues {
   def empty = JiraIssues(0, null, null, Nil)
 
+  val status = "status"
+  val fixVersions = "fixVersions"
+  val validFields = Set(status, fixVersions)
+
   def trimHistoryItems(issue: Issue) = {
     Issue(
       issue.key,
@@ -44,7 +48,7 @@ object JiraIssues {
           h.author,
           h.created,
           h.items
-            .filter(_.fieldId.contains("status"))
+            .filter(_.fieldId.exists(validFields.contains))
             .map(i => ChangeItem(
               i.fieldId,
               i.from,
