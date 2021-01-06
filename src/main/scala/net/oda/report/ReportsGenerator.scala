@@ -1,7 +1,8 @@
-package net.oda.rep
+package net.oda.report
 
-import java.time.{LocalDate, ZonedDateTime}
 import java.time.temporal.ChronoUnit
+import java.time.{LocalDate, ZonedDateTime}
+import java.util.concurrent.Executors
 
 import com.paulgoldbaum.influxdbclient.Parameter.Precision
 import com.paulgoldbaum.influxdbclient.Point
@@ -9,17 +10,17 @@ import net.oda.Config
 import net.oda.cfd.CfdInflux.toCfdCountPoints
 import net.oda.cfd.CfdReporter.generate
 import net.oda.cfd.{CfdInflux, CfdReporter}
-import net.oda.gitlab.{CommitsReporter, GitlabClient, GitlabData, GitlabInflux, GitlabReporter, MergeRequestsReporter}
-import net.oda.influx.InfluxDb
-import net.oda.influx.InfluxDb.db
+import net.oda.gitlab._
+import net.oda.influx.Influx
 import net.oda.jira.JiraData.location
 import net.oda.jira.{JiraData, JiraInflux, JiraReporter}
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
+
 
 object ReportsGenerator {
+
+  implicit val ec = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(1))
 
   def workItemsChangelog(projectKey: String, interval: ChronoUnit) = {
     JiraData
@@ -168,11 +169,11 @@ object ReportsGenerator {
       .apply(JiraData.location(projectKey))
   }
 
-  def commits(since: ZonedDateTime) = Future.sequence(
+  def commits(since: ZonedDateTime, until: ZonedDateTime) = Future.sequence(
     GitlabData
       .loadProjects()
       .map(p =>
-        GitlabClient.getCommits(p.id, "develop", since, true)
+        GitlabClient.getCommits(p.id, "develop", true, since, until)
           .map(cs => cs.filterNot(_.committer_email.startsWith("jenkins"))
             .map(_.mapCommitterEmail(Config.props.emailMapping))
             .map(c => (p, c)))))
@@ -223,8 +224,8 @@ object ReportsGenerator {
     .map(GitlabInflux.toActiveCommittersPoints(_, interval))
     .map(writeChunks)
 
-  def mergeRequests(since: ZonedDateTime) = GitlabClient
-    .getMergeRequests(since)
+  def mergeRequests(after: ZonedDateTime, before: ZonedDateTime) = GitlabClient
+    .getMergeRequests(after, before)
     .map(GitlabInflux.toMergeRequestsPoints)
     .map(writeChunks)
 
@@ -313,14 +314,10 @@ object ReportsGenerator {
     .map(writeChunks)
 
   private def writeChunks(points: Seq[Point]): Future[Boolean] = {
-    points.sliding(100)
-      .foreach(s => Await.result(InfluxDb.db.bulkWrite(s, precision = Precision.MILLISECONDS), 10 minutes))
+    val promises = points.sliding(50)
+      .map(Influx.db.bulkWrite(_, precision = Precision.MILLISECONDS))
 
-    //    Future.sequence(
-    //      points.sliding(100)
-    //        .map(InfluxDb.db.bulkWrite(_, precision = Precision.MILLISECONDS)))
-
-    Future.successful(true)
+    Future.sequence(promises).map(_.reduce((l, r) => l && r))
   }
 
   private def writeChunks(points: Array[Point]): Future[Boolean] = writeChunks(points.toSeq)

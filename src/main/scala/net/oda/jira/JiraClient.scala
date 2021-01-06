@@ -16,11 +16,10 @@ import scala.concurrent.{Future, Promise}
 object JiraClient {
   val log = Logger("jira-client")
 
-  implicit val formats = DefaultFormats + JiraTimestampSerializer +
-    FieldSerializer[ChangeItem](
-      FieldSerializer.renameTo("toStr", "toString"),
-      FieldSerializer.renameFrom("toString", "toStr")
-    )
+  implicit val formats = DefaultFormats +
+    JiraTimestampSerializer +
+    FieldSerializer[ChangeItem](FieldSerializer.renameTo("toStr", "toString"), FieldSerializer.renameFrom("toString", "toStr")) +
+    JiraDateSerializer
 
   val jiraAuthHeader = Config.props.jira.user + ":" + Config.props.jira.apiKey
   val jiraHeaders = Map(HttpHeaders.AUTHORIZATION -> Seq("Basic " + Base64.getEncoder.encodeToString(jiraAuthHeader.getBytes)))
@@ -53,4 +52,10 @@ object JiraClient {
 
   def searchIssues(project: String): Future[List[Issue]] = searchIssues(project, -1)
 
+  def getProjectVersions(project: String): Future[Seq[ProjectVersions]] = restClient.resource("/project/%s/versions", project)
+    .get
+    .execute
+    .filter(_.statusCode == 200)
+    .map(_.body.get)
+    .map(Serialization.read[Seq[ProjectVersions]])
 }

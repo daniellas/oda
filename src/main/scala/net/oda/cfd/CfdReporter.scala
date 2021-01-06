@@ -113,7 +113,8 @@ object CfdReporter {
         i.size,
         i.estimate,
         normalizeFlow(referenceFlow, entryState, finalState, stateMapping, i.statusHistory),
-        i.epicName))
+        i.epicName,
+        i.version))
       .filter(_.statusHistory.nonEmpty)
   }
 

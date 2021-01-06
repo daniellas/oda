@@ -12,4 +12,4 @@ target/
 .cache-main
 .cache-tests
 dependency-reduced-pom.xml
-tmp.json
+src/test/resources/*.json
