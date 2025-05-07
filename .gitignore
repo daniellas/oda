@@ -13,3 +13,4 @@ target/
 .cache-tests
 dependency-reduced-pom.xml
 src/test/resources/*.json
+.ipynb_checkpoints/

@@ -1,7 +1,6 @@
 package net.oda.report
 
-import java.time.ZonedDateTime
-
+import java.time.{ZoneId, ZonedDateTime}
 import com.typesafe.scalalogging.Logger
 import net.oda.gitlab.{GitlabClient, GitlabInflux}
 import net.oda.jira.{JiraClient, JiraDateSerializer, JiraIssues, JiraTimestampSerializer}
@@ -21,10 +20,13 @@ class DataDownloadSpec extends FreeSpec {
   val interval = 12
 
   "Download data" taggedAs (IT) in {
-    //downloadGitlabProjects()
+    val start = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
+    val end = ZonedDateTime.now()
+
+    //    downloadGitlabProjects()
+    //    downloadGitlabMergeRequests(start, end)
     //    downloadGitlabCommits()
-    downloadGitlabMergeRequests()
-    //downloadJiraIssuesData()
+    downloadJiraIssuesData()
     //downloadJiraVersionsData()
   }
 
@@ -36,6 +38,15 @@ class DataDownloadSpec extends FreeSpec {
     Await.result(projects, 10 minutes)
   }
 
+  def downloadGitlabMergeRequests(after: ZonedDateTime, before: ZonedDateTime) = {
+    val mergeRequests = GitlabClient.getMergeRequests(after, before)
+      .map(Serialization.write(_))
+
+    mergeRequests.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/gitlab-merge-requests.json", _: String)))
+
+    Await.result(mergeRequests, 20 minutes)
+  }
+
   def downloadGitlabCommits() = {
     val promise = GitlabInflux.findLastCommitTime()
       .map(_.getOrElse(defaultStart))
@@ -44,13 +55,6 @@ class DataDownloadSpec extends FreeSpec {
     Await.result(promise, 20 minutes)
   }
 
-  def downloadGitlabMergeRequests() = {
-    val promise = GitlabInflux.findLastMergeRequestTime()
-      .map(_.map(_.minusMonths(interval)).getOrElse(defaultStart))
-      .flatMap(s => ReportsGenerator.mergeRequests(s, s.plusMonths(2 * interval)))
-
-    Await.result(promise, 20 minutes)
-  }
 
   def downloadJiraIssuesData(): Unit = {
     Config.props.jira.projects.keys.foreach(downloadJiraIssuesData)
@@ -70,12 +74,6 @@ class DataDownloadSpec extends FreeSpec {
 
     Await.result(path, 10 minutes)
     log.info("{} JIRA issues data downloaded to {}", projectKey, path)
-
-    Await.result(
-      JiraClient.getProjectVersions(projectKey)
-        .map(Serialization.write(_)(jsonFormats))
-        .map(FileIO.saveTextContent(s"${Config.dataLocation}/jira-project-versiobs-${projectKey}.json", _)),
-      10 minutes)
   }
 
   def downloadJiraVersionsData(projectKey: String) = {
