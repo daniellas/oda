@@ -1,17 +1,20 @@
 package net.oda.report
 
-import java.time.{ZoneId, ZonedDateTime}
 import com.typesafe.scalalogging.Logger
-import net.oda.gitlab.{GitlabClient, GitlabInflux}
+import net.oda.FileIO.saveTextContent
+import net.oda.gitlab.{GitlabClient, GitlabData}
 import net.oda.jira.{JiraClient, JiraDateSerializer, JiraIssues, JiraTimestampSerializer}
-import net.oda.{Config, FileIO, IT}
+import net.oda.{Config, IT}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 import org.scalatest.FreeSpec
 
-import scala.concurrent.Await
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.time.{ZoneId, ZonedDateTime}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class DataDownloadSpec extends FreeSpec {
   val log = Logger(classOf[DataDownloadSpec])
@@ -21,40 +24,92 @@ class DataDownloadSpec extends FreeSpec {
 
   "Download data" taggedAs (IT) in {
     val start = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
-    val end = ZonedDateTime.now()
+    val end = ZonedDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0)
 
     //    downloadGitlabProjects()
     //    downloadGitlabMergeRequests(start, end)
-    //    downloadGitlabCommits()
-    downloadJiraIssuesData()
-    //downloadJiraVersionsData()
+    //        downloadJiraIssuesData()
+    downloadGitlabCommits(end.withDayOfMonth(1), end.plusMonths(1).withDayOfMonth(1))
+    //    downloadAllGitlabCommits(start, end)
+  }
+
+  def downloadAllGitlabCommits(start: ZonedDateTime, end: ZonedDateTime): Unit = {
+    val months = ChronoUnit.MONTHS.between(
+      start.withDayOfMonth(1),
+      end.withDayOfMonth(1))
+      .toInt
+
+    (0 to months)
+      .map(m => start.withDayOfMonth(1).plusMonths(m))
+      .foreach(m => downloadGitlabCommits(m, m.plusMonths(1)))
   }
 
   def downloadGitlabProjects(): Unit = {
+    log.info("Downloading Gitlab projects")
+
     val projects = GitlabClient.getProjects()
       .map(Serialization.write(_))
 
-    projects.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/gitlab-projects.json", _: String)))
+    projects.onComplete(_.foreach(saveTextContent(s"${Config.dataLocation}/gitlab-projects.json", _: String)))
     Await.result(projects, 10 minutes)
   }
 
   def downloadGitlabMergeRequests(after: ZonedDateTime, before: ZonedDateTime) = {
+    log.info("Downloading Gitlab merge requests")
+
     val mergeRequests = GitlabClient.getMergeRequests(after, before)
       .map(Serialization.write(_))
 
-    mergeRequests.onComplete(_.foreach(FileIO.saveTextContent(s"${Config.dataLocation}/gitlab-merge-requests.json", _: String)))
+    mergeRequests.onComplete(_.foreach(saveTextContent(s"${Config.dataLocation}/gitlab-merge-requests.json", _: String)))
 
     Await.result(mergeRequests, 20 minutes)
   }
 
-  def downloadGitlabCommits() = {
-    val promise = GitlabInflux.findLastCommitTime()
-      .map(_.getOrElse(defaultStart))
-      .flatMap(s => ReportsGenerator.commits(s, s.plusMonths(interval)))
+  def downloadGitlabCommits(since: ZonedDateTime, until: ZonedDateTime) = {
+    log.info("Downloading commits between {} - {}", since, until)
 
-    Await.result(promise, 20 minutes)
+    val commits = Future.sequence(
+      GitlabData
+        .loadProjects()
+        .map(p =>
+          GitlabClient.getCommits(p.id, "master", true, since, until)
+            .map(cs => cs.filterNot(_.committer_email.startsWith("jenkins"))
+              .map(_.mapCommitterEmail(Config.props.emailMapping))
+              .map(c => (p, c)))))
+      .map(_.flatten)
+      .map(pcs => pcs.map(pc => CommitItem(
+        pc._2.id,
+        pc._2.title,
+        pc._1.id,
+        pc._2.created_at,
+        pc._2.committer_email,
+        pc._2.stats.additions,
+        pc._2.stats.deletions,
+        pc._2.stats.total
+      )))
+      .map(Serialization.write(_))
+
+    val dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+
+    commits.onComplete(_.foreach(
+      saveTextContent(
+        s"${Config.dataLocation}/commits/gitlab-commits-" +
+          s"${since.format(dateTimeFormatter)}-${until.format(dateTimeFormatter)}.json",
+        _: String)))
+
+    Await.result(commits, 20 minutes)
+
   }
 
+  case class CommitItem(
+                         id: String,
+                         title: String,
+                         projectId: Int,
+                         createdAt: ZonedDateTime,
+                         committer: String,
+                         additions: Int,
+                         deletions: Int,
+                         total: Int)
 
   def downloadJiraIssuesData(): Unit = {
     Config.props.jira.projects.keys.foreach(downloadJiraIssuesData)
@@ -70,7 +125,7 @@ class DataDownloadSpec extends FreeSpec {
     val path = JiraClient.searchIssues(projectKey)
       .map(_.map(JiraIssues.trimHistoryItems))
       .map(Serialization.write(_)(jsonFormats))
-      .map(FileIO.saveTextContent(s"${Config.dataLocation}/jira-issues-${projectKey}.json", _))
+      .map(saveTextContent(s"${Config.dataLocation}/jira-issues-${projectKey}.json", _))
 
     Await.result(path, 10 minutes)
     log.info("{} JIRA issues data downloaded to {}", projectKey, path)
@@ -80,7 +135,7 @@ class DataDownloadSpec extends FreeSpec {
     Await.result(
       JiraClient.getProjectVersions(projectKey)
         .map(Serialization.write(_)(jsonFormats))
-        .map(FileIO.saveTextContent(s"${Config.dataLocation}/jira-project-versions-${projectKey}.json", _)),
+        .map(saveTextContent(s"${Config.dataLocation}/jira-project-versions-${projectKey}.json", _)),
       10 minutes)
   }
 

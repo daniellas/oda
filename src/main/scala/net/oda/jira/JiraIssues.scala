@@ -6,13 +6,16 @@ case class IssueType(id: String, name: String)
 
 case class Priority(name: String)
 
+case class Size(id: String, value: String)
+
 case class Fields(
                    summary: String,
                    resolutiondate: Option[ZonedDateTime],
                    created: ZonedDateTime,
                    issuetype: IssueType,
                    reporter: Person,
-                   priority: Priority)
+                   priority: Priority,
+                   customfield_10035: Option[Size])
 
 case class Person(accountId: String, displayName: String)
 

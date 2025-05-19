@@ -28,7 +28,7 @@ object JiraClient {
     .defaultHeaders(jiraHeaders)
 
   val expand = "changelog,-schema,-editmeta"
-  val fields = "resolution,summary,reporter,created,resolutiondate,status,priority,project,issuetype,size"
+  val fields = "resolution,summary,reporter,created,resolutiondate,status,priority,project,issuetype,size,customfield_10035"
   val maxResults = 100
 
   private def getIsses(project: String, take: Int, issues: JiraIssues): Future[JiraIssues] = {
