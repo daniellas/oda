@@ -109,8 +109,8 @@ def current_status_changed_at(changelog):
         return status_changes[-1]
 
 
-def read_jira_issues(spark):
-    return spark.read.json('../data/jira-issues-CRYP.json')
+def read_jira_issues(spark, project_key):
+    return spark.read.json(f'{HDFS_BASE_URL}/jira-issues-{project_key}.json')
 
 
 def normalize_jira_issues(issues):
@@ -171,14 +171,14 @@ def project_type(path):
 
 
 def read_gitlab_projects(spark):
-    return spark.read.json('../data/gitlab-projects.json') \
+    return spark.read.json(f'{HDFS_BASE_URL}/gitlab-projects.json') \
         .withColumn('name_with_namespace', f.regexp_replace('name_with_namespace', ' ', '')) \
         .withColumn('project_type', project_type(f.col('name_with_namespace'))) \
         .drop('tag_list')
 
 
 def read_gitlab_mrs(spark):
-    return spark.read.json('../data/gitlab-merge-requests.json') \
+    return spark.read.json(f'{HDFS_BASE_URL}/gitlab-merge-requests.json') \
         .where(f.col('state') == 'merged') \
         .withColumn('created_at', f.col('created_at').cast(TimestampType())) \
         .withColumn('updated_at', f.col('updated_at').cast(TimestampType())) \
@@ -214,7 +214,7 @@ def count_mrs_comments(project_mrs):
 
 
 def read_gitlab_commits(spark):
-    return spark.read.json('../data/commits/*.json') \
+    return spark.read.json(f'{HDFS_BASE_URL}/gitlab-commits.json') \
         .withColumn('committer', f.split('committer', '@')[0]) \
         .withColumn('createdAt', f.col('createdAt').cast(TimestampType())) \
         .withColumn('month', f.date_trunc('month', 'createdAt'))
