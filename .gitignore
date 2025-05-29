@@ -15,3 +15,4 @@ dependency-reduced-pom.xml
 src/test/resources/*.json
 .ipynb_checkpoints/
 venv/
+__pycache__/
