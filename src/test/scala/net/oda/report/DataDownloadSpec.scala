@@ -4,7 +4,8 @@ import com.typesafe.scalalogging.Logger
 import net.oda.FileIO.saveTextContent
 import net.oda.gitlab.{GitlabClient, GitlabData}
 import net.oda.jira.{JiraClient, JiraDateSerializer, JiraIssues, JiraTimestampSerializer}
-import net.oda.{Config, IT}
+import net.oda.{Config, IT, Spark}
+import org.apache.spark.sql.SaveMode
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 import org.scalatest.FreeSpec
@@ -26,11 +27,13 @@ class DataDownloadSpec extends FreeSpec {
     val start = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val end = ZonedDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0)
 
-    downloadGitlabProjects()
-    downloadGitlabMergeRequests(start, end)
-    downloadJiraIssuesData()
-    downloadGitlabCommits(end.withDayOfMonth(1), end.plusMonths(1).withDayOfMonth(1))
+    //    downloadGitlabProjects()
+    //    downloadGitlabMergeRequests(start, end)
+    //    downloadJiraIssuesData()
+    //    downloadGitlabCommits(end.withDayOfMonth(1), end.plusMonths(1).withDayOfMonth(1))
     //    downloadAllGitlabCommits(start, end)
+
+    uploadDataToHdfs()
   }
 
   def downloadAllGitlabCommits(start: ZonedDateTime, end: ZonedDateTime): Unit = {
@@ -139,4 +142,18 @@ class DataDownloadSpec extends FreeSpec {
       10 minutes)
   }
 
+  def uploadDataToHdfs() = {
+    Spark.session.read.json(s"${Config.dataLocation}/gitlab-projects.json")
+      .write.mode(SaveMode.Overwrite).json("hdfs://hdfs.platform:9000/user/daniel.las/teams-metrics/gitlab-projects.json")
+    Spark.session.read.json(s"${Config.dataLocation}/gitlab-merge-requests.json")
+      .write.mode(SaveMode.Overwrite).json("hdfs://hdfs.platform:9000/user/daniel.las/teams-metrics/gitlab-merge-requests.json")
+    Spark.session.read.json(s"${Config.dataLocation}/commits/*.json")
+      .write.mode(SaveMode.Overwrite).json("hdfs://hdfs.platform:9000/user/daniel.las/teams-metrics/gitlab-commits.json")
+    Config.props.jira.projects.keys.foreach(projectKey => {
+      Spark.session.read.json(s"${Config.dataLocation}/jira-issues-${projectKey}.json")
+        .write.mode(SaveMode.Overwrite).json(s"hdfs://hdfs.platform:9000/user/daniel.las/teams-metrics/jira-issues-${projectKey}.json")
+    })
+    Spark.session.read.csv(s"${Config.dataLocation}/timesheets/*.csv")
+      .write.mode(SaveMode.Overwrite).csv("hdfs://hdfs.platform:9000/user/daniel.las/teams-metrics/timesheets.csv")
+  }
 }
