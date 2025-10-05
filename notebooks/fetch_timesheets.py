@@ -32,6 +32,19 @@ TIMESHEETS = [
     ('MSo', 2025, '1YSxq60sOUjsZyWsDrj8lcH-wE61GeHnvorRKJJU6468'),
     ('ATa', 2024, '1L81d5QnBU9jniJHSkbL_TEjG1UPgRJKGytDyYgwpd1Q'),
     ('ATa', 2025, '1iRB2PNdihh--AjltV2W0LfvSRHCw2OGIPTb1toilyhk'),
+    ('MDe', 2024, '17SkkRU7vybZ5u_q9RnXcvRNJ-wZWsbrlfITLbU_UJjE'),
+    ('MDe', 2025, '1wE458J376ic_i6FfgsgxEMzbOjWDloR_eYSoO1aMAdI'),
+    ('CWr', 2024, '1g3UcjSz7jh5ld4A2GtZ3I04-SELmVu2JeLCxwxhBcUc'),
+    ('CWr', 2025, '1w4F98lGf0x36N0KF2z2bW-v0QQFnuL8pkUwg-aJ0cVk'),
+    ('MŁy', 2025, '1LDoqKpc8dHISH6enwV_VJjLNL8zlabnKnNpVYwSCbXo'),
+    ('ACi', 2024, '1x2foEcAH9-o5A6QApdUyuyljh8Y_5KdkZrgimF-peu8'),
+    ('ACi', 2025, '1lbxGaDPrZgQRhfHC4jJClQtHEzBVJUKyWtkkEimTWvY'),
+    ('MKz', 2024, '1RePOfZR2ZeC1aoHNPu0OFSKLtkmvLyptKSSDh-V2guU'),
+    ('MKz', 2025, '13OqqXbFW0WYn_38EKkBIeCbDWNthx_FF_f-1AZQqcVg'),
+    ('MGr', 2024, '121NfOnxy05It5thEyHDQtDRVVxKHAsc1BjkYUdTg1LU'),
+    ('MGr', 2025, '18xWo51MDfsunmLLamQStJMNZ7wtNPOCJKkJWEG2snaY'),
+    ('JGr', 2024, '1X_t-CPmYtSatmzxvTkzZOludqWvHC-emMbYxU9dMTUk'),
+    ('JGr', 2025, '1hGQoVOkSUx6-0HAVr7__vqnN4sNiLLV1WxJHzgdrx9I'),
 ]
 
 

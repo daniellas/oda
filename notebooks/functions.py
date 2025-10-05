@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pyspark.sql.functions as f
 from pyspark.sql.functions import udf
 from pyspark.sql.types import IntegerType, DoubleType, TimestampType
+from pyspark.sql import DataFrame
 
 HDFS_BASE_URL = 'hdfs://hdfs.platform:9000/user/daniel.las/teams-metrics'
 
@@ -53,7 +54,7 @@ def read_ts(spark):
         .withColumn('hours', f.col('hours').cast(DoubleType())) \
         .withColumn('day', f.to_timestamp(f.concat_ws('-', 'year', 'month', 'day'), 'yyyy-M-d')) \
         .withColumn('month', f.date_trunc('month', f.col('day'))) \
-        .withColumn('week', f.date_add(f.date_trunc('week', f.col('day')), 1)) \
+        .withColumn('week', f.date_add(f.date_trunc('week', f.col('day')), 0)) \
         .drop('year') \
         .where(f.col('hours').isNotNull()) \
         .where(f.col('hours') > 0) \
@@ -109,25 +110,44 @@ def current_status_changed_at(changelog):
         return status_changes[-1]
 
 
-def read_jira_issues(spark, project_key):
-    return spark.read.json(f'{HDFS_BASE_URL}/jira-issues-{project_key}.json')
+def read_jira_issues(spark, project_key) -> DataFrame:
+    return spark.read.json(f'{HDFS_BASE_URL}/jira-issues-{project_key}.json') \
+        .withColumn('project', f.lit(project_key))
 
 
-def normalize_jira_issues(issues):
+def normalize_jira_issues(issues: DataFrame, include_size: bool) -> DataFrame:
+    if include_size:
+        selection = [
+            f.col('project'),
+            f.col('key'),
+            f.col('fields.summary'),
+            f.col('status'),
+            f.col('status_changed_at'),
+            f.col('fields.created'),
+            f.col('fields.resolutiondate'),
+            f.col('fields.issuetype.name').alias('type'),
+            f.col('fields.priority.name').alias('priority'),
+            f.when(f.col('fields.customfield_10035.value').isNotNull(), f.col('fields.customfield_10035.value'))
+            .otherwise('?').alias('size')
+        ]
+    else:
+        selection = [
+            f.col('project'),
+            f.col('key'),
+            f.col('fields.summary'),
+            f.col('status'),
+            f.col('status_changed_at'),
+            f.col('fields.created'),
+            f.col('fields.resolutiondate'),
+            f.col('fields.issuetype.name').alias('type'),
+            f.col('fields.priority.name').alias('priority'),
+            f.lit('?').alias('size')]
+
     return issues \
         .withColumn('status', current_status(f.col('changelog'))) \
         .withColumn('status_changed_at', f.to_timestamp(current_status_changed_at(f.col('changelog')))) \
-        .select(
-        f.col('key'),
-        f.col('fields.summary'),
-        f.col('status'),
-        f.col('status_changed_at'),
-        f.col('fields.created'),
-        f.col('fields.resolutiondate'),
-        f.col('fields.issuetype.name').alias('type'),
-        f.col('fields.priority.name').alias('priority'),
-        f.col('fields.customfield_10035.value').alias('size')) \
-        .where(f.col('type').isin(['Bug', 'Story', 'Sub-task'])) \
+        .select(selection) \
+        .where(f.col('type').isin(['Bug', 'Story', 'Sub-task', 'Task'])) \
         .withColumn('created', f.col('created').cast(TimestampType())) \
         .withColumn('resolutiondate', f.col('resolutiondate').cast(TimestampType())) \
         .withColumn('created_month', f.date_trunc('month', 'created')) \
@@ -150,7 +170,7 @@ def filter_heavy_open_issues(issues_open, ts, issues_hours, work_hours_threshold
         f.col('user'),
         f.col('issue_total_hours')) \
         .agg(f.sum('hours').alias('user_total_hours')) \
-        .where(f.col('user_total_hours') > work_hours_threshold) \
+        .where(f.col('issue_total_hours') > work_hours_threshold) \
         .where(~f.col('status').isin(skip_status)) \
         .orderBy(f.col('user_total_hours').desc())
 
@@ -170,14 +190,14 @@ def project_type(path):
     return 'code'
 
 
-def read_gitlab_projects(spark):
+def read_gitlab_projects(spark) -> DataFrame:
     return spark.read.json(f'{HDFS_BASE_URL}/gitlab-projects.json') \
         .withColumn('name_with_namespace', f.regexp_replace('name_with_namespace', ' ', '')) \
         .withColumn('project_type', project_type(f.col('name_with_namespace'))) \
         .drop('tag_list')
 
 
-def read_gitlab_mrs(spark):
+def read_gitlab_mrs(spark) -> DataFrame:
     return spark.read.json(f'{HDFS_BASE_URL}/gitlab-merge-requests.json') \
         .where(f.col('state') == 'merged') \
         .withColumn('created_at', f.col('created_at').cast(TimestampType())) \
@@ -213,7 +233,7 @@ def count_mrs_comments(project_mrs):
         .withColumn('comments_avg', f.col('comments') / f.col('count'))
 
 
-def read_gitlab_commits(spark):
+def read_gitlab_commits(spark) -> DataFrame:
     return spark.read.json(f'{HDFS_BASE_URL}/gitlab-commits.json') \
         .withColumn('committer', f.split('committer', '@')[0]) \
         .withColumn('createdAt', f.col('createdAt').cast(TimestampType())) \

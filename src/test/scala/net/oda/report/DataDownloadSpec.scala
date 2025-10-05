@@ -27,16 +27,17 @@ class DataDownloadSpec extends FreeSpec {
     val start = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault())
     val end = ZonedDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0)
 
-    downloadGitlabProjects()
-    downloadGitlabMergeRequests(start, end)
+//    downloadGitlabProjects()
+//    downloadGitlabMergeRequests(start, end)
     downloadJiraIssuesData()
-    downloadGitlabCommits(end.withDayOfMonth(1), end.plusMonths(1).withDayOfMonth(1))
-    //    downloadAllGitlabCommits(start, end)
-
+    downloadAllGitlabCommits(
+      end.minusMonths(1).withDayOfMonth(1),
+      end.plusMonths(1).withDayOfMonth(1))
     uploadDataToHdfs()
   }
 
   def downloadAllGitlabCommits(start: ZonedDateTime, end: ZonedDateTime): Unit = {
+    log.info("Downloading all Gitlab commits between: {} - {}", start, end)
     val months = ChronoUnit.MONTHS.between(
       start.withDayOfMonth(1),
       end.withDayOfMonth(1))

@@ -35,11 +35,11 @@ object JiraClient {
     log.info("Downloading {} issues {} to {}", project, issues.startAt, issues.startAt + maxResults)
 
     restClient
-      .resource("/search?jql=%s&expand=%s&fields=%s&startAt=%s&maxResults=%s", s"project=$project", expand, fields, issues.startAt, maxResults)
+      .resource("/search/jql?jql=%s&expand=%s&fields=%s&startAt=%s&maxResults=%s", s"project=$project", expand, fields, issues.startAt, maxResults)
       .get
       .execute
       .map(r => {
-        log.info("Response status: {}", r.statusCode)
+        log.info("Response status: {} {} {}", r.statusCode, r.statusLine, r.body)
         r
       })
       .filter(_.statusCode == 200)
