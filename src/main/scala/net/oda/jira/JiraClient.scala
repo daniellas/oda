@@ -32,20 +32,44 @@ object JiraClient {
   val maxResults = 100
 
   private def getIsses(project: String, take: Int, issues: JiraIssues): Future[JiraIssues] = {
-    log.info("Downloading {} issues {} to {}", project, issues.startAt, issues.startAt + maxResults)
+    log.info("Downloading {} issues, {} completed", project, issues.issues.length)
 
-    restClient
-      .resource("/search/jql?jql=%s&expand=%s&fields=%s&startAt=%s&maxResults=%s", s"project=$project", expand, fields, issues.startAt, maxResults)
+    issues.nextPageToken
+      .map(token => {
+        //        log.info("Next page token {}", token)
+        restClient
+          .resource(
+            "/search/jql?jql=%s&expand=%s&fields=%s&maxResults=%s&nextPageToken=%s",
+            s"project=$project", expand, fields, maxResults, token)
+      })
+      .getOrElse({
+        restClient
+          .resource(
+            "/search/jql?jql=%s&expand=%s&fields=%s&maxResults=%s",
+            s"project=$project", expand, fields, maxResults)
+      })
       .get
       .execute
       .map(r => {
-        log.info("Response status: {} {} {}", r.statusCode, r.statusLine, r.body)
+        //        log.info("Response status: {} {} {}", r.statusCode, r.statusLine, r.body)
         r
       })
       .filter(_.statusCode == 200)
       .map(_.body.get)
       .map(Serialization.read[JiraIssues])
-      .flatMap(i => if (i.total > issues.startAt && (issues.startAt < take || take == -1)) getIsses(project, take, new JiraIssues(i.startAt + maxResults, maxResults, i.total, issues.issues ::: i.issues)) else Promise.successful(issues).future)
+      .map(r => {
+        //        log.info("isLast: {}", r.isLast)
+        r
+      })
+      .flatMap(i => {
+        val res = new JiraIssues(i.isLast, i.nextPageToken, issues.issues ::: i.issues)
+
+        if (!i.isLast) {
+          getIsses(project, take, res)
+        } else {
+          Promise.successful(res).future
+        }
+      })
   }
 
   def searchIssues(project: String, take: Int): Future[List[Issue]] = getIsses(project, take, JiraIssues.empty).map(_.issues)

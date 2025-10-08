@@ -27,15 +27,11 @@ case class Changelog(histories: List[HistoryItem])
 
 case class Issue(key: String, fields: Fields, changelog: Changelog)
 
-case class JiraIssues(
-                       startAt: Integer,
-                       maxResults: Integer,
-                       total: Integer,
-                       issues: List[Issue]) {
+case class JiraIssues(isLast: Boolean, nextPageToken: Option[String], issues: List[Issue]) {
 }
 
 object JiraIssues {
-  def empty = JiraIssues(0, null, null, Nil)
+  def empty = JiraIssues(false, Option.empty, Nil)
 
   val status = "status"
   val fixVersions = "fixVersions"
