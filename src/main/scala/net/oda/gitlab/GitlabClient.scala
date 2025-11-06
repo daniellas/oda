@@ -1,8 +1,5 @@
 package net.oda.gitlab
 
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
 import com.typesafe.scalalogging.Logger
 import net.oda.Config
 import net.oda.json.ZondedDateTimeSerializer
@@ -13,6 +10,8 @@ import org.apache.http.entity.ContentType
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
 
@@ -32,14 +31,13 @@ case object Project {
 
 case class Stats(additions: Int, deletions: Int, total: Int)
 
-case class Commit(
-                   id: String,
-                   short_id: String,
-                   title: String,
-                   message: String,
-                   created_at: ZonedDateTime,
-                   committer_email: String,
-                   stats: Stats) {
+case class Commit(id: String,
+                  short_id: String,
+                  title: String,
+                  message: String,
+                  created_at: ZonedDateTime,
+                  committer_email: String,
+                  stats: Stats) {
   def mapCommitterEmail(mapper: String => String): Commit =
     Commit(
       this.id,
@@ -53,7 +51,21 @@ case class Commit(
 
   def mapCommitterEmail(mapping: Map[String, String]): Commit = mapCommitterEmail(a => mapping.get(a).getOrElse(a))
 
+  def isAI: Boolean = {
+    message != null && message.contains("Co-Authored-By: Claude")
+  }
+
+  private val mrIdPattern = """!([0-9]+)""".r
+
+  def mrId: Option[Int] = mrIdPattern.findFirstMatchIn(message).map(_.group(1).toInt)
 }
+
+case class MergeRequestCommit(id: String,
+                              short_id: String,
+                              title: String,
+                              message: String,
+                              created_at: ZonedDateTime,
+                              committer_email: String)
 
 case class Author(id: Int, username: String)
 
@@ -129,7 +141,26 @@ object GitlabClient {
         .recover { case _: Throwable => Response(200, "", Map.empty, Some(Seq.empty[Commit])) },
       Seq.empty,
       1)
+      .flatMap(commits => getSourceCommits(projectId, commits))
   }
+
+  private def getSourceCommits(projectId: Int, commits: Seq[Commit]): Future[Seq[Commit]] = {
+    val futures = commits.map(commit => commit.mrId
+      .map(mrId => getMergeRequestCommits(projectId, mrId))
+      .orElse(Some(Future.successful(Seq(commit)))))
+
+    Future.sequence(futures.flatten).map(_.flatten)
+  }
+
+  private def getMergeRequestCommits(projectId: Int, mergeRequestId: Int): Future[Seq[Commit]] = restClient
+    .resource("/projects/%s/merge_requests/%s/commits", projectId, mergeRequestId)
+    .get()
+    .execute()
+    .flatMap(_.body
+      .map(Serialization.read[Seq[MergeRequestCommit]])
+      .map(Future.successful)
+      .getOrElse(emptyBodyFailure()))
+    .flatMap(commits => Future.sequence(commits.map(commit => getCommit(projectId, commit.short_id))))
 
   def getCommit(projectId: Int, sha: String): Future[Commit] = restClient
     .resource("/projects/%s/repository/commits/%s", projectId, sha)

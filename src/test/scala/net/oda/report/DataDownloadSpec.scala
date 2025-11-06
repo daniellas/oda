@@ -29,19 +29,16 @@ class DataDownloadSpec extends FreeSpec {
 
     //    downloadGitlabProjects()
     //    downloadGitlabMergeRequests(start, end)
-    downloadJiraIssuesData()
-    //    downloadAllGitlabCommits(
-    //      end.minusMonths(1).withDayOfMonth(1),
-    //      end.plusMonths(1).withDayOfMonth(1))
+    //    downloadJiraIssuesData()
+    downloadAllGitlabCommits(
+      end.minusMonths(1).withDayOfMonth(1),
+      end.plusMonths(1).withDayOfMonth(1))
     uploadDataToHdfs()
   }
 
   def downloadAllGitlabCommits(start: ZonedDateTime, end: ZonedDateTime): Unit = {
     log.info("Downloading all Gitlab commits between: {} - {}", start, end)
-    val months = ChronoUnit.MONTHS.between(
-      start.withDayOfMonth(1),
-      end.withDayOfMonth(1))
-      .toInt
+    val months = ChronoUnit.MONTHS.between(start, end).toInt
 
     (0 to months)
       .map(m => start.withDayOfMonth(1).plusMonths(m))
@@ -89,7 +86,8 @@ class DataDownloadSpec extends FreeSpec {
         pc._2.committer_email,
         pc._2.stats.additions,
         pc._2.stats.deletions,
-        pc._2.stats.total
+        pc._2.stats.total,
+        pc._2.isAI
       )))
       .map(Serialization.write(_))
 
@@ -113,7 +111,8 @@ class DataDownloadSpec extends FreeSpec {
                          committer: String,
                          additions: Int,
                          deletions: Int,
-                         total: Int)
+                         total: Int,
+                         ai: Boolean)
 
   def downloadJiraIssuesData(): Unit = {
     Config.props.jira.projects.keys.foreach(downloadJiraIssuesData)
